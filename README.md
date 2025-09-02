@@ -4,6 +4,14 @@
     <a href="https://arxiv.org/abs/2508.00910"><img src="https://img.shields.io/badge/arXiv-2508.00910-b31b1b.svg?style=for-the-badge">
 </p>
 
+
+<div align="center">
+    <h2>🎉 Check out our latest work!<br>
+    <a href="https://arxiv.org/abs/2508.18370" title="CTF-Dojo: Training Language Model Agents to Find Vulnerabilities with CTF-Dojo"><img src="https://img.shields.io/badge/CTF--Dojo-First%20runtime%20for%20cybersecurity%20agents-orange?style=for-the-badge"></a><br>
+    <strong>🚀 First runtime environment for cybersecurity agents 🚀<br>
+</div>
+
+
 <p align="left">
     🧐&nbsp;<a href="#overview">Overview</a>
     | 🏆&nbsp;<a href="#benchmark-suite">Benchmark Suite</a>
@@ -318,6 +326,13 @@ If you use this benchmark suite in your research, please cite:
   author={Zhuo, Terry Yue and Wang, Dingmin and Ding, Hantian and Kumar, Varun and Wang, Zijian},
   journal={arXiv preprint arXiv:2508.00910},
   year={2025},
+}
+
+@article{zhuo2025training,
+  title={Training Language Model Agents to Find Vulnerabilities with CTF-Dojo},
+  author={Zhuo, Terry Yue and Wang, Dingmin and Ding, Hantian and Kumar, Varun and Wang, Zijian},
+  journal={arXiv preprint arXiv:2508.18370},
+  year={2025}
 }
 ```
 

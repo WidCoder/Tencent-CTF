@@ -112,11 +112,11 @@ python run.py \
 
 ### Script Control Arguments
 
-- `--config_file`: Agent configuration file (default: config/default_ctf.yaml)
+- `--config_file`: Agent configuration file (default: `config/default_ctf.yaml`; use `config/writeup_ctf.yaml` for CTF-Dojo)
 - `--suffix`: Suffix for run name
 - `--trajectory_path`: Custom trajectory output path
 - `--container_only`: Start container only without running agents
-- `--writeup`: Writeup content to append as hint
+- `--writeup`: Writeup content to append as hint (see [CTF-Dojo](https://github.com/amazon-science/CTF-Dojo))
 - `--skip_existing`: Skip instances with existing trajectories (default: true)
 - `--bypass_step_limit_history`: Bypass step limit history
 
@@ -227,6 +227,13 @@ If you use this benchmark suite in your research, please cite:
   author={Zhuo, Terry Yue and Wang, Dingmin and Ding, Hantian and Kumar, Varun and Wang, Zijian},
   journal={arXiv preprint arXiv:2508.00910},
   year={2025},
+}
+
+@article{zhuo2025training,
+  title={Training Language Model Agents to Find Vulnerabilities with CTF-Dojo},
+  author={Zhuo, Terry Yue and Wang, Dingmin and Ding, Hantian and Kumar, Varun and Wang, Zijian},
+  journal={arXiv preprint arXiv:2508.18370},
+  year={2025}
 }
 ```
 
