@@ -1,4 +1,4 @@
-# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.  
+﻿# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.  
 
 # SPDX-License-Identifier: CC-BY-NC-4.0
 
@@ -139,3 +139,12 @@ blocklist_error_template: |
 summarizer_config:
   function: SimpleSummarizer
   window_length: 100
+# Long-context trajectory generation
+enable_context_compression: true
+enable_thought_recording: true
+context_compression:
+  enabled: true
+  max_context_tokens: 128000
+  trigger_ratio: 0.95
+  summary_model: same_as_agent
+

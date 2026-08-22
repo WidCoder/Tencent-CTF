@@ -1,4 +1,4 @@
-# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.  
+﻿# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.  
 
 # SPDX-License-Identifier: CC-BY-NC-4.0
 
@@ -34,6 +34,8 @@ from sweagent.agent.models import (
 )
 from sweagent.agent.parsing import FormatError, ParseFunction
 from sweagent.agent.summarizer import SummarizerConfig
+from sweagent.agent.context_compressor import ContextCompressionManager
+from sweagent.agent.trajectory_recorder import TrajectoryRecorder
 from sweagent.environment.swe_env import SWEEnv
 from sweagent.types import AgentInfo, History, HistoryItem, Trajectory, TrajectoryStep
 from sweagent.utils.config import convert_paths_to_abspath
@@ -83,6 +85,9 @@ class AgentConfig(FrozenSerializable):
     history_processor_args: dict[str, Any] = field(default_factory=dict)
     command_docs: str = None  # type: ignore
     summarizer_config: SummarizerConfig = field(default_factory=SummarizerConfig)
+    enable_context_compression: bool = False
+    enable_thought_recording: bool = True
+    context_compression: dict[str, Any] = field(default_factory=dict)
     blocklist_error_template: str = "Interactive operation '{name}' is not supported by this environment"
     blocklist: tuple[str, ...] = (
         "vim",
@@ -311,6 +316,15 @@ class Agent:
         self.logger = get_logger("agent")
         # Requires instance, so is set in `setup` methods
         self._rloop = None
+        compression = dict(getattr(self.config, "context_compression", {}) or {})
+        self.context_compressor = ContextCompressionManager(
+            enabled=bool(getattr(self.config, "enable_context_compression", False) or compression.get("enabled", False)),
+            max_context_tokens=int(compression.get("max_context_tokens", 128000)),
+            trigger_ratio=float(compression.get("trigger_ratio", 0.95)),
+            summary_model=self._summarize_context,
+        )
+        self.trajectory_recorder = TrajectoryRecorder(enable_thought_recording=bool(getattr(self.config, "enable_thought_recording", True)))
+        self._last_context_compressed = False
 
         # Set in run method
         self._env: SWEEnv | None = None
@@ -527,7 +541,20 @@ class Agent:
     @property
     def local_history(self) -> list[dict[str, str]]:
         """Return the history of the agent since the last reset."""
-        return self.config.history_processor([entry for entry in self.history if entry["agent"] == self.name])
+        history = self.config.history_processor([entry for entry in self.history if entry["agent"] == self.name])
+        result = self.context_compressor.maybe_compress(history)
+        self._last_context_compressed = result.compressed
+        if result.compressed:
+            for msg in result.messages:
+                if msg.get("context_summary") is not None:
+                    msg["agent"] = self.name
+            self.history = [entry for entry in self.history if entry.get("role") == "system"]
+            self.history.extend(result.messages[1:])
+            self.info.setdefault("context_events", []).append(self.context_compressor.events[-1])
+        return result.messages
+
+    def _summarize_context(self, messages: list[dict[str, Any]]) -> Any:
+        return self._query_model_with_timeout(messages)
 
     def _get_total_stats(self) -> APIStats:
         """Combine model stats of different attempts"""
@@ -561,13 +588,48 @@ class Agent:
                 }
             )
 
-        data = {
-            **get_attempt_data(0),
-        }
-
+        self.info.setdefault("trajectory_schema_version", 2)
+        self.info.setdefault("artifact_type", "agent_trace")
+        data = {"trajectory_schema_version": 2, **get_attempt_data(0), "context_events": self.info.get("context_events", [])}
         assert self.traj_path is not None
-        self.traj_path.write_text(json.dumps(data, indent=2))
+        self.trajectory_recorder.save(self.traj_path, data)
 
+    def finalize_episode(self, exit_status: str, terminal_reason: str, error_type: str | None = None) -> None:
+        """Record one canonical terminal state and durably save the partial trajectory."""
+        if getattr(self, "_episode_finalized", False):
+            return
+        self._episode_finalized = True
+        self.info["exit_status"] = exit_status
+        self.info["terminal_reason"] = terminal_reason
+        self.info["error_type"] = error_type or ""
+        self.info.setdefault("flag_submitted", False)
+        self.info.setdefault("flag_verified", "unknown")
+        self.info["episode_end_time"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        self.trajectory.append(TrajectoryStep({
+            "step_id": len(self.trajectory) + 1, "thought": "", "action": exit_status,
+            "tool_name": "unknown", "tool_args": "", "observation": terminal_reason,
+            "return_code": None, "execution_time": 0.0, "error": error_type or "",
+            "terminal": True, "response": "", "state": "",
+        }))
+        self.info["total_steps"] = len(self.trajectory)
+        try:
+            self.save_trajectory()
+        except Exception:
+            self.logger.exception("Failed to save terminal trajectory")
+
+    @staticmethod
+    def _structured_action(action: str) -> tuple[str, str]:
+        """Extract command metadata without discarding the raw action."""
+        parts = action.strip().split(maxsplit=1)
+        return (parts[0], parts[1] if len(parts) > 1 else "") if parts else ("unknown", "")
+
+    @staticmethod
+    def _strict_action_is_valid(action: str) -> bool:
+        """Reject prose/Markdown before it can be passed to the shell."""
+        stripped = action.strip()
+        if not stripped or "```" in stripped or re.search(r"(?im)^\s*(discussion|analysis|explanation)\s*:", stripped):
+            return False
+        return "\n" not in stripped and "\r" not in stripped
     def _get_first_match(self, action: str, pattern_type: str) -> re.Match | None:
         """Return the first match of a command pattern in the action string."""
         assert self.config is not None  # mypy
@@ -722,14 +784,15 @@ class Agent:
             {
                 "role": "assistant",
                 "content": output,
-                "thought": thought,
+                "thought": getattr(self.model, "last_thought", "") or thought,
+                "context_compressed": self._last_context_compressed,
                 "action": action,
                 "agent": self.name,
             },
         )
 
-        self.logger.info(f"💭 THOUGHT ({self.name})\n{thought}")
-        self.logger.info(f"🎬 ACTION ({self.name})\n{action}")
+        self.logger.info(f"濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏閻ゎ喗銇勯弽銊х焼闁?THOUGHT ({self.name})\n{thought}")
+        self.logger.info(f"濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏閻ゎ喗銇勯幇鈺佲偓妤佺▔?ACTION ({self.name})\n{action}")
 
         return thought, action, output
 
@@ -814,7 +877,7 @@ class Agent:
 
         message = "\n".join(messages)
 
-        self.logger.info(f"🤖 MODEL INPUT\n{message}")
+        self.logger.info(f"濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏缁愭鎱ㄥ鍡楀姦?MODEL INPUT\n{message}")
         self._append_history({"role": "user", "content": message, "agent": self.name})
 
         for hook in self.hooks:
@@ -862,53 +925,41 @@ class Agent:
             return True
         return False
 
-    def check_format_and_requery(
-        self,
-        output: str,
-    ) -> tuple[str, str, str]:
-        """Query the model with the current state and observation with the appropriate template.
-
-        Try to parse the output into a thought and action. Retry if the output is malformatted or the action is blocked.
-
-        Returns:
-            thought: model reasoning
-            action: action that the model proposes
-            output: raw model output
-        """
-        # Condition for handling outputs with no thought (just action)
+    def check_format_and_requery(self, output: str) -> tuple[str, str, str]:
+        """Parse exactly one shell command; malformed prose is retried, never executed."""
         if self.model.args.model_name == "human":
+            if not self._strict_action_is_valid(output):
+                raise FormatError("action must be one standalone command")
             return "", output, output
-        elif self.model.args.model_name == "human_thought":
-            thought, action = ParseFunction.get("ThoughtActionParser")(
-                output,
-                self.config._commands + self.config.subroutine_types,
-                strict=False,
-            )
+        if self.model.args.model_name == "human_thought":
+            thought, action = ParseFunction.get("ThoughtActionParser")(output, self.config._commands + self.config.subroutine_types, strict=True)
+            if not self._strict_action_is_valid(action):
+                raise FormatError("action must be one standalone command")
             return thought, action, output
-
         format_fails = blocklist_fails = 0
-
         while format_fails + blocklist_fails <= 10:
             try:
-                thought, action = self.config.parse_function(
-                    output,
-                    self.config._commands + self.config.subroutine_types,
-                    strict=False,
-                )
+                thought, action = self.config.parse_function(output, self.config._commands + self.config.subroutine_types, strict=True)
+                if not self._strict_action_is_valid(action):
+                    raise FormatError("action must be one standalone command")
             except KeyboardInterrupt:
                 raise
             except FormatError:
                 format_fails += 1
+                self.info["parser_retry_count"] = format_fails
+                self.info["last_parse_error"] = "parse_error"
                 output = self.retry_after_format_fail(output)
                 continue
             if self.should_block_action(action):
                 blocklist_fails += 1
                 output = self.retry_after_blocklist_fail(output, action)
             else:
+                self.info["parser_retry_count"] = format_fails
                 return thought, action, output
         self.logger.warning(f"Malformat limit reached: \n{output}")
+        self.info["parser_retry_count"] = format_fails
+        self.info["last_parse_error"] = "parse_error"
         return "Exit due to format error", "exit_format", output
-
     def forward_with_error_check(self, observation: str | None, state: str) -> tuple[str, str, str]:
         """Wrapper around `self.forward_model` that handles errors and retries
         due to format errors or blocked actions.
@@ -1089,10 +1140,9 @@ class Agent:
             )
             self._update_summarizer_stats(additional_cost)
             self.info.update(_info)
+            self.info["return_code"] = _info.get("return_code") if isinstance(_info, dict) else None
             for hook in self.hooks:
                 hook.on_sub_action_executed(obs=observation, done=done)
-            if sub_action["cmd_name"] == self.config.submit_command:
-                done = True
         else:
             agent_name = sub_action["agent"]
             sub_agent_output = self.call_subroutine(agent_name, sub_action, self._env)
@@ -1156,22 +1206,31 @@ class Agent:
         execution_t0 = time.perf_counter()
         for sub_action in self.split_actions(run_action):
             observation, done = self._run_sub_action(sub_action)
-            # If the last sub-action is done, the observation is not
-            # appended.
+            # Terminal observations carry verifier and environment feedback.
+            # Preserve them in the trajectory before ending the step.
+            observations.append(observation)
             if done:
                 break
-            observations.append(observation)
         observation = "\n".join([obs for obs in observations if obs is not None])
         execution_time = time.perf_counter() - execution_t0
 
+        tool_name, tool_args = self._structured_action(action)
+        terminal_error = "parse_error" if action == "exit_format" else ""
         trajectory_step = TrajectoryStep(
             {
+                "step_id": len(self.trajectory) + 1,
                 "action": action,
+                "tool_name": tool_name,
+                "tool_args": tool_args,
                 "observation": observation,
+                "return_code": self.info.get("return_code"),
                 "response": output,
                 "state": state,
-                "thought": thought,
+                "thought": getattr(self.model, "last_thought", "") or thought,
+                "context_compressed": self._last_context_compressed,
                 "execution_time": execution_time,
+                "error": terminal_error,
+                "terminal": done,
             },
         )
         self.trajectory.append(trajectory_step)
@@ -1190,88 +1249,65 @@ class Agent:
         return_type: str = "info_trajectory",
         init_model_stats: APIStats | None = None,
     ):
-        """
-        Run the agent on an environment.
-        Return the final value of the specified return type.
-
-        Args:
-            setup_args: Arguments to pass to the agent's setup method.
-            env: The environment to run the agent on.
-            observation: Output from environment setup
-            traj_dir: Directory to save the trajectory to
-            return_type: Controls what to return.
-                This should be left at `info_trajectory`, the
-                other values are for internal usage with subroutines.
-            init_model_stats: Initial model stats to use for the run.
-
-        Returns:
-            If return_type is "info", returns a tuple of
-            the info dictionary and the trajectory (list of dictionaries).
-        """
-        assert env.record is not None
-        assert env.container_obj is not None
-        if env.container_obj.id != self.last_container_id:
-            self.logger.info(f"Initializing agent settings for container {env.container_obj.id}")
-            self.init_environment_vars(env)
-            self.last_container_id = env.container_obj.id
-        # Re-initialize primary
-        self.setup(setup_args, init_model_stats)
-        self.config.summarizer_config.function.setup(setup_args, self.config)
-
-        # Save/reset some attributes
-        self.trajectory = Trajectory()
+        """Run an episode and always persist a terminal, analysis-ready trajectory."""
+        self._episode_finalized = False
+        # Establish a writable trajectory context before container/setup assertions can fail.
         self._env = env
-        self.info = AgentInfo()
         self.traj_dir = traj_dir
-
-        self.logger.info("Trajectory will be saved to %s", self.traj_path)
-
-        # Run action/observation loop
-        for hook in self.hooks:
-            hook.on_run_start()
-        done = False
-        task_start_time = time.time()  # Track task execution start time
-        while not done:
-            # Check if task execution has exceeded the timeout
-            elapsed_time = time.time() - task_start_time
-            if elapsed_time > TASK_EXECUTION_TIMEOUT:
-                self.logger.warning(f"Task execution timed out after {elapsed_time:.1f} seconds (limit: {TASK_EXECUTION_TIMEOUT}s)")
-                self.info["exit_status"] = "task_timeout"
-                self.info["timeout_reason"] = f"Task exceeded {TASK_EXECUTION_TIMEOUT}s timeout"
-                self.info["elapsed_time"] = elapsed_time
-                
-                # Try to get any current observation before terminating
-                try:
-                    observation = f"TASK EXECUTION TIMED OUT after {elapsed_time:.1f} seconds. Maximum allowed time is {TASK_EXECUTION_TIMEOUT} seconds (15 minutes by default). This can be configured with SWE_AGENT_TASK_TIMEOUT environment variable."
-                except Exception:
-                    observation = "TASK EXECUTION TIMED OUT"
-                
-                # Add final trajectory step for timeout
-                if hasattr(self, 'trajectory'):
-                    timeout_step = TrajectoryStep({
-                        "action": "task_timeout",
-                        "observation": observation,
-                        "response": "",
-                        "state": "",
-                        "thought": f"Task execution exceeded timeout limit of {TASK_EXECUTION_TIMEOUT} seconds",
-                        "execution_time": elapsed_time,
-                    })
-                    self.trajectory.append(timeout_step)
-                
-                done = True
-                break
-                
-            observation, done = self._run_step(observation)
-            self.save_trajectory()
-            if done:
-                done = True
-        for hook in self.hooks:
-            hook.on_run_done(trajectory=self.trajectory, info=self.info)
-
+        self.trajectory = Trajectory()
+        self.info = AgentInfo()
+        try:
+            assert env.record is not None
+            assert env.container_obj is not None
+            if env.container_obj.id != self.last_container_id:
+                self.logger.info(f"Initializing agent settings for container {env.container_obj.id}")
+                self.init_environment_vars(env)
+                self.last_container_id = env.container_obj.id
+            self.setup(setup_args, init_model_stats)
+            self.config.summarizer_config.function.setup(setup_args, self.config)
+            self.trajectory = Trajectory()
+            self._env = env
+            self.info = AgentInfo()
+            self.traj_dir = traj_dir
+            self.logger.info("Trajectory will be saved to %s", self.traj_path)
+            for hook in self.hooks:
+                hook.on_run_start()
+            done = False
+            task_start_time = time.time()
+            while not done:
+                elapsed_time = time.time() - task_start_time
+                if elapsed_time > TASK_EXECUTION_TIMEOUT:
+                    reason = f"Task exceeded {TASK_EXECUTION_TIMEOUT}s timeout"
+                    self.finalize_episode("task_timeout", reason, "task_timeout")
+                    done = True
+                    break
+                observation, done = self._run_step(observation)
+                self.save_trajectory()
+            exit_status = self.info.get("exit_status")
+            if not isinstance(exit_status, str) or not exit_status:
+                exit_status = "early_exit"
+                reason = "Agent loop ended without an environment exit status"
+            else:
+                reason = str(self.info.get("terminal_reason") or f"Agent exited with {exit_status}")
+            self.finalize_episode(exit_status, reason, self.info.get("error_type") or None)
+            for hook in self.hooks:
+                hook.on_run_done(trajectory=self.trajectory, info=self.info)
+        except KeyboardInterrupt:
+            if hasattr(self, "info") and hasattr(self, "trajectory"):
+                self.finalize_episode("early_exit", "Episode interrupted by user", "KeyboardInterrupt")
+            raise
+        except BaseException as error:
+            if hasattr(self, "info") and hasattr(self, "trajectory"):
+                self.info["traceback"] = traceback.format_exc()
+                self.finalize_episode("runner_exception", str(error), type(error).__name__)
+            raise
         self.logger.info("Trajectory saved to %s", self.traj_path)
-
         if return_type == "info":
             return self.info
         if return_type == "info_trajectory":
             return self.info, self.trajectory
         return self.trajectory[-1][return_type]
+
+
+
+

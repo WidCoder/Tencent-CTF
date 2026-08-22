@@ -401,43 +401,24 @@ class Main:
         setup_args = {"issue": issue, "files": files, "test_files": test_files, "tests": tests}
         challenge = self.env.challenge
         if challenge is not None:
-            flag_value = challenge.get("flag")
-
-            if flag_value:
-                setup_args["flag_format"] = extract_flag_format(flag_value)
-            else:
-                setup_args["flag_format"] = challenge.get("flag_format", ".*")
-
+            setup_args["flag_format"] = extract_flag_format(challenge["flag"])
             setup_args["name"] = challenge["name"]
-
             # Handle description with optional writeup content
             description = challenge["description"]
-
             if self.args.writeup:
-                description += (
-                    "\n\n<<<INTERNAL_HINT_SPLITTER_START>>>\n"
-                    f"{self.args.writeup}"
-                    "\n<<<INTERNAL_HINT_SPLITTER_END>>>\n\n"
-                )
-
+                # Add writeup with special splitter - marked as internal hint that should not be explicitly mentioned
+                description += f"\n\n<<<INTERNAL_HINT_SPLITTER_START>>>\n{self.args.writeup}\n<<<INTERNAL_HINT_SPLITTER_END>>>\n\n"
             setup_args["description"] = description
-            setup_args["category_friendly"] = challenge.get(
-                "category_friendly",
-                challenge.get("category", ""),
-            )
-            setup_args["points"] = challenge.get("points", 0)
-            setup_args["files"] = (
-                challenge.get("files")
-                or "No files included in this challenge."
-            )
+            setup_args["category_friendly"] = challenge["category_friendly"]
+            setup_args["points"] = challenge["points"]
+            setup_args["files"] = challenge["files"] or "No files included in this challenge."
             setup_args["box"] = challenge.get("server_name")
             setup_args["port"] = challenge.get("port")
-            setup_args["server_description"] = challenge.get(
-                "server_description"
-            )
-
+            setup_args["server_description"] = challenge.get("server_description")
+        
         # Get step limit from model arguments
         step_limit = self.args.agent.model.per_instance_step_limit
+        
         # Create a custom version of the Agent.run method that enforces step limits
         if step_limit > 0:
             original_run = self.agent.run

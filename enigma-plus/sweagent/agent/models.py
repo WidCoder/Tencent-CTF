@@ -68,6 +68,14 @@ def get_model_metadata(model_name: str, provider_configs: dict, shortcuts: dict,
     
     return metadata
 
+def extract_thought(result: str, reasoning_content: str | None = None) -> str:
+    """Normalize reasoning fields from provider responses and <think> tags."""
+    import re
+    if reasoning_content:
+        return str(reasoning_content).strip()
+    match = re.search(r"<think>(.*?)</think>", result or "", flags=re.DOTALL | re.IGNORECASE)
+    return match.group(1).strip() if match else ""
+
 def clean_result(result):
     # First, split on </think> and take everything after the first one (if any)
     if "</think>" in result:
@@ -84,15 +92,15 @@ def clean_result(result):
     
     # Also remove specific tool call patterns
     tool_patterns = [
-        r"<｜tool▁call▁begin｜>.*?<｜tool▁call▁end｜>",
-        r"<｜tool▁calls▁begin｜>.*?<｜tool▁calls▁end｜>",
+        r"<锝渢ool鈻乧all鈻乥egin锝?.*?<锝渢ool鈻乧all鈻乪nd锝?",
+        r"<锝渢ool鈻乧alls鈻乥egin锝?.*?<锝渢ool鈻乧alls鈻乪nd锝?",
     ]
     # Use a loop to handle nested patterns
     for pattern in tool_patterns:
         while re.search(pattern, content, flags=re.DOTALL):
             content = re.sub(pattern, "", content, flags=re.DOTALL)
 
-    content = content.replace("<｜tool▁call▁begin｜>", "").replace("<｜tool▁call▁end｜>", "").replace("<｜tool▁calls▁begin｜>", "").replace("<｜tool▁calls▁end｜>", "")
+    content = content.replace("<锝渢ool鈻乧all鈻乥egin锝?", "").replace("<锝渢ool鈻乧all鈻乪nd锝?", "").replace("<锝渢ool鈻乧alls鈻乥egin锝?", "").replace("<锝渢ool鈻乧alls鈻乪nd锝?", "")
     
     return content.strip()
 
@@ -116,6 +124,9 @@ class ModelArguments(FrozenSerializable):
     replay_path: str | None = None
     # Host URL when using Ollama model
     host_url: str = "localhost:11434"
+    # Anthropic Messages-compatible endpoint for local gateways.
+    messages_api_url: str = ""
+    messages_api_key: str = "EMPTY"
     # Maximum number of steps (environment interactions) per instance (0 = unlimited)
     per_instance_step_limit: int = 0
 
@@ -159,6 +170,7 @@ class BaseModel:
         self.commands = commands
         self.model_metadata = {}
         self.stats = APIStats()
+        self.last_thought = ""
 
         # Load configurations from YAML
         configs = load_model_configs()
@@ -355,7 +367,10 @@ class OpenAIModel(BaseModel):
         input_tokens = response.usage.prompt_tokens
         output_tokens = response.usage.completion_tokens
         self.update_stats(input_tokens, output_tokens)
-        current_response = clean_result(response.choices[0].message.content)
+        raw_content = response.choices[0].message.content or ""
+        reasoning = getattr(response.choices[0].message, "reasoning_content", None) or getattr(response.choices[0].message, "thinking", None)
+        self.last_thought = extract_thought(raw_content, reasoning)
+        current_response = clean_result(raw_content)
         
         # Store this response for future comparison
         self.previous_responses.append(current_response.strip())
@@ -380,6 +395,38 @@ class GroqModel(OpenAIModel):
             api_key=keys_config["GROQ_API_KEY"],
         )
 
+
+class MessagesAPIModel(BaseModel):
+    """Local Anthropic Messages-compatible model, such as a GLM gateway."""
+
+    def _get_provider_configs(self, configs: dict) -> tuple[dict, dict]:
+        return configs.get("messages_api_models", {}), {}
+
+    def __init__(self, args: ModelArguments, commands: list[Command]):
+        super().__init__(args, commands)
+        self.api_url = args.messages_api_url.rstrip("/")
+        if not self.api_url:
+            raise ValueError("--messages_api_url is required for glm52_* models")
+        self.api_key = args.messages_api_key or "EMPTY"
+
+    @retry(wait=wait_random_exponential(min=1, max=15), reraise=True, stop=stop_after_attempt(_MAX_RETRIES), retry=retry_if_not_exception_type((CostLimitExceededError, RuntimeError)))
+    def query(self, history: list[dict[str, str]]) -> str:
+        system = "\n".join(entry["content"] for entry in history if entry["role"] == "system")
+        messages = anthropic_history_to_messages(self, history)
+        payload = {"model": self.api_model, "messages": messages, "max_tokens": self.model_metadata.get("max_tokens", 8192), "temperature": self.args.temperature, "top_p": self.args.top_p}
+        if system:
+            payload["system"] = system
+        response = requests.post(self.api_url, headers={"x-api-key": self.api_key, "Authorization": f"Bearer {self.api_key}", "anthropic-version": "2023-06-01", "content-type": "application/json"}, json=payload, timeout=3600)
+        response.raise_for_status()
+        data = response.json()
+        content = data.get("content", [])
+        result = "".join(block.get("text", "") for block in content if isinstance(block, dict)) if isinstance(content, list) else str(content)
+        if not result.strip():
+            raise RuntimeError("Messages API returned no text content")
+        usage = data.get("usage", {})
+        self.update_stats(int(usage.get("input_tokens", 0)), int(usage.get("output_tokens", 0)))
+        self.last_thought = extract_thought(result)
+        return clean_result(result)
 
 class AnthropicModel(BaseModel):
     def _get_provider_configs(self, configs: dict) -> tuple[dict, dict]:
@@ -541,14 +588,21 @@ def deepseek_query(model: BedrockModel, history: list[dict[str, str]]) -> str:
     # Extract the response content
     output_message = response["output"]["message"]
     response_text = ""
-        # Handle reasoning content and regular content
+    reasoning_parts = []
+    # Handle reasoning content and regular content
     for content in output_message["content"]:
         if content.get("reasoningContent"):
-            # Skip reasoning content for now, but could be included if needed
+            reasoning = content.get("reasoningContent")
+            if isinstance(reasoning, dict):
+                reasoning_parts.append(reasoning.get("text", reasoning.get("data", "")))
+            else:
+                reasoning_parts.append(str(reasoning))
             continue
         else:
             response_text = content["text"].split("(Open file:")[0].strip()
             break
+
+    model.last_thought = "\n".join(str(x) for x in reasoning_parts if x).strip()
 
     # Calculate token usage for cost tracking
     usage = response.get("usage", {})
@@ -1013,6 +1067,8 @@ def get_model(args: ModelArguments, commands: list[Command] | None = None):
         return ReplayModel(args, commands)
     
     # Check model prefixes
+    if re.fullmatch(r"glm52_(?:[1-9]|10)", args.model_name):
+        return MessagesAPIModel(args, commands)
     if (args.model_name.startswith("gpt") or 
         args.model_name.startswith("ft:gpt") or 
         args.model_name.startswith("azure:gpt") or 

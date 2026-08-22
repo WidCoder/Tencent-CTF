@@ -1,5 +1,3 @@
-# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.  
-
 # SPDX-License-Identifier: CC-BY-NC-4.0
 
 
@@ -85,10 +83,7 @@ class ParseCommandBash(ParseCommand):
     def parse_command_file(self, path: str) -> list[Command]:
         with open(path) as file:
             contents = file.read()
-        # Check for shebang in first 10 lines (SPDX header may push it down)
-        lines = contents.split("\n")
-        has_shebang = any(line.startswith("#!") for line in lines[:10])
-        if has_shebang:
+        if contents.strip().startswith("#!"):
             commands = self.parse_script(path, contents)
         else:
             if Path(path).suffix != ".sh" and not Path(path).name.startswith("_"):
@@ -111,7 +106,7 @@ class ParseCommandBash(ParseCommand):
             raise ValueError(msg)
         else:
             return commands
-            
+
     def parse_bash_functions(self, path, contents: str) -> list[Command]:
         """
         Simple logic for parsing a bash file and segmenting it into functions.
@@ -123,51 +118,42 @@ class ParseCommandBash(ParseCommand):
         commands = []
         idx = 0
         docs = []
+    
         while idx < len(lines):
             line = lines[idx]
             idx += 1
             if line.startswith("# "):
-                content = line[2:]
-                # Ignore license headers
-                if content.startswith("SPDX-License-Identifier"):
-                    continue
-                if content.startswith("Copyright"):
-                    continue
-                docs.append(content)
+                docs.append(line[2:])
             elif line.strip().endswith("() {"):
                 name = line.split()[0][:-2]
                 code = line
-                while lines[idx].strip() != "}":
-                    code += lines[idx]
+                while idx < len(lines) and lines[idx].strip() != "}":
+                    code += "\n" + lines[idx]
                     idx += 1
-                code += lines[idx]
+                if idx < len(lines):
+                    code += "\n" + lines[idx]
+                    idx += 1
                 docstring, end_name, arguments, signature = None, None, None, name
-                
-                # Extract YAML content from @yaml block only
-                yaml_docs = []
-                in_yaml = False
-                for d in docs:
-                    if "@yaml" in d:
-                        in_yaml = True
-                        continue  # Skip @yaml line itself
-                    if in_yaml:
-                        yaml_docs.append(d)
-                
-                docs_dict = yaml.safe_load("\n".join(yaml_docs)) if yaml_docs else None
-                
-                if docs_dict is not None:
-                    docstring = docs_dict["docstring"]
+                docs = [
+                    line for line in docs
+                    if not line.lstrip("# ").startswith("SPDX-License-Identifier:")
+                ]
+                docs_text = "\n".join(docs).replace("@yaml", "").strip()
+                docs_dict = yaml.safe_load(docs_text) if docs_text else None
+                if isinstance(docs_dict, dict):
+                    docstring = docs_dict.get("docstring")
                     end_name = docs_dict.get("end_name", None)
                     arguments = docs_dict.get("arguments", None)
                     if "signature" in docs_dict:
                         signature = docs_dict["signature"]
-                    elif arguments is not None:
+                    elif isinstance(arguments, dict):
                         for param, settings in arguments.items():
-                            if settings["required"]:
+                            if not isinstance(settings, dict):
+                                continue
+                            if settings.get("required", False):
                                 signature += f" <{param}>"
                             else:
                                 signature += f" [<{param}>]"
-                
                 command = Command.from_dict(
                     {
                         "code": code,
@@ -181,7 +167,7 @@ class ParseCommandBash(ParseCommand):
                 commands.append(command)
                 docs = []
         return commands
-   
+
     def parse_script(self, path, contents) -> list[Command]:
         pattern = re.compile(r"^#\s*@yaml\s*\n^#.*(?:\n#.*)*", re.MULTILINE)
         matches = pattern.findall(contents)

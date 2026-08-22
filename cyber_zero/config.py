@@ -83,6 +83,11 @@ class Config:
     # Model IDs (can be overridden)
     assistant_model_id: str = "deepseek-v3-0324"
     user_model_id: str = "deepseek-v3-0324"
+
+    # Optional Anthropic Messages-compatible endpoint for local model gateways.
+    messages_api_base_url: Optional[str] = None
+    messages_api_key: str = "EMPTY"
+    messages_api_max_tokens: int = 8192
     
     def __post_init__(self):
         if self.models is None:
@@ -109,4 +114,17 @@ class Config:
         if assistant_model_id is not None:
             self.assistant_model_id = assistant_model_id
         if user_model_id is not None:
-            self.user_model_id = user_model_id 
+            self.user_model_id = user_model_id
+
+    def update_messages_api(
+        self,
+        base_url: Optional[str] = None,
+        api_key: Optional[str] = None,
+        max_tokens: Optional[int] = None,
+    ) -> None:
+        if base_url:
+            self.messages_api_base_url = base_url.rstrip("/")
+        if api_key is not None:
+            self.messages_api_key = api_key
+        if max_tokens is not None:
+            self.messages_api_max_tokens = max_tokens

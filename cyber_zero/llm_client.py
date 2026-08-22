@@ -9,7 +9,10 @@ LLM client for interacting with various language models.
 """
 
 from typing import List, Dict, Any, Optional
+import time
+
 import litellm
+import requests
 from litellm import completion
 
 from .config import Config
@@ -59,12 +62,20 @@ class LLMClient:
         
         for attempt in range(max_retries):
             try:
-                response = completion(
-                    model=model_full_id,
-                    messages=messages,
-                    temperature=effective_temperature,
-                    top_p=effective_top_p,
-                )['choices'][0]['message']['content']
+                if self.config.messages_api_base_url:
+                    response = self._call_messages_api(
+                        messages=messages,
+                        model=model_full_id,
+                        temperature=effective_temperature,
+                        top_p=effective_top_p,
+                    )
+                else:
+                    response = completion(
+                        model=model_full_id,
+                        messages=messages,
+                        temperature=effective_temperature,
+                        top_p=effective_top_p,
+                    )['choices'][0]['message']['content']
                 
                 if not response:
                     raise Exception("No response from model")
@@ -84,8 +95,60 @@ class LLMClient:
                 
                 if attempt >= max_retries - 1:
                     return None
+                time.sleep(min(2 ** attempt, 10))
         
         return None
+
+    def _call_messages_api(
+        self,
+        *,
+        messages: List[Dict[str, str]],
+        model: str,
+        temperature: float,
+        top_p: float,
+    ) -> str:
+        """Call an Anthropic Messages-compatible API, including local GLM gateways."""
+        system_messages = [item["content"] for item in messages if item.get("role") == "system"]
+        body_messages = [
+            {"role": item["role"], "content": item["content"]}
+            for item in messages
+            if item.get("role") != "system"
+        ]
+        if not body_messages:
+            raise ValueError("Messages API requires at least one non-system message")
+
+        payload = {
+            "model": model,
+            "messages": body_messages,
+            "max_tokens": self.config.messages_api_max_tokens,
+            "temperature": temperature,
+            "top_p": top_p,
+        }
+        if system_messages:
+            payload["system"] = "\n\n".join(system_messages)
+
+        response = requests.post(
+            self.config.messages_api_base_url,
+            headers={
+                "x-api-key": self.config.messages_api_key,
+                "Authorization": f"Bearer {self.config.messages_api_key}",
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            },
+            json=payload,
+            timeout=180,
+        )
+        response.raise_for_status()
+        data = response.json()
+        content = data.get("content", "")
+        if isinstance(content, list):
+            content = "".join(
+                block.get("text", "") if isinstance(block, dict) else str(block)
+                for block in content
+            )
+        if not isinstance(content, str) or not content.strip():
+            raise ValueError("Messages API returned no text content")
+        return content
     
     def _validate_model_response(self, response: str, role: str) -> bool:
         """Validate model response according to framework rules."""

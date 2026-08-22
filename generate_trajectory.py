@@ -68,6 +68,12 @@ def main():
     parser.add_argument('--demo', 
                        action='store_true', 
                        help='Process only one random sample with one worker for demonstration.')
+    parser.add_argument('--messages_api_base_url',
+                       help='Anthropic Messages-compatible endpoint, e.g. http://127.0.0.1:23106/v1/messages')
+    parser.add_argument('--messages_api_key', default='EMPTY',
+                       help='API key for --messages_api_base_url (default: EMPTY)')
+    parser.add_argument('--messages_api_max_tokens', type=int, default=8192,
+                       help='Maximum completion tokens for --messages_api_base_url')
     
     args = parser.parse_args()
 

@@ -58,6 +58,13 @@ class TrajectoryGenerationCLI:
                 user_model_id=args.user_model_id
             )
         
+        if getattr(args, 'messages_api_base_url', None):
+            self.config.update_messages_api(
+                base_url=args.messages_api_base_url,
+                api_key=args.messages_api_key,
+                max_tokens=args.messages_api_max_tokens,
+            )
+
         # Load system prompts
         assistant_system_prompt = load_file(self.config.ASSISTANT_PROMPT_PATH)
         user_system_prompt = load_file(self.config.USER_SYSTEM_PROMPT_PATH)
@@ -646,6 +653,12 @@ def main():
                            help='Model ID for the assistant')
     gen_parser.add_argument('--user_model_id', type=str, default='deepseek-v3-0324',
                            help='Model ID for the user')
+    gen_parser.add_argument('--messages_api_base_url',
+                           help='Anthropic Messages-compatible endpoint, e.g. http://127.0.0.1:23106/v1/messages')
+    gen_parser.add_argument('--messages_api_key', default='EMPTY',
+                           help='API key for --messages_api_base_url (default: EMPTY)')
+    gen_parser.add_argument('--messages_api_max_tokens', type=int, default=8192,
+                           help='Maximum completion tokens for --messages_api_base_url')
     
     # Quality evaluation command
     eval_parser = subparsers.add_parser('evaluate', help='Evaluate trajectory quality')

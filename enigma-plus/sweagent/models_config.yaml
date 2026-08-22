@@ -51,6 +51,11 @@ openai_models:
     max_context: 128000
     cost_per_input_token: 1.5e-07
     cost_per_output_token: 6e-07
+  
+  glm-5.1:
+    max_context: 128000
+    cost_per_input_token: 0.0
+    cost_per_output_token: 0.0
 
   # O1 Models
   o1-preview-2024-09-12:
@@ -63,8 +68,10 @@ openai_models:
     cost_per_output_token: 12e-6
 
   # DeepSeek Models (free/local)
-  deepseek-reasoner:
-    max_context: 128000
+  deepseek-v4-flash:
+    max_context: 64000
+    cost_per_input_token: 0.00000014
+    cost_per_output_token: 0.00000028
     # No cost specified - defaults to 0.0
 
   # Local/Custom Models (no pricing)
@@ -247,3 +254,54 @@ defaults:
   cost_per_input_token: 0.0  # Default to free for turn-based evaluation
   cost_per_output_token: 0.0  # Default to free for turn-based evaluation
   max_tokens: 4096 
+messages_api_models:
+  glm52_1:
+    max_context: 128000
+    max_tokens: 8192
+    cost_per_input_token: 0.0
+    cost_per_output_token: 0.0
+  glm52_2:
+    max_context: 128000
+    max_tokens: 8192
+    cost_per_input_token: 0.0
+    cost_per_output_token: 0.0
+  glm52_3:
+    max_context: 128000
+    max_tokens: 8192
+    cost_per_input_token: 0.0
+    cost_per_output_token: 0.0
+  glm52_4:
+    max_context: 128000
+    max_tokens: 8192
+    cost_per_input_token: 0.0
+    cost_per_output_token: 0.0
+  glm52_5:
+    max_context: 128000
+    max_tokens: 8192
+    cost_per_input_token: 0.0
+    cost_per_output_token: 0.0
+  glm52_6:
+    max_context: 128000
+    max_tokens: 8192
+    cost_per_input_token: 0.0
+    cost_per_output_token: 0.0
+  glm52_7:
+    max_context: 128000
+    max_tokens: 8192
+    cost_per_input_token: 0.0
+    cost_per_output_token: 0.0
+  glm52_8:
+    max_context: 128000
+    max_tokens: 8192
+    cost_per_input_token: 0.0
+    cost_per_output_token: 0.0
+  glm52_9:
+    max_context: 128000
+    max_tokens: 8192
+    cost_per_input_token: 0.0
+    cost_per_output_token: 0.0
+  glm52_10:
+    max_context: 128000
+    max_tokens: 8192
+    cost_per_input_token: 0.0
+    cost_per_output_token: 0.0
