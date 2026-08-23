@@ -1042,7 +1042,7 @@ class SWEEnv(gym.Env):
             else:
                 # Currently only validating CTF challenges
                 assert self.challenge is not None
-                self.logger.warning(f"Wrong submission found: {submission} (real flag is {self.challenge['flag']})")
+                self.logger.warning("Wrong submission rejected by the challenge verifier.")
                 observation = "Wrong flag!"
                 return observation, 0, False, info
 
