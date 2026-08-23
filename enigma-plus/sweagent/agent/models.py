@@ -128,40 +128,44 @@ def _tool_call_to_agent_response(tool_call: dict[str, Any]) -> str:
     return fence + chr(10) + str(command).strip() + chr(10) + fence
 
 
-def extract_messages_api_response(data: dict[str, Any]) -> tuple[str, str]:
-    """Extract text/reasoning from Anthropic or OpenAI-compatible JSON responses."""
+def extract_messages_api_response_details(data: dict[str, Any]) -> dict[str, Any]:
+    """Extract a Messages response without discarding its structured blocks.
+
+    ``content_text`` is the compatibility projection consumed by the existing
+    action parser. ``content_blocks`` and ``raw_response`` remain structured
+    for trajectory persistence.
+    """
     if not isinstance(data, dict):
         raise EmptyModelResponseError("Messages API returned a non-object JSON response")
 
     text_parts: list[str] = []
     reasoning_parts: list[str] = []
     tool_calls: list[dict[str, Any]] = []
+    content_blocks: list[dict[str, Any]] = []
 
     def consume_content(content: Any) -> None:
         if isinstance(content, str):
             text_parts.append(content)
+            content_blocks.append({"type": "text", "text": content})
         elif isinstance(content, dict):
-            value = content.get("text") or content.get("content")
-            if isinstance(value, str):
-                text_parts.append(value)
-            elif str(content.get("type", "")).lower() in {"tool_use", "tool_call", "function"}:
-                tool_calls.append(content)
+            block = copy.deepcopy(content)
+            block_type = str(block.get("type", "")).lower()
+            if block_type in {"thinking", "reasoning"}:
+                value = block.get("thinking") or block.get("reasoning_content") or block.get("text")
+                if value:
+                    reasoning_parts.append(str(value))
+                content_blocks.append(block)
+            elif block_type in {"tool_use", "tool_call", "function"}:
+                content_blocks.append(block)
+                tool_calls.append(block)
+            else:
+                value = block.get("text") or block.get("content")
+                if isinstance(value, str):
+                    text_parts.append(value)
+                content_blocks.append(block)
         elif isinstance(content, list):
             for block in content:
-                if isinstance(block, str):
-                    text_parts.append(block)
-                elif isinstance(block, dict):
-                    block_type = str(block.get("type", "")).lower()
-                    if block_type in {"thinking", "reasoning"}:
-                        value = block.get("thinking") or block.get("reasoning_content") or block.get("text")
-                        if value:
-                            reasoning_parts.append(str(value))
-                    elif block_type in {"tool_use", "tool_call", "function"}:
-                        tool_calls.append(block)
-                    else:
-                        value = block.get("text") or block.get("content")
-                        if isinstance(value, str):
-                            text_parts.append(value)
+                consume_content(block)
 
     content = data.get("content")
     if content is not None:
@@ -169,18 +173,28 @@ def extract_messages_api_response(data: dict[str, Any]) -> tuple[str, str]:
 
     choices = data.get("choices")
     if isinstance(choices, list) and choices and isinstance(choices[0], dict):
-        message = choices[0].get("message") or choices[0].get("delta") or {}
+        choice = choices[0]
+        message = choice.get("message") or choice.get("delta") or {}
         if isinstance(message, dict):
             consume_content(message.get("content"))
             message_reasoning = message.get("reasoning_content") or message.get("reasoning") or message.get("thinking")
             if message_reasoning:
                 reasoning_parts.append(str(message_reasoning))
+                content_blocks.append({"type": "thinking", "thinking": str(message_reasoning)})
             calls = message.get("tool_calls")
             if isinstance(calls, list):
-                tool_calls.extend(call for call in calls if isinstance(call, dict))
-        top_level_calls = choices[0].get("tool_calls")
+                for call in calls:
+                    if isinstance(call, dict):
+                        call_copy = copy.deepcopy(call)
+                        tool_calls.append(call_copy)
+                        content_blocks.append(call_copy)
+        top_level_calls = choice.get("tool_calls")
         if isinstance(top_level_calls, list):
-            tool_calls.extend(call for call in top_level_calls if isinstance(call, dict))
+            for call in top_level_calls:
+                if isinstance(call, dict):
+                    call_copy = copy.deepcopy(call)
+                    tool_calls.append(call_copy)
+                    content_blocks.append(call_copy)
 
     output = data.get("output")
     if output is not None:
@@ -189,9 +203,11 @@ def extract_messages_api_response(data: dict[str, Any]) -> tuple[str, str]:
         value = data.get(key)
         if isinstance(value, str):
             text_parts.append(value)
+            content_blocks.append({"type": "text", "text": value})
     top_level_reasoning = data.get("reasoning_content") or data.get("reasoning") or data.get("thinking")
     if top_level_reasoning:
         reasoning_parts.append(str(top_level_reasoning))
+        content_blocks.append({"type": "thinking", "thinking": str(top_level_reasoning)})
 
     if tool_calls:
         if len(tool_calls) > 1:
@@ -203,9 +219,7 @@ def extract_messages_api_response(data: dict[str, Any]) -> tuple[str, str]:
     result = chr(10).join(part for part in text_parts if part)
     if not result.strip():
         keys = sorted(str(key) for key in data.keys())
-        block_types: list[str] = []
-        if isinstance(content, list):
-            block_types.extend(str(block.get("type", "unknown")) for block in content if isinstance(block, dict))
+        block_types = [str(block.get("type", "unknown")) for block in content_blocks]
         logger.warning(
             "Messages API empty response: keys=%s block_types=%s stop_reason=%s usage=%s",
             keys,
@@ -214,7 +228,20 @@ def extract_messages_api_response(data: dict[str, Any]) -> tuple[str, str]:
             data.get("usage", {}),
         )
         raise EmptyModelResponseError("Messages API returned no usable text or tool call")
-    return result, chr(10).join(reasoning_parts).strip()
+    return {
+        "content_blocks": content_blocks,
+        "content_text": result,
+        "reasoning": chr(10).join(reasoning_parts).strip(),
+        "stop_reason": data.get("stop_reason"),
+        "usage": copy.deepcopy(data.get("usage")) if isinstance(data.get("usage"), dict) else {},
+        "raw_response": copy.deepcopy(data),
+    }
+
+
+def extract_messages_api_response(data: dict[str, Any]) -> tuple[str, str]:
+    """Backward-compatible text/reasoning projection of a Messages response."""
+    details = extract_messages_api_response_details(data)
+    return details["content_text"], details["reasoning"]
 
 
 def clean_result(result):
@@ -312,7 +339,13 @@ class BaseModel:
         self.model_metadata = {}
         self.stats = APIStats()
         self.last_thought = ""
-
+        # Structured response metadata for trajectory persistence.  The model
+        # still returns a text projection because the existing parser expects it.
+        self.last_content_blocks: list[dict[str, Any]] = []
+        self.last_content_text = ""
+        self.last_raw_response: dict[str, Any] = {}
+        self.last_stop_reason: str | None = None
+        self.last_usage: dict[str, Any] = {}
         # Load configurations from YAML
         configs = load_model_configs()
         defaults = configs['defaults']
@@ -584,18 +617,22 @@ class MessagesAPIModel(BaseModel):
         )
         response.raise_for_status()
         data = response.json()
-        result, reasoning = extract_messages_api_response(data)
-        usage = data.get("usage") if isinstance(data.get("usage"), dict) else {}
+        details = extract_messages_api_response_details(data)
+        usage = details["usage"]
         self.update_stats(
             int(usage.get("input_tokens", usage.get("prompt_tokens", 0))),
             int(usage.get("output_tokens", usage.get("completion_tokens", 0))),
         )
-        self.last_thought = extract_thought(result, reasoning)
-        cleaned = clean_result(result)
+        self.last_content_blocks = copy.deepcopy(details["content_blocks"])
+        self.last_raw_response = copy.deepcopy(details["raw_response"])
+        self.last_stop_reason = details["stop_reason"]
+        self.last_usage = copy.deepcopy(usage)
+        self.last_thought = details["reasoning"] or extract_thought(details["content_text"])
+        cleaned = clean_result(details["content_text"])
+        self.last_content_text = cleaned
         if not cleaned.strip():
             raise EmptyModelResponseError("Messages API response became empty after cleanup")
         return cleaned
-
 
 class AnthropicModel(BaseModel):
     def _get_provider_configs(self, configs: dict) -> tuple[dict, dict]:
@@ -1158,6 +1195,28 @@ def anthropic_history_to_messages(
     return compiled_messages
 
 
+def extract_anthropic_response_parts(response: Any) -> tuple[str, str]:
+    """Separate Anthropic thinking/reasoning blocks from executable text."""
+    text_parts: list[str] = []
+    thought_parts: list[str] = []
+    for block in getattr(response, "content", []) or []:
+        block_type = str(getattr(block, "type", "") or "").lower()
+        if block_type in {"thinking", "reasoning"}:
+            value = getattr(block, "thinking", None) or getattr(block, "reasoning_content", None)
+            if value:
+                thought_parts.append(str(value))
+        elif block_type == "text":
+            value = getattr(block, "text", None)
+            if value:
+                text_parts.append(str(value))
+        else:
+            value = getattr(block, "text", None)
+            if value:
+                text_parts.append(str(value))
+    response_text = chr(10).join(text_parts).split("(Open file:")[0].strip()
+    thought = chr(10).join(thought_parts).strip()
+    return response_text, thought
+
 def anthropic_query(model: AnthropicModel | BedrockModel, history: list[dict[str, str]]) -> str:
     """
     Query the Anthropic API with the given `history` and return the response.
@@ -1209,9 +1268,10 @@ def anthropic_query(model: AnthropicModel | BedrockModel, history: list[dict[str
     )
     # Calculate + update costs, return response
     model.update_stats(response.usage.input_tokens, response.usage.output_tokens)
-    response_text = "\n".join([x.text for x in response.content]).split("(Open file:")[0].strip()
-    print(messages)
-    print(response_text)
+    response_text, reasoning = extract_anthropic_response_parts(response)
+    model.last_thought = reasoning or extract_thought(response_text)
+    if not response_text:
+        raise EmptyModelResponseError("Anthropic API returned no usable text content")
     return response_text
 
 

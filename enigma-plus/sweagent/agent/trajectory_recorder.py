@@ -14,6 +14,14 @@ class TrajectoryRecorder:
         result = dict(step)
         if not self.enable_thought_recording:
             result["thought"] = ""
+        blocks = result.get("content_blocks")
+        result["content_blocks"] = blocks if isinstance(blocks, list) else []
+        raw_response = result.get("raw_response")
+        result["raw_response"] = raw_response if isinstance(raw_response, dict) else {}
+        usage = result.get("usage")
+        result["usage"] = usage if isinstance(usage, dict) else {}
+        result.setdefault("content_text", result.get("response", "") or "")
+        result.setdefault("stop_reason", None)
         result.setdefault("context_compressed", False)
         return result
 

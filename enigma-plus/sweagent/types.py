@@ -19,13 +19,18 @@ from typing import Any, Literal, TypedDict
 from simple_parsing.helpers.serialization.serializable import FrozenSerializable
 
 
-class TrajectoryStep(TypedDict):
+class TrajectoryStep(TypedDict, total=False):
     action: str
     observation: str
     response: str
     state: str | None
     thought: str
     execution_time: float
+    content_blocks: list[dict[str, Any]]
+    content_text: str
+    raw_response: dict[str, Any]
+    stop_reason: str | None
+    usage: dict[str, Any]
 
 
 class _HistoryItem(TypedDict):
@@ -38,6 +43,11 @@ class HistoryItem(_HistoryItem, total=False):
     is_demo: bool
     thought: str
     action: str | None
+    content_blocks: list[dict[str, Any]]
+    content_text: str
+    raw_response: dict[str, Any]
+    stop_reason: str | None
+    usage: dict[str, Any]
 
 
 History = list[HistoryItem]

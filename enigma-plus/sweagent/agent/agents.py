@@ -392,10 +392,27 @@ class Agent:
         self.hooks.append(hook)
 
     def _append_history(self, item: HistoryItem) -> None:
-        """Adds an item to the history."""
+        """Adds an item to history while keeping hook calls backward compatible."""
         for hook in self.hooks:
-            hook.on_query_message_added(**item)
+            hook.on_query_message_added(
+                role=item.get("role", ""),
+                content=item.get("content", "") or "",
+                agent=item.get("agent", self.name),
+                is_demo=item.get("is_demo", False),
+                thought=item.get("thought", ""),
+                action=item.get("action", "") or "",
+            )
         self.history.append(item)
+
+    def _model_response_metadata(self) -> dict[str, Any]:
+        """Return JSON-safe structured metadata from the latest model query."""
+        return {
+            "content_blocks": copy.deepcopy(getattr(self.model, "last_content_blocks", [])),
+            "content_text": getattr(self.model, "last_content_text", "") or "",
+            "raw_response": copy.deepcopy(getattr(self.model, "last_raw_response", {})),
+            "stop_reason": getattr(self.model, "last_stop_reason", None),
+            "usage": copy.deepcopy(getattr(self.model, "last_usage", {})),
+        }
 
     def _query_model_with_timeout(self, history: list[dict[str, str]], timeout: float = None) -> str:
         """
@@ -781,16 +798,16 @@ class Agent:
         """
         thought, action, output = self.forward_with_error_check(observation, state)
 
-        self._append_history(
-            {
-                "role": "assistant",
-                "content": output,
-                "thought": getattr(self.model, "last_thought", "") or thought,
-                "context_compressed": self._last_context_compressed,
-                "action": action,
-                "agent": self.name,
-            },
-        )
+        history_item = {
+            "role": "assistant",
+            "content": output,
+            "thought": getattr(self.model, "last_thought", "") or thought,
+            "context_compressed": self._last_context_compressed,
+            "action": action,
+            "agent": self.name,
+            **self._model_response_metadata(),
+        }
+        self._append_history(history_item)
 
         self.logger.info(f"濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏閻ゎ喗銇勯弽銊х焼闁?THOUGHT ({self.name})\n{thought}")
         self.logger.info(f"濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏閻ゎ喗銇勯幇鈺佲偓妤佺▔?ACTION ({self.name})\n{action}")
@@ -1235,6 +1252,7 @@ class Agent:
                 "response": output,
                 "state": state,
                 "thought": getattr(self.model, "last_thought", "") or thought,
+                **self._model_response_metadata(),
                 "context_compressed": self._last_context_compressed,
                 "execution_time": execution_time,
                 "error": terminal_error,
