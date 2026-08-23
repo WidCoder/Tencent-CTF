@@ -115,6 +115,21 @@ class CTFDojoBatchTests(unittest.TestCase):
         self.assertEqual(summary["docker_bridge_containers_at_start"], 2)
         self.assertEqual(summary["categories"]["crypto"]["trajectory_generated"], 1)
 
+    def test_public_trajectory_uses_messages_and_dictionary_tool_arguments(self):
+        task = challenge()
+        payload = {
+            "history": [
+                {"role": "system", "content": "system prompt"},
+                {"role": "user", "content": "solve this"},
+            ],
+            "trajectory": [{"thought": "inspect files", "action": "ls -la", "observation": "flag.txt"}],
+        }
+        public = batch.trajectory_to_messages(payload, task)
+        self.assertEqual(set(public), {"id", "sample_type", "messages"})
+        self.assertEqual(public["id"], task.task_id)
+        self.assertEqual(public["sample_type"], "main")
+        self.assertEqual(public["messages"][2]["tool_calls"], [{"name": "Bash", "arguments": {"command": "ls -la"}}])
+        self.assertEqual(public["messages"][3], {"role": "tool", "content": "flag.txt"})
     def test_network_exhaustion_is_classified_separately(self):
         self.assertTrue(batch.docker_network_exhausted("Docker 500", "no available IPv4 addresses on this network's address pools: bridge"))
         self.assertFalse(batch.docker_network_exhausted("model API error"))

@@ -13,12 +13,13 @@ import copy
 import threading
 from typing import List, Dict, Any, Optional, Tuple
 from pathlib import Path
+import json
 
 from .config import Config
 from .models import ConversationTurn, TaskMeta, TrajectoryData
 from .llm_client import LLMClient
 from .utils import (
-    load_file, shift_role, collect_trajectory, 
+    load_file, shift_role, collect_trajectory, trajectory_record_id,
     save_trajectory_to_file, extract_code_blocks,
     truncate_to_first_code_block
 )
@@ -48,9 +49,13 @@ class TrajectoryGenerator:
         if verbose:
             print(f"Processing task: {task_meta.task_name} ({task_meta.task_tag}) - Trajectory {task_meta.trajectory_id}")
         
-        # Create initial conversation
+        # Save the system prompt as part of the trajectory, as required by the
+        # agent-event JSONL format.
         initial_content = self._build_initial_user_content(task_meta)
-        conversation = [ConversationTurn(role="user", content=initial_content)]
+        conversation = [
+            ConversationTurn(role="system", content=assistant_system_prompt),
+            ConversationTurn(role="user", content=initial_content),
+        ]
         
         # Build enhanced user system prompt with task metadata
         enhanced_user_prompt = self._build_enhanced_user_prompt(
@@ -60,24 +65,23 @@ class TrajectoryGenerator:
         flag_turn_idx = None
         break_outer = False
         
-        # Main conversation loop
+        # Main conversation loop. The assistant emits tool-call dictionaries;
+        # each call is followed by a separate tool-result event.
         for turn_idx in range(self.config.MAX_TURNS):
-            next_role = shift_role(conversation)
-            
-            if next_role == 'assistant':
-                success, break_outer, flag_turn_idx = self._handle_assistant_turn(
-                    conversation, assistant_system_prompt, task_meta.solution, 
-                    turn_idx, verbose
-                )
-                if not success:
+            success, break_outer, flag_turn_idx = self._handle_assistant_turn(
+                conversation, assistant_system_prompt, task_meta.solution,
+                turn_idx, verbose
+            )
+            if not success:
+                return False
+
+            assistant_turn = conversation[-1]
+            for tool_call in assistant_turn.tool_calls or []:
+                if not self._handle_tool_turn(
+                    conversation, enhanced_user_prompt, tool_call, verbose, turn_idx
+                ):
                     return False
-            else:
-                success = self._handle_user_turn(
-                    conversation, enhanced_user_prompt, verbose, turn_idx
-                )
-                if not success:
-                    return False
-            
+
             if break_outer:
                 flag_turn_idx = turn_idx
                 break
@@ -189,52 +193,106 @@ PLEASE NOTE THAT THE PLAYER MAY NOT WRITE THE SCRIPT CORRECTLY. YOU MUST CHECK C
         turn_idx: int,
         verbose: bool
     ) -> Tuple[bool, bool, Optional[int]]:
-        """Handle assistant turn. Returns (success, break_outer, flag_turn_idx)."""
+        """Append one assistant event with normalized tool-call dictionaries."""
         for retry in range(self.config.MAX_RETRIES):
             messages = self.llm_client.prepare_assistant_messages(conversation, system_prompt)
-            
-            # Handle hints in the last message
-            if "[HINT]" in messages[-1]['content']:
+            if messages and "[HINT]" in messages[-1]['content']:
                 messages[-1]['content'] = messages[-1]['content'].replace(
-                    "[/HINT]", 
+                    "[/HINT]",
                     "\nDO NOT MENTION 'hint' IN YOUR RESPONSE. MAKE THIS HINT AS PART OF YOUR THOUGHT PROCESS.\n[/HINT]"
                 )
-            
-            response = self.llm_client.call_model(
-                messages=messages, 
-                role="assistant", 
+
+            response = self.llm_client.call_model_response(
+                messages=messages,
+                role="assistant",
                 model_id=self.config.models.get_model_id(self.config.assistant_model_id)
             )
-            
             if response is None:
                 return False, False, None
-            
-            # Check for hint mentions
-            if "[HINT]" in messages[-1]['content'] and 'hint' in response:
+
+            content = response.get('content', '')
+            tool_calls = response.get('tool_calls') or []
+            reasoning_content = response.get('reasoning_content') or None
+
+            # Preserve compatibility with text-only models by converting the
+            # first bash block into the same dictionary format as native calls.
+            if not tool_calls:
+                code_block_match = re.search(r"```bash\n([\s\S]*?)\n```", content)
+                if code_block_match:
+                    command = code_block_match.group(1).strip()
+                    tool_calls = [{
+                        'name': 'Bash',
+                        'arguments': {
+                            'command': command,
+                            'description': 'Execute the assistant command',
+                        },
+                    }]
+                    # The command is represented by tool_calls in the target
+                    # format; retain only any surrounding assistant text.
+                    content = (content[:code_block_match.start()] +
+                               content[code_block_match.end():]).strip()
+
+            if not content and not tool_calls:
                 continue
-            
-            # Truncate to first code block if multiple exist
-            response = truncate_to_first_code_block(response)
-            
-            turn = ConversationTurn(role="assistant", content=response)
+
+            turn = ConversationTurn(
+                role="assistant",
+                content=content,
+                reasoning_content=reasoning_content,
+                tool_calls=tool_calls or None,
+            )
             conversation.append(turn)
-            
-            # Check for successful flag submission
-            code_block_match = re.search(r"```bash\n([\s\S]*?)\n```", response)
-            if code_block_match:
-                code = code_block_match.group(1).strip()
-                submit_match = re.match(r"submit\s+'([^']+)'", code)
-                if submit_match and submit_match.group(1) == expected_solution:
-                    return True, True, turn_idx
-            
+
+            submit_found = any(
+                call.get('name') == 'Bash'
+                and isinstance(call.get('arguments'), dict)
+                and re.search(
+                    r"submit\s+'([^']+)'",
+                    call['arguments'].get('command', ''),
+                )
+                and expected_solution in re.search(
+                    r"submit\s+'([^']+)'",
+                    call['arguments'].get('command', ''),
+                ).group(1)
+                for call in tool_calls
+            )
             if verbose:
-                print(f"Assistant turn {turn_idx+1}.")
-                print(f"\033[93m{response}\033[0m")
-            
-            break
-        
-        return True, False, None
-    
+                print(f"Assistant turn {turn_idx + 1}.")
+                print(f"\033[93m{content}\033[0m")
+            return True, submit_found, turn_idx if submit_found else None
+
+        return False, False, None
+
+    def _handle_tool_turn(
+        self,
+        conversation: List[ConversationTurn],
+        system_prompt: str,
+        tool_call: Dict[str, Any],
+        verbose: bool,
+        turn_idx: int,
+    ) -> bool:
+        """Execute a normalized tool call through the terminal model."""
+        name = tool_call.get('name', 'Bash')
+        arguments = tool_call.get('arguments', {})
+        if not isinstance(arguments, dict):
+            arguments = {'value': arguments}
+        command = arguments.get('command', '')
+        messages = self.llm_client.prepare_user_messages(
+            conversation[:-1], system_prompt, current_command=command
+        )
+        response = self.llm_client.call_model(
+            messages=messages,
+            role="user",
+            model_id=self.config.models.get_model_id(self.config.user_model_id),
+        )
+        if response is None:
+            return False
+        conversation.append(ConversationTurn(role="tool", content=response))
+        if verbose:
+            print(f"Tool turn {turn_idx + 1} ({name}).")
+            print(f"\033[94m{response}\033[0m")
+        return True
+
     def _handle_user_turn(
         self,
         conversation: List[ConversationTurn],
@@ -242,27 +300,17 @@ PLEASE NOTE THAT THE PLAYER MAY NOT WRITE THE SCRIPT CORRECTLY. YOU MUST CHECK C
         verbose: bool,
         turn_idx: int
     ) -> bool:
-        """Handle user (terminal) turn."""
-        messages = self.llm_client.prepare_user_messages(conversation, system_prompt)
-        
+        """Legacy user-turn handler retained for callers using old trajectories."""
         response = self.llm_client.call_model(
-            messages=messages,
-            role="user", 
-            model_id=self.config.models.get_model_id(self.config.user_model_id)
+            messages=self.llm_client.prepare_user_messages(conversation, system_prompt),
+            role="user",
+            model_id=self.config.models.get_model_id(self.config.user_model_id),
         )
-        
         if response is None:
             return False
-        
-        if verbose:
-            print(f"User turn {turn_idx+1}.")
-            print(f"\033[94m{response}\033[0m")
-        
-        turn = ConversationTurn(role="user", content=response)
-        conversation.append(turn)
-        
+        conversation.append(ConversationTurn(role="tool", content=response))
         return True
-    
+
     def _save_successful_trajectory(
         self,
         conversation: List[ConversationTurn],
@@ -272,18 +320,14 @@ PLEASE NOTE THAT THE PLAYER MAY NOT WRITE THE SCRIPT CORRECTLY. YOU MUST CHECK C
         verbose: bool
     ) -> bool:
         """Save a successful trajectory to file."""
-        trajectory = collect_trajectory(conversation, task_meta.solution, verbose)
-        
+        # The assistant event that submits the flag is followed by its tool
+        # result, so retain the complete event sequence in the final record.
+        trajectory = list(conversation)
+
         trajectory_data = TrajectoryData(
-            writeup_path=task_meta.writeup_path,
-            trajectory_id=task_meta.trajectory_id,
-            assistant_turn_count=sum(1 for turn in trajectory if turn.role == 'assistant'),
-            task_name=task_meta.task_name,
-            task_tag=task_meta.task_tag,
-            task_points=task_meta.task_points,
-            task_description=task_meta.task_description,
-            solution=task_meta.solution,
-            trajectory=trajectory,
+            id=trajectory_record_id(task_meta.writeup_path, task_meta.trajectory_id),
+            sample_type="main",
+            messages=trajectory,
         )
         
         save_trajectory_to_file(trajectory_data.to_dict(), output_path, write_lock)

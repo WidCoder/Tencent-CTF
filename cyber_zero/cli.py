@@ -24,8 +24,8 @@ from .trajectory_generator import TrajectoryGenerator
 from .quality_evaluator import TrajectoryQualityEvaluator
 from .trajectory_reformatter import TrajectoryReformatter
 from .utils import (
-    load_file, load_existing_combinations, split_dataset_by_part,
-    load_json_file
+    load_file, load_existing_combinations, load_existing_ids,
+    split_dataset_by_part, load_json_file, trajectory_record_id
 )
 
 
@@ -102,9 +102,11 @@ class TrajectoryGenerationCLI:
         # Filter out existing combinations
         if not args.overwrite:
             existing_combinations = load_existing_combinations(args.output_path)
+            existing_ids = set(load_existing_ids(args.output_path))
             task_metas = [
-                task for task in task_metas 
+                task for task in task_metas
                 if (task.writeup_path, task.trajectory_id) not in existing_combinations
+                and trajectory_record_id(task.writeup_path, task.trajectory_id) not in existing_ids
             ]
         else:
             # Clear output file if overwriting

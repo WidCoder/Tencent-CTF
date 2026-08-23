@@ -16,12 +16,22 @@ from pathlib import Path
 @dataclass
 class ConversationTurn:
     """Represents a single turn in a conversation."""
-    role: str  # 'user' or 'assistant'
+    role: str  # 'system', 'user', 'assistant', or 'tool'
     content: str
+    reasoning_content: Optional[str] = None
+    tool_calls: Optional[List[Dict[str, Any]]] = None
     
     def __post_init__(self):
-        if self.role not in ['user', 'assistant']:
-            raise ValueError(f"Invalid role: {self.role}. Must be 'user' or 'assistant'")
+        if self.role not in ['system', 'user', 'assistant', 'tool']:
+            raise ValueError(
+                f"Invalid role: {self.role}. Must be 'system', 'user', 'assistant', or 'tool'"
+            )
+        if not isinstance(self.content, str):
+            raise ValueError("Message content must be a string")
+        if self.tool_calls is not None and not isinstance(self.tool_calls, list):
+            raise ValueError("tool_calls must be a list of dictionaries")
+        if self.tool_calls is not None and not all(isinstance(call, dict) for call in self.tool_calls):
+            raise ValueError("Each tool_call must be a dictionary")
 
 
 @dataclass
@@ -48,53 +58,47 @@ class TaskMeta:
 
 @dataclass
 class TrajectoryData:
-    """Complete trajectory data including metadata and conversation."""
-    writeup_path: str
-    trajectory_id: int
-    assistant_turn_count: int
-    task_name: str
-    task_tag: str
-    task_points: str
-    task_description: str
-    solution: str
-    trajectory: List[ConversationTurn]
-    
+    """Trajectory data serialized in the agent-event JSONL format."""
+    id: str
+    sample_type: str
+    messages: List[ConversationTurn]
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'TrajectoryData':
-        """Create TrajectoryData from dictionary representation."""
-        # Convert trajectory list of dicts to ConversationTurn objects
-        trajectory = [
-            ConversationTurn(role=turn['role'], content=turn['content'])
-            for turn in data.get('trajectory', [])
+        """Create TrajectoryData from either the new or legacy representation."""
+        raw_messages = data.get('messages', data.get('trajectory', []))
+        messages = [
+            ConversationTurn(
+                role=message['role'],
+                content=message.get('content', ''),
+                reasoning_content=message.get('reasoning_content'),
+                tool_calls=message.get('tool_calls'),
+            )
+            for message in raw_messages
         ]
-        
         return cls(
-            writeup_path=data['writeup_path'],
-            trajectory_id=data['trajectory_id'],
-            assistant_turn_count=data['assistant_turn_count'],
-            task_name=data['task_name'],
-            task_tag=data['task_tag'],
-            task_points=data['task_points'],
-            task_description=data['task_description'],
-            solution=data['solution'],
-            trajectory=trajectory
+            id=str(data.get('id', data.get('trajectory_id', ''))),
+            sample_type=data.get('sample_type', 'main'),
+            messages=messages,
         )
-    
+
     def to_dict(self) -> Dict[str, Any]:
-        """Convert TrajectoryData to dictionary representation."""
+        """Convert TrajectoryData to the target JSONL representation."""
+        messages = []
+        for message in self.messages:
+            item = {
+                'role': message.role,
+                'content': message.content,
+            }
+            if message.reasoning_content:
+                item['reasoning_content'] = message.reasoning_content
+            if message.tool_calls:
+                item['tool_calls'] = message.tool_calls
+            messages.append(item)
         return {
-            'writeup_path': self.writeup_path,
-            'trajectory_id': self.trajectory_id,
-            'assistant_turn_count': self.assistant_turn_count,
-            'task_name': self.task_name,
-            'task_tag': self.task_tag,
-            'task_points': self.task_points,
-            'task_description': self.task_description,
-            'solution': self.solution,
-            'trajectory': [
-                {'role': turn.role, 'content': turn.content}
-                for turn in self.trajectory
-            ]
+            'id': self.id,
+            'sample_type': self.sample_type,
+            'messages': messages,
         }
 
 

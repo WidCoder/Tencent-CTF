@@ -79,7 +79,7 @@ Think step by step in plain text and then respond with a Markdown code block (``
         task_points = trajectory_obj.get('task_points', '')
         task_description = trajectory_obj.get('task_description', '')
         solution = trajectory_obj.get('solution', '')
-        trajectory = trajectory_obj.get('trajectory', [])
+        trajectory = trajectory_obj.get('messages', trajectory_obj.get('trajectory', []))
         writeup_path = trajectory_obj.get('writeup_path', '')
         
         if verbose:
@@ -201,7 +201,18 @@ Please evaluate this trajectory according to the criteria outlined above."""
             if role == "user":
                 trajectory_text += f"=== Turn {i+1} (LINUX TERMINAL) ===\n{content}\n\n"
             elif role == "assistant":
-                trajectory_text += f"=== Turn {i+1} (PLAYER) ===\n{content}\n\n"
+                reasoning = turn.get('reasoning_content', '')
+                tool_calls = turn.get('tool_calls', [])
+                trajectory_text += f"=== Turn {i+1} (PLAYER) ===\n"
+                if reasoning:
+                    trajectory_text += f"[reasoning]\n{reasoning}\n"
+                if content:
+                    trajectory_text += content + "\n"
+                if tool_calls:
+                    trajectory_text += f"[tool_calls]\n{json.dumps(tool_calls, ensure_ascii=False)}\n"
+                trajectory_text += "\n"
+            elif role == "tool":
+                trajectory_text += f"=== Turn {i+1} (TOOL RESULT) ===\n{content}\n\n"
             else:
                 continue
         return trajectory_text

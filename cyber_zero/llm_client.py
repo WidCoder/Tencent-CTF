@@ -9,6 +9,7 @@ LLM client for interacting with various language models.
 """
 
 from typing import List, Dict, Any, Optional
+import json
 import time
 
 import litellm
@@ -30,36 +31,21 @@ class LLMClient:
         self.config = config or Config()
         self.validator = ResponseValidator(config)
     
-    def call_model(
+    def call_model_response(
         self,
-        messages: List[Dict[str, str]],
+        messages: List[Dict[str, Any]],
         role: str,
         model_id: str = "deepseek-v3-0324",
         max_retries: int = None,
         temperature: Optional[float] = None,
-        top_p: Optional[float] = None
-    ) -> Optional[str]:
-        """
-        Call language model with retries and validation.
-        
-        Args:
-            messages: List of message dictionaries with 'role' and 'content'
-            role: Expected role for validation ('user' or 'assistant')
-            model_id: Model identifier
-            max_retries: Maximum number of retries
-            temperature: Temperature for generation (uses config default if None)
-            top_p: Top-p for generation (uses config default if None)
-            
-        Returns:
-            Model response string or None if failed
-        """
+        top_p: Optional[float] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Call a model and preserve text, reasoning, and structured tool calls."""
         max_retries = max_retries or self.config.MAX_RETRIES
         model_full_id = self.config.models.get_model_id(model_id)
-        
-        # Use provided parameters or fall back to config defaults
         effective_temperature = temperature if temperature is not None else self.config.temperature
         effective_top_p = top_p if top_p is not None else self.config.top_p
-        
+
         for attempt in range(max_retries):
             try:
                 if self.config.messages_api_base_url:
@@ -70,44 +56,104 @@ class LLMClient:
                         top_p=effective_top_p,
                     )
                 else:
-                    response = completion(
+                    raw = completion(
                         model=model_full_id,
                         messages=messages,
                         temperature=effective_temperature,
                         top_p=effective_top_p,
-                    )['choices'][0]['message']['content']
-                
-                if not response:
+                    )
+                    response = self._normalize_model_message(
+                        raw.get('choices', [{}])[0].get('message', {})
+                    )
+
+                if not response.get('content') and not response.get('tool_calls'):
                     raise Exception("No response from model")
-                
-                # Validate response
-                if not self._validate_model_response(response, role):
+
+                content = response.get('content', '')
+                if content and not self._validate_model_response(content, role):
                     raise Exception("Response validation failed")
-                
                 return response
-                
             except Exception as e:
                 print(f"Error on attempt {attempt + 1}: {e}")
-                
-                # Don't retry if the error is about content being too long
-                if "long" in str(e):
-                    return None
-                
-                if attempt >= max_retries - 1:
+                if "long" in str(e) or attempt >= max_retries - 1:
                     return None
                 time.sleep(min(2 ** attempt, 10))
-        
         return None
+
+    def call_model(
+        self,
+        messages: List[Dict[str, Any]],
+        role: str,
+        model_id: str = "deepseek-v3-0324",
+        max_retries: int = None,
+        temperature: Optional[float] = None,
+        top_p: Optional[float] = None,
+    ) -> Optional[str]:
+        """Call a model and return only text for legacy callers."""
+        response = self.call_model_response(
+            messages=messages,
+            role=role,
+            model_id=model_id,
+            max_retries=max_retries,
+            temperature=temperature,
+            top_p=top_p,
+        )
+        return response.get('content', '') if response else None
+
+    def _normalize_tool_calls(self, tool_calls: Any) -> List[Dict[str, Any]]:
+        """Normalize provider-specific tool calls to name/arguments dictionaries."""
+        normalized = []
+        for call in tool_calls or []:
+            if not isinstance(call, dict):
+                continue
+            function = call.get('function') if isinstance(call.get('function'), dict) else call
+            name = function.get('name') or call.get('name')
+            arguments = function.get('arguments', function.get('input', call.get('arguments', {})))
+            if isinstance(arguments, str):
+                try:
+                    arguments = json.loads(arguments)
+                except json.JSONDecodeError:
+                    arguments = {'command': arguments}
+            if not isinstance(arguments, dict):
+                arguments = {'value': arguments}
+            if name:
+                normalized.append({'name': name, 'arguments': arguments})
+        return normalized
+
+    def _normalize_model_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
+        """Normalize OpenAI-compatible message responses."""
+        content = message.get('content', '')
+        reasoning = message.get('reasoning_content') or message.get('reasoning') or ''
+        tool_calls = self._normalize_tool_calls(message.get('tool_calls'))
+        if isinstance(content, list):
+            text_parts = []
+            for block in content:
+                if not isinstance(block, dict):
+                    text_parts.append(str(block))
+                    continue
+                block_type = block.get('type')
+                if block_type in ('text', 'output_text'):
+                    text_parts.append(block.get('text', ''))
+                elif block_type in ('thinking', 'reasoning'):
+                    reasoning += block.get('thinking', block.get('text', ''))
+                elif block_type in ('tool_use', 'tool_call'):
+                    tool_calls.extend(self._normalize_tool_calls([block]))
+            content = ''.join(text_parts)
+        return {
+            'content': content if isinstance(content, str) else ('' if content is None else str(content)),
+            'reasoning_content': reasoning,
+            'tool_calls': tool_calls,
+        }
 
     def _call_messages_api(
         self,
         *,
-        messages: List[Dict[str, str]],
+        messages: List[Dict[str, Any]],
         model: str,
         temperature: float,
         top_p: float,
-    ) -> str:
-        """Call an Anthropic Messages-compatible API, including local GLM gateways."""
+    ) -> Dict[str, Any]:
+        """Call a Messages-compatible endpoint and normalize its response."""
         system_messages = [item["content"] for item in messages if item.get("role") == "system"]
         body_messages = [
             {"role": item["role"], "content": item["content"]}
@@ -140,16 +186,12 @@ class LLMClient:
         )
         response.raise_for_status()
         data = response.json()
-        content = data.get("content", "")
-        if isinstance(content, list):
-            content = "".join(
-                block.get("text", "") if isinstance(block, dict) else str(block)
-                for block in content
+        if 'choices' in data:
+            return self._normalize_model_message(
+                data.get('choices', [{}])[0].get('message', {})
             )
-        if not isinstance(content, str) or not content.strip():
-            raise ValueError("Messages API returned no text content")
-        return content
-    
+        return self._normalize_model_message(data)
+
     def _validate_model_response(self, response: str, role: str) -> bool:
         """Validate model response according to framework rules."""
         # Check colon patterns
@@ -183,8 +225,11 @@ class LLMClient:
         messages = [{"role": "system", "content": system_prompt}]
         
         for turn in conversation:
+            if turn.role == "system":
+                continue
+            role = "user" if turn.role == "tool" else turn.role
             messages.append({
-                "role": turn.role,
+                "role": role,
                 "content": turn.content
             })
         
@@ -197,7 +242,8 @@ class LLMClient:
     def prepare_user_messages(
         self,
         conversation: List[ConversationTurn],
-        system_prompt: str
+        system_prompt: str,
+        current_command: Optional[str] = None,
     ) -> List[Dict[str, str]]:
         """Prepare messages for user (terminal) model call."""
         # Build user model context: only code blocks from assistant turns, full user turns
@@ -205,16 +251,30 @@ class LLMClient:
         
         for turn in conversation:
             if turn.role == "assistant":
-                # Extract code block
                 import re
-                code_blocks = re.findall(r"```bash\n([\s\S]*?)\n```", turn.content)
-                if code_blocks:
-                    code_content = f"```bash\n{code_blocks[0].strip()}\n```"
-                    user_context.append({"role": "user", "content": code_content})
-            elif turn.role == "user":
+                commands = [
+                    call.get("arguments", {}).get("command", "")
+                    for call in (turn.tool_calls or [])
+                    if call.get("name") == "Bash"
+                    and isinstance(call.get("arguments"), dict)
+                ]
+                if not commands:
+                    code_blocks = re.findall(r"```bash\n([\s\S]*?)\n```", turn.content)
+                    commands = [code_blocks[0].strip()] if code_blocks else []
+                for command in commands:
+                    user_context.append({
+                        "role": "user",
+                        "content": f"```bash\n{command}\n```",
+                    })
+            elif turn.role in ("user", "tool"):
                 user_context.append({"role": "assistant", "content": turn.content})
         
         messages = [{"role": "system", "content": system_prompt}] + user_context
+        if current_command:
+            messages.append({
+                "role": "user",
+                "content": f"```bash\n{current_command.strip()}\n```",
+            })
         return messages
 
 

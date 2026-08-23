@@ -87,6 +87,52 @@ def atomic_write_trajectory(path: Path, payload: dict[str, Any]) -> None:
     temporary.replace(path)
 
 
+def _text(value: Any) -> str:
+    return "" if value is None else str(value)
+
+
+def _messages_tool_call(step: dict[str, Any]) -> dict[str, Any]:
+    """Represent an EnIGMA shell action using the target dictionary schema."""
+    return {"name": "Bash", "arguments": {"command": _text(step.get("action")).strip()}}
+
+
+def trajectory_to_messages(payload: dict[str, Any], task: Challenge) -> dict[str, Any]:
+    """Convert an internal EnIGMA trajectory into the public messages JSONL schema."""
+    history = payload.get("history")
+    history = history if isinstance(history, list) else []
+    system = next((entry for entry in history if isinstance(entry, dict) and entry.get("role") == "system"), None)
+    initial_user = next((entry for entry in history if isinstance(entry, dict) and entry.get("role") == "user"), None)
+    messages: list[dict[str, Any]] = []
+    if system is not None:
+        messages.append({"role": "system", "content": _text(system.get("content"))})
+    messages.append({"role": "user", "content": _text(initial_user.get("content")) if initial_user is not None else task.name})
+    trajectory = payload.get("trajectory")
+    trajectory = trajectory if isinstance(trajectory, list) else []
+    for raw_step in trajectory:
+        if not isinstance(raw_step, dict):
+            continue
+        messages.append({
+            "role": "assistant",
+            "content": "",
+            "reasoning_content": _text(raw_step.get("thought")),
+            "tool_calls": [_messages_tool_call(raw_step)],
+        })
+        messages.append({"role": "tool", "content": _text(raw_step.get("observation"))})
+    return {"id": task.task_id, "sample_type": "main", "messages": messages}
+
+
+def write_public_trajectory(path: Path, payload: dict[str, Any], task: Challenge) -> None:
+    atomic_write_trajectory(path, trajectory_to_messages(payload, task))
+
+def status_payload(payload: dict[str, Any], exit_status: str) -> dict[str, Any]:
+    """Restore status fields after reading a public messages artifact."""
+    if "messages" not in payload:
+        return payload
+    return {
+        "info": {"exit_status": exit_status},
+        "trajectory": [message for message in payload.get("messages", []) if isinstance(message, dict) and message.get("role") == "tool"],
+    }
+
 def atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
@@ -245,6 +291,8 @@ def enrich_completed_records(state: dict[str, Any], output_dir: Path, tasks: lis
             continue
         try:
             payload = read_trajectory(path)
+            if "messages" in payload and record.get("episode_status") not in (None, "running"):
+                continue
             flags = flag_status_from_trajectory(payload)
             episode = episode_status_from_trajectory(payload)
             values = {"run_status": "generated", "trajectory_generated": True, **episode, **flags, "outcome_status": outcome_status_from(flags, episode, True)}
@@ -418,7 +466,7 @@ def run_one_task(request: WorkerRequest) -> dict[str, Any]:
             destination = persist_terminal_trajectory(output_dir, task, exit_status="task_timeout",
                 terminal_reason=reason, error_type="outer_timeout", source=source)
             save_failure_log(error_log, task, command, reason, timeout_error.stdout or "", timeout_error.stderr or "", traceback.format_exc())
-            payload = read_trajectory(destination)
+            payload = status_payload(read_trajectory(destination), "task_timeout")
             flags, episode = flag_status_from_trajectory(payload), episode_status_from_trajectory(payload)
             record = task_record(task, run_status="error", trajectory_generated=True, time=utc_now(), trajectory=str(destination),
                 source_trajectory=str(source) if source else "", exit_status="task_timeout", error=reason, error_code="task_timeout",
@@ -430,7 +478,7 @@ def run_one_task(request: WorkerRequest) -> dict[str, Any]:
             destination = persist_terminal_trajectory(output_dir, task, exit_status=exit_status,
                 terminal_reason=reason, error_type=error_type, source=source)
             save_failure_log(error_log, task, command, reason, result.stdout if result else "", result.stderr if result else "")
-            payload = read_trajectory(destination)
+            payload = status_payload(read_trajectory(destination), "runner_exception")
             flags, episode = flag_status_from_trajectory(payload), episode_status_from_trajectory(payload)
             record = task_record(task, run_status="error", trajectory_generated=True, time=utc_now(), trajectory=str(destination),
                 source_trajectory=str(source) if source else "", exit_status=exit_status, error=reason, error_code=error_type,
@@ -439,7 +487,7 @@ def run_one_task(request: WorkerRequest) -> dict[str, Any]:
             reason = "run.py exited successfully but no trajectory file was produced"
             destination = persist_terminal_trajectory(output_dir, task, exit_status="runner_exception", terminal_reason=reason, error_type="missing_trajectory")
             save_failure_log(error_log, task, command, reason)
-            payload = read_trajectory(destination)
+            payload = status_payload(read_trajectory(destination), "runner_exception")
             flags, episode = flag_status_from_trajectory(payload), episode_status_from_trajectory(payload)
             record = task_record(task, run_status="failed", trajectory_generated=True, time=utc_now(), trajectory=str(destination),
                 exit_status="runner_exception", error=reason, error_code="missing_trajectory", error_log=str(error_log), solved=False,
@@ -450,22 +498,23 @@ def run_one_task(request: WorkerRequest) -> dict[str, Any]:
             payload.setdefault("info", {})["artifact_type"] = "agent_trace"
             destination = trajectory_path(output_dir, task)
             destination.parent.mkdir(parents=True, exist_ok=True)
-            atomic_write_trajectory(destination, payload)
             flags, episode = flag_status_from_trajectory(payload), episode_status_from_trajectory(payload)
             record = task_record(task, run_status="generated", trajectory_generated=True, time=utc_now(), trajectory=str(destination),
                 source_trajectory=str(source), exit_status=payload.get("info", {}).get("exit_status", ""),
                 solved=flags["flag_verified"] is True, steps=len(payload.get("trajectory", [])), **episode, **flags)
+        write_public_trajectory(destination, payload, task)
         record["outcome_status"] = outcome_status_from(flags, episode, True)
     except BaseException as error:
         reason = str(error)
         save_failure_log(error_log, task, command, reason, trace=traceback.format_exc())
         error_code = "interrupted" if isinstance(error, KeyboardInterrupt) else "task_setup_failed"
         destination = persist_terminal_trajectory(output_dir, task, exit_status="runner_exception", terminal_reason=reason, error_type=error_code)
-        payload = read_trajectory(destination)
+        payload = status_payload(read_trajectory(destination), "runner_exception")
         flags, episode = flag_status_from_trajectory(payload), episode_status_from_trajectory(payload)
         record = task_record(task, run_status="error", trajectory_generated=True, time=utc_now(), trajectory=str(destination),
             exit_status="runner_exception", error=reason, error_code=error_code, error_log=str(error_log), solved=False,
             steps=len(payload.get("trajectory", [])), outcome_status=outcome_status_from(flags, episode, True), **episode, **flags)
+        write_public_trajectory(destination, payload, task)
     finally:
         cleanup = cleanup_agent_containers(baseline, request.image_name)
         if 'record' in locals():

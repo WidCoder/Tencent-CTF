@@ -57,9 +57,11 @@ class TrajectoryReformatter:
             Reformatted trajectory or None if should be filtered out
         """
         writeup_path = trajectory_data.get('writeup_path', '')
-        trajectory = trajectory_data.get('trajectory', [])
+        trajectory = trajectory_data.get('messages', trajectory_data.get('trajectory', []))
+        if not writeup_path and trajectory_data.get('id'):
+            writeup_path = trajectory_data.get('id', '')
         
-        if not writeup_path or not trajectory:
+        if not trajectory:
             return None
         
         # Check for forbidden CTFs
@@ -75,8 +77,12 @@ class TrajectoryReformatter:
         for turn in trajectory:
             if "role" in turn and "content" in turn:
                 content = self._clean_content(turn["content"])
+                if turn.get("reasoning_content"):
+                    content = f"[reasoning]\n{turn['reasoning_content']}\n\n{content}".strip()
+                if turn.get("tool_calls"):
+                    content = f"{content}\n\n[tool_calls]\n{json.dumps(turn['tool_calls'], ensure_ascii=False)}".strip()
                 conversations.append({
-                    "from": turn["role"], 
+                    "from": turn["role"],
                     "value": content.strip()
                 })
         

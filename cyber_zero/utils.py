@@ -10,6 +10,7 @@ Common utility functions for Cyber-Zero framework.
 
 import json
 import re
+import hashlib
 import time
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Union
@@ -54,7 +55,11 @@ def shift_role(conversation: List[ConversationTurn]) -> str:
         return 'user'
     
     last_role = conversation[-1].role
-    return 'assistant' if last_role == 'user' else 'user'
+    if last_role in ('user', 'tool'):
+        return 'assistant'
+    if last_role == 'assistant':
+        return 'tool'
+    return 'user'
 
 
 def collect_trajectory(
@@ -93,6 +98,28 @@ def save_trajectory_to_file(
     with write_lock:
         with open(output_path, 'a', encoding='utf-8') as out:
             out.write(json.dumps(trajectory_data, ensure_ascii=False) + '\n')
+
+
+def trajectory_record_id(writeup_path: str, trajectory_id: int) -> str:
+    """Build a stable string ID for a generated trajectory."""
+    key = f"{writeup_path}\0{trajectory_id}".encode("utf-8")
+    digest = hashlib.sha1(key).hexdigest()[:16]
+    return f"trajectory_{digest}-{trajectory_id:03d}"
+
+
+def load_existing_ids(output_path: Union[str, Path]) -> List[str]:
+    """Load IDs from target-format trajectory records."""
+    existing_ids = []
+    if Path(output_path).exists():
+        with open(output_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                try:
+                    obj = json.loads(line)
+                    if obj.get('id'):
+                        existing_ids.append(str(obj['id']))
+                except Exception:
+                    continue
+    return existing_ids
 
 
 def load_existing_combinations(output_path: Union[str, Path]) -> List[tuple]:
