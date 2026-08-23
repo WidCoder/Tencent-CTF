@@ -18,7 +18,7 @@ from litellm import completion
 
 from .config import Config
 from .validation import ResponseValidator
-from .models import ConversationTurn
+from .models import ConversationTurn, block_to_dict, project_content_text, block_to_dict, project_content_text
 
 # Suppress debug info from litellm
 litellm.suppress_debug_info = True
@@ -66,12 +66,15 @@ class LLMClient:
                         raw.get('choices', [{}])[0].get('message', {})
                     )
 
-                if not response.get('content') and not response.get('tool_calls'):
+                content_text = response.get(
+                    'content_text',
+                    project_content_text(response.get('content'), response.get('content_blocks')),
+                )
+                if not content_text and not response.get('tool_calls') and not response.get('content_blocks'):
                     raise Exception("No response from model")
-
-                content = response.get('content', '')
-                if content and not self._validate_model_response(content, role):
+                if content_text and not self._validate_model_response(content_text, role):
                     raise Exception("Response validation failed")
+                response['content_text'] = content_text
                 return response
             except Exception as e:
                 print(f"Error on attempt {attempt + 1}: {e}")
@@ -98,7 +101,7 @@ class LLMClient:
             temperature=temperature,
             top_p=top_p,
         )
-        return response.get('content', '') if response else None
+        return response.get('content_text', project_content_text(response.get('content'))) if response else None
 
     def _normalize_tool_calls(self, tool_calls: Any) -> List[Dict[str, Any]]:
         """Normalize provider-specific tool calls to name/arguments dictionaries."""
@@ -121,28 +124,35 @@ class LLMClient:
         return normalized
 
     def _normalize_model_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
-        """Normalize OpenAI-compatible message responses."""
-        content = message.get('content', '')
+        """Normalize provider responses without flattening content blocks."""
+        raw_content = message.get('content', '')
+        content_blocks = None
+        if isinstance(raw_content, list):
+            content_blocks = [
+                mapped
+                for item in raw_content
+                if (mapped := block_to_dict(item)) is not None
+            ]
+            content = content_blocks
+        else:
+            content = raw_content
+
         reasoning = message.get('reasoning_content') or message.get('reasoning') or ''
         tool_calls = self._normalize_tool_calls(message.get('tool_calls'))
-        if isinstance(content, list):
-            text_parts = []
-            for block in content:
-                if not isinstance(block, dict):
-                    text_parts.append(str(block))
-                    continue
-                block_type = block.get('type')
-                if block_type in ('text', 'output_text'):
-                    text_parts.append(block.get('text', ''))
-                elif block_type in ('thinking', 'reasoning'):
-                    reasoning += block.get('thinking', block.get('text', ''))
-                elif block_type in ('tool_use', 'tool_call'):
-                    tool_calls.extend(self._normalize_tool_calls([block]))
-            content = ''.join(text_parts)
+        for block in content_blocks or []:
+            block_type = block.get('type')
+            if block_type in ('thinking', 'reasoning'):
+                reasoning += str(block.get('thinking', block.get('text', '')) or '')
+            elif block_type in ('tool_use', 'tool_call'):
+                tool_calls.extend(self._normalize_tool_calls([block]))
+
         return {
-            'content': content if isinstance(content, str) else ('' if content is None else str(content)),
+            'content': content,
+            'content_blocks': content_blocks,
+            'content_text': project_content_text(content, content_blocks),
             'reasoning_content': reasoning,
             'tool_calls': tool_calls,
+            'raw_message': message,
         }
 
     def _call_messages_api(
@@ -153,7 +163,7 @@ class LLMClient:
         temperature: float,
         top_p: float,
     ) -> Dict[str, Any]:
-        """Call a Messages-compatible endpoint and normalize its response."""
+        """Call Messages API and retain its raw response and blocks."""
         system_messages = [item["content"] for item in messages if item.get("role") == "system"]
         body_messages = [
             {"role": item["role"], "content": item["content"]}
@@ -171,7 +181,10 @@ class LLMClient:
             "top_p": top_p,
         }
         if system_messages:
-            payload["system"] = "\n\n".join(system_messages)
+            payload["system"] = "\n\n".join(
+                item if isinstance(item, str) else project_content_text(item)
+                for item in system_messages
+            )
 
         response = requests.post(
             self.config.messages_api_base_url,
@@ -187,10 +200,13 @@ class LLMClient:
         response.raise_for_status()
         data = response.json()
         if 'choices' in data:
-            return self._normalize_model_message(
+            normalized = self._normalize_model_message(
                 data.get('choices', [{}])[0].get('message', {})
             )
-        return self._normalize_model_message(data)
+        else:
+            normalized = self._normalize_model_message(data)
+        normalized['raw_response'] = data
+        return normalized
 
     def _validate_model_response(self, response: str, role: str) -> bool:
         """Validate model response according to framework rules."""
@@ -220,7 +236,7 @@ class LLMClient:
         self,
         conversation: List[ConversationTurn],
         system_prompt: str
-    ) -> List[Dict[str, str]]:
+    ) -> List[Dict[str, Any]]:
         """Prepare messages for assistant model call."""
         messages = [{"role": "system", "content": system_prompt}]
         
@@ -235,7 +251,13 @@ class LLMClient:
         
         # Add instruction for single code block
         if messages and messages[-1]["role"] == "user":
-            messages[-1]["content"] += "\nMAKE SURE YOU ONLY INCLUDE ONE BASH MARKDOWN CODE BLOCK IN YOUR RESPONSE."
+            current = messages[-1]["content"]
+            suffix = "\nMAKE SURE YOU ONLY INCLUDE ONE BASH MARKDOWN CODE BLOCK IN YOUR RESPONSE."
+            messages[-1]["content"] = (
+                current + suffix
+                if isinstance(current, str)
+                else project_content_text(current) + suffix
+            )
         
         return messages
     
@@ -244,7 +266,7 @@ class LLMClient:
         conversation: List[ConversationTurn],
         system_prompt: str,
         current_command: Optional[str] = None,
-    ) -> List[Dict[str, str]]:
+    ) -> List[Dict[str, Any]]:
         """Prepare messages for user (terminal) model call."""
         # Build user model context: only code blocks from assistant turns, full user turns
         user_context = []
@@ -259,7 +281,8 @@ class LLMClient:
                     and isinstance(call.get("arguments"), dict)
                 ]
                 if not commands:
-                    code_blocks = re.findall(r"```bash\n([\s\S]*?)\n```", turn.content)
+                    code_pattern = rf"{chr(96)*3}bash\n([\s\S]*?)\n{chr(96)*3}"
+                    code_blocks = re.findall(code_pattern, turn.content_text or project_content_text(turn.content, turn.content_blocks))
                     commands = [code_blocks[0].strip()] if code_blocks else []
                 for command in commands:
                     user_context.append({

@@ -16,13 +16,14 @@ from pathlib import Path
 import json
 
 from .config import Config
-from .models import ConversationTurn, TaskMeta, TrajectoryData
+from .models import ConversationTurn, TaskMeta, TrajectoryData, project_content_text
 from .llm_client import LLMClient
 from .utils import (
     load_file, shift_role, collect_trajectory, trajectory_record_id,
     save_trajectory_to_file, extract_code_blocks,
     truncate_to_first_code_block
 )
+from .models import project_content_text
 
 
 class TrajectoryGenerator:
@@ -211,13 +212,18 @@ PLEASE NOTE THAT THE PLAYER MAY NOT WRITE THE SCRIPT CORRECTLY. YOU MUST CHECK C
                 return False, False, None
 
             content = response.get('content', '')
+            content_blocks = response.get('content_blocks')
+            content_text = response.get(
+                'content_text',
+                project_content_text(content, content_blocks),
+            )
             tool_calls = response.get('tool_calls') or []
             reasoning_content = response.get('reasoning_content') or None
 
             # Preserve compatibility with text-only models by converting the
             # first bash block into the same dictionary format as native calls.
             if not tool_calls:
-                code_block_match = re.search(r"```bash\n([\s\S]*?)\n```", content)
+                code_block_match = re.search(r"```bash\n([\s\S]*?)\n```", content_text)
                 if code_block_match:
                     command = code_block_match.group(1).strip()
                     tool_calls = [{
@@ -227,10 +233,6 @@ PLEASE NOTE THAT THE PLAYER MAY NOT WRITE THE SCRIPT CORRECTLY. YOU MUST CHECK C
                             'description': 'Execute the assistant command',
                         },
                     }]
-                    # The command is represented by tool_calls in the target
-                    # format; retain only any surrounding assistant text.
-                    content = (content[:code_block_match.start()] +
-                               content[code_block_match.end():]).strip()
 
             if not content and not tool_calls:
                 continue
@@ -240,6 +242,9 @@ PLEASE NOTE THAT THE PLAYER MAY NOT WRITE THE SCRIPT CORRECTLY. YOU MUST CHECK C
                 content=content,
                 reasoning_content=reasoning_content,
                 tool_calls=tool_calls or None,
+                content_blocks=content_blocks,
+                content_text=content_text,
+                raw_response=response.get('raw_response'),
             )
             conversation.append(turn)
 
@@ -258,7 +263,7 @@ PLEASE NOTE THAT THE PLAYER MAY NOT WRITE THE SCRIPT CORRECTLY. YOU MUST CHECK C
             )
             if verbose:
                 print(f"Assistant turn {turn_idx + 1}.")
-                print(f"\033[93m{content}\033[0m")
+                print(f"\033[93m{content_text}\033[0m")
             return True, submit_found, turn_idx if submit_found else None
 
         return False, False, None
@@ -280,17 +285,32 @@ PLEASE NOTE THAT THE PLAYER MAY NOT WRITE THE SCRIPT CORRECTLY. YOU MUST CHECK C
         messages = self.llm_client.prepare_user_messages(
             conversation[:-1], system_prompt, current_command=command
         )
-        response = self.llm_client.call_model(
+        model_response = self.llm_client.call_model_response(
             messages=messages,
             role="user",
             model_id=self.config.models.get_model_id(self.config.user_model_id),
         )
-        if response is None:
+        if model_response is None:
             return False
-        conversation.append(ConversationTurn(role="tool", content=response))
+        response = model_response.get(
+            'content',
+            model_response.get('content_text', ''),
+        )
+        content_text = model_response.get(
+            'content_text',
+            project_content_text(response, model_response.get('content_blocks')),
+        )
+        conversation.append(ConversationTurn(
+            role="tool",
+            content=response,
+            content_blocks=model_response.get('content_blocks'),
+            content_text=content_text,
+            reasoning_content=model_response.get('reasoning_content') or None,
+            raw_response=model_response.get('raw_response'),
+        ))
         if verbose:
             print(f"Tool turn {turn_idx + 1} ({name}).")
-            print(f"\033[94m{response}\033[0m")
+            print(f"\033[94m{content_text}\033[0m")
         return True
 
     def _handle_user_turn(
@@ -301,14 +321,22 @@ PLEASE NOTE THAT THE PLAYER MAY NOT WRITE THE SCRIPT CORRECTLY. YOU MUST CHECK C
         turn_idx: int
     ) -> bool:
         """Legacy user-turn handler retained for callers using old trajectories."""
-        response = self.llm_client.call_model(
+        model_response = self.llm_client.call_model_response(
             messages=self.llm_client.prepare_user_messages(conversation, system_prompt),
             role="user",
             model_id=self.config.models.get_model_id(self.config.user_model_id),
         )
-        if response is None:
+        if model_response is None:
             return False
-        conversation.append(ConversationTurn(role="tool", content=response))
+        response = model_response.get('content', model_response.get('content_text', ''))
+        conversation.append(ConversationTurn(
+            role="tool",
+            content=response,
+            content_blocks=model_response.get('content_blocks'),
+            content_text=model_response.get('content_text'),
+            reasoning_content=model_response.get('reasoning_content') or None,
+            raw_response=model_response.get('raw_response'),
+        ))
         return True
 
     def _save_successful_trajectory(
@@ -330,5 +358,5 @@ PLEASE NOTE THAT THE PLAYER MAY NOT WRITE THE SCRIPT CORRECTLY. YOU MUST CHECK C
             messages=trajectory,
         )
         
-        save_trajectory_to_file(trajectory_data.to_dict(), output_path, write_lock)
+        save_trajectory_to_file(trajectory_data.to_intermediate_dict(), output_path, write_lock)
         return True 

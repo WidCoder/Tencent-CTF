@@ -23,6 +23,7 @@ except ImportError:
 
 from .config import Config
 from .utils import load_json_file
+from .models import project_content_text
 
 
 class TrajectoryReformatter:
@@ -74,22 +75,42 @@ class TrajectoryReformatter:
         
         # Convert trajectory format
         conversations = []
+        public_messages = []
         for turn in trajectory:
             if "role" in turn and "content" in turn:
-                content = self._clean_content(turn["content"])
+                content = self._clean_content(
+                    turn.get("content_text")
+                    or project_content_text(turn.get("content"), turn.get("content_blocks"))
+                )
+                public_message = {
+                    "role": turn["role"],
+                    "content": content,
+                }
+                if turn.get("content_blocks"):
+                    public_message["content_blocks"] = turn["content_blocks"]
                 if turn.get("reasoning_content"):
-                    content = f"[reasoning]\n{turn['reasoning_content']}\n\n{content}".strip()
+                    public_message["reasoning_content"] = turn["reasoning_content"]
                 if turn.get("tool_calls"):
-                    content = f"{content}\n\n[tool_calls]\n{json.dumps(turn['tool_calls'], ensure_ascii=False)}".strip()
+                    public_message["tool_calls"] = turn["tool_calls"]
+                public_messages.append(public_message)
+
+                training_content = content
+                if turn.get("reasoning_content"):
+                    training_content = f"[reasoning]\n{turn['reasoning_content']}\n\n{training_content}".strip()
+                if turn.get("tool_calls"):
+                    training_content = f"{training_content}\n\n[tool_calls]\n{json.dumps(turn['tool_calls'], ensure_ascii=False)}".strip()
                 conversations.append({
                     "from": turn["role"],
-                    "value": content.strip()
+                    "value": training_content.strip()
                 })
         
         # Get writeup link
         writeup_link = self._get_writeup_link(writeup_path)
         
         reformatted = {
+            'id': trajectory_data.get('id', ''),
+            'sample_type': trajectory_data.get('sample_type', 'main'),
+            'messages': public_messages,
             'system': self.DEFAULT_SYSTEM_PROMPT,
             'conversations': conversations,
             'mask': 'user',
@@ -100,7 +121,7 @@ class TrajectoryReformatter:
         
         return reformatted
     
-    def _clean_content(self, content: str) -> str:
+    def _clean_content(self, content: Any) -> str:
         """Clean content by removing unwanted patterns."""
         # Define the context pattern to remove
         context_pattern = r'(?:"""\s*)?Execute the command in the terminal[\s\S]*?maintain the consistency of current environment and the task workflow instead of dynamically changing the environment to make the task done in 40 steps\.(?:\s*""")?'

@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional, Union
 import threading
 
-from .models import ConversationTurn
+from .models import ConversationTurn, project_content_text
 from .config import Config
 
 
@@ -75,16 +75,19 @@ def collect_trajectory(
     for turn in conversation:
         trajectory.append(turn)
         
-        if (turn.role == 'assistant' and 
-            'submit' in turn.content):
+        content_text = turn.content_text or project_content_text(
+            turn.content, turn.content_blocks
+        )
+        if (turn.role == 'assistant' and
+            'submit' in content_text):
             
             # Check if this submit command contains the expected solution
-            m = re.search(r"submit\s+'([^']+)'", turn.content)
-            if (m and expected_solution in m.group(1)) or (expected_solution in turn.content):
+            m = re.search(r"submit\s+'([^']+)'", content_text)
+            if (m and expected_solution in m.group(1)) or (expected_solution in content_text):
                 break
                 
             if verbose:
-                print(f"Submit command does not contain expected solution '{expected_solution}' in '{turn.content}'")
+                print(f"Submit command does not contain expected solution '{expected_solution}' in '{content_text}'")
     
     return trajectory
 
