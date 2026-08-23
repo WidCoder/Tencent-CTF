@@ -960,12 +960,22 @@ class SWEEnv(gym.Env):
                 observation = self.communicate(input="submit")
                 submission = self.get_submission(observation)
                 assert submission is not None and submission.strip() != "", AssertionError("No submission found.")
-                self.logger.info(f"Found submission: {submission}")
+                verified = self.validate_submission(submission)
                 info["exit_status"] = f"submitted ({action})"
-                info["submission"] = submission
-                info.update(self._get_edited_files_with_context(patch=submission))  # type: ignore
-                observation = "Exited (autosubmitted)"
-                self.logger.info("Exiting with autosubmission")
+                info["submission"] = submission if self.challenge is None else None
+                if self.challenge is not None:
+                    info.update(self._last_flag_verification)
+                info.update(self._get_edited_files_with_context(
+                    patch=submission if self.challenge is None else ""
+                ))  # type: ignore
+                observation = (
+                    "Exited (autosubmitted)"
+                    if self.challenge is None
+                    else ("Flag submission accepted." if verified else "Wrong flag!")
+                )
+                if not verified and self.challenge is not None:
+                    info["exit_status"] = action
+                    return observation, 0, False, info
                 return observation, 0, True, info
             except KeyboardInterrupt:
                 raise
@@ -973,7 +983,6 @@ class SWEEnv(gym.Env):
                 observation = "Exited"
                 info["exit_status"] = action
                 return observation, 0, True, info
-
         # Attempt to run action in container
         observation = ""
         try:
@@ -1029,23 +1038,31 @@ class SWEEnv(gym.Env):
             observation += "\nEXECUTION FAILED OR COMMAND MALFORMED"
             self.logger.exception("Unknown exception")
 
-        # Record submission and end episode if `submit` keyword found
+        # Record submission and end episode if submit keyword found
         submission = self.get_submission(observation)
         if submission is not None:
-            if self.validate_submission(submission):
-                self.logger.info(f"Found submission: {submission}")
+            verified = self.validate_submission(submission)
+            if verified:
+                if self.challenge is None:
+                    self.logger.info(f"Found submission: {submission}")
                 info["exit_status"] = "submitted"
-                info["submission"] = submission if submission.strip() != "" else None
-                info.update(self._get_edited_files_with_context(patch=submission))  # type: ignore
-                observation = submission if submission.strip() != "" else None
+                info["submission"] = submission if self.challenge is None and submission.strip() != "" else None
+                if self.challenge is not None:
+                    info.update(self._last_flag_verification)
+                info.update(self._get_edited_files_with_context(
+                    patch=submission if self.challenge is None else ""
+                ))  # type: ignore
+                observation = (
+                    submission
+                    if self.challenge is None and submission.strip() != ""
+                    else "Flag submission accepted."
+                )
                 return observation, 0, True, info
             else:
-                # Currently only validating CTF challenges
-                assert self.challenge is not None
-                self.logger.warning("Wrong submission rejected by the challenge verifier.")
+                self.logger.warning("Wrong flag submission found.")
+                info.update(self._last_flag_verification)
                 observation = "Wrong flag!"
                 return observation, 0, False, info
-
         observation = self._handle_interactive_commands(observation)
 
         # CRITICAL: Detect and handle CTF server crashes during model interaction
@@ -2331,71 +2348,172 @@ class SWEEnv(gym.Env):
 
     # ctf
     def validate_submission(self, submission: str) -> bool:
-        """
-        Function for validating submission for CTF challenges.
-
-        Args:
-            submission: extracted submission
-
-        Returns:
-            validation of the submission found against known flag
-        """
+        """Validate a CTF submission without exposing plaintext flag material."""
         submission = submission.strip()
-        def wrap(s: str) -> str:
-            return f"flag{{{s}}}"
+        self._last_flag_verification = {
+            "flag_submitted": True,
+            "flag_verified": "unknown",
+            "flag_verification_evidence": "no verifier evidence",
+        }
 
-        if self.challenge is not None:
-            flag_correct, raw_sha256_correct, sha256_correct, raw_check_correct, check_correct = False, False, False, False, False
+        def wrap(value: str) -> str:
+            return f"flag{{{value}}}"
 
-            pattern = r".+?{(.+?)}"
-            match = re.search(pattern, submission)
-            extracted_flag = match.group(1) if match else submission
-            
-            if "flag" in self.challenge and self.challenge["flag"] != "pwn.college{...}":
-                solution = self.challenge["flag"]
-                flag_correct = any(
-                    (
-                        submission == solution,
-                        wrap(submission) == solution,
-                        submission == wrap(solution),
+        if self.challenge is None:
+            return True
+
+        challenge = self.challenge
+        match = re.search(r".+?{(.+?)}", submission)
+        extracted_flag = match.group(1) if match else submission
+
+        # Compare plaintext only inside this process; never log or return it.
+        solution = challenge.get("flag")
+        if isinstance(solution, str) and solution and solution != "pwn.college{...}":
+            verified = any((
+                submission == solution,
+                wrap(submission) == solution,
+                submission == wrap(solution),
+            ))
+            self._last_flag_verification.update({
+                "flag_verified": verified,
+                "flag_verification_evidence": "plaintext flag comparison",
+            })
+            return verified
+
+        expected_hashes: list[str] = []
+        for key in ("sha256_flag", "flag_sha256", "flag_hash"):
+            value = challenge.get(key)
+            if isinstance(value, str):
+                expected_hashes.append(value)
+        verification = challenge.get("verification")
+        if isinstance(verification, dict):
+            for key in ("sha256", "sha256_flag", "flag_sha256", "hash"):
+                value = verification.get(key)
+                if isinstance(value, str):
+                    expected_hashes.append(value)
+
+        hash_files: list[Path] = []
+        verifier_files: list[Path] = []
+        source_roots: list[Path] = []
+        for value in (
+            challenge.get("file_path"),
+            self.record.get("repo") if self.record else None,
+        ):
+            if isinstance(value, str) and value:
+                root = Path(value.removeprefix("local://"))
+                source_roots.append(root if root.is_dir() else root.parent)
+
+        for key in ("sha256_file", "sha256_flag_file", "flag_sha256_file", "hash_file"):
+            value = challenge.get(key)
+            if isinstance(value, str) and value:
+                candidate = Path(value)
+                hash_files.extend(
+                    candidate if candidate.is_absolute() else (root / candidate for root in source_roots)
+                )
+
+        verification = challenge.get("verification")
+        if isinstance(verification, dict):
+            verification_files = verification.get("files", [])
+            if isinstance(verification_files, list):
+                for value in verification_files:
+                    if not isinstance(value, str) or not value:
+                        continue
+                    candidate = Path(value)
+                    candidates = [candidate] if candidate.is_absolute() else [root / candidate for root in source_roots]
+                    if candidate.name.lower() in {"flag.sha256", ".flag.sha256", "flag.sha256.txt"}:
+                        hash_files.extend(candidates)
+                    else:
+                        verifier_files.extend(candidates)
+
+        for root in source_roots:
+            for name in (".flag.sha256", "flag.sha256", "flag.sha256.txt"):
+                hash_files.append(root / name)
+
+        for path in hash_files:
+            try:
+                if path.is_file():
+                    expected_hashes.extend(
+                        re.findall(
+                            r"\b[0-9a-fA-F]{64}\b",
+                            path.read_text(encoding="utf-8"),
+                        )
                     )
-                )
-        
-            if "sha256_flag" in self.challenge:
-                checker = self.challenge["sha256_flag"]
-                raw_sha256_correct = hashlib.sha256(extracted_flag.encode()).hexdigest() == checker
-                sha256_correct = hashlib.sha256(submission.encode()).hexdigest() == checker
+            except (OSError, UnicodeError):
+                continue
 
-            if "flag_check" in self.challenge:
-                # Ensure the flag_check script is readable and executable
-                flag_check_path = self.challenge["flag_check"]
-                try:
-                    # Make the flag_check script readable and executable
-                    os.chmod(flag_check_path, 0o755)
-                    self.logger.debug(f"Set permissions for flag_check script: {flag_check_path}")
-                except Exception as e:
-                    self.logger.warning(f"Failed to set permissions for flag_check script {flag_check_path}: {e}")
-                    # Try to continue anyway in case the script is already executable
-                
-                raw_check_result = subprocess.run(
-                    [self.challenge["flag_check"]],
-                    input=submission + "\n",
-                    text=True,
-                    capture_output=True
-                )
-                raw_check_correct = "incorrect" not in raw_check_result.stdout.lower()
-                check_result = subprocess.run(
-                    [self.challenge["flag_check"]],
-                    input=extracted_flag + "\n",
-                    text=True,
-                    capture_output=True
-                )
-                check_correct = "incorrect" not in check_result.stdout.lower()
+        normalized_hashes = {
+            value.strip().split()[0].lower()
+            for value in expected_hashes
+            if re.fullmatch(r"\s*[0-9a-fA-F]{64}(?:\s+.*)?", value)
+        }
+        if normalized_hashes:
+            verified = any(
+                hashlib.sha256(candidate.encode()).hexdigest().lower()
+                in normalized_hashes
+                for candidate in (submission, extracted_flag)
+            )
+            self._last_flag_verification.update({
+                "flag_verified": verified,
+                "flag_verification_evidence": "sha256 verifier",
+            })
+            return verified
 
-            return flag_correct or raw_sha256_correct or sha256_correct or raw_check_correct or check_correct
-        
+        verifier = (
+            challenge.get("flagCheck")
+            or challenge.get("flag_check")
+            or challenge.get("verifier")
+        )
+        if verifier is None and verifier_files:
+            verifier = str(verifier_files[0])
+
+        if isinstance(verifier, dict):
+            verifier = verifier.get("path") or verifier.get("command")
+        if verifier:
+            command = verifier if isinstance(verifier, list) else shlex.split(str(verifier))
+            if not command:
+                return True
+
+            challenge_root = source_roots[0] if source_roots else None
+            # Resolve importer-produced relative checker paths against the staged task.
+            for index, value in enumerate(command):
+                candidate = Path(str(value))
+                if challenge_root and not candidate.is_absolute() and (challenge_root / candidate).is_file():
+                    command[index] = str((challenge_root / candidate).resolve())
+                    break
+            try:
+                for candidate in (submission, extracted_flag):
+                    result = subprocess.run(
+                        command,
+                        input=candidate + "\n",
+                        text=True,
+                        capture_output=True,
+                        timeout=10,
+                        cwd=str(challenge_root) if challenge_root else None,
+                    )
+                    output = (result.stdout + "\n" + result.stderr).lower()
+                    if result.returncode == 0 and not any(
+                        word in output
+                        for word in ("incorrect", "wrong", "invalid", "fail")
+                    ):
+                        self._last_flag_verification.update({
+                            "flag_verified": True,
+                            "flag_verification_evidence": "script verifier accepted submission",
+                        })
+                        return True
+                self._last_flag_verification.update({
+                    "flag_verified": False,
+                    "flag_verification_evidence": "script verifier rejected submission",
+                })
+                return False
+            except (OSError, subprocess.SubprocessError, TypeError, ValueError):
+                self._last_flag_verification.update({
+                    "flag_verified": "unknown",
+                    "flag_verification_evidence": "script verifier unavailable",
+                })
+                return True
+
+        # No plaintext flag and no verifier: terminate cleanly as unknown.
         return True
-
     def get_submission(self, output: str) -> str | None:
         """
         Function for extracting diff patch submission at the end of an episode.

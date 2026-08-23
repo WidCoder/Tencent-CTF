@@ -96,6 +96,13 @@ def _messages_tool_call(step: dict[str, Any]) -> dict[str, Any]:
     return {"name": "Bash", "arguments": {"command": _text(step.get("action")).strip()}}
 
 
+def _is_terminal_step(step: dict[str, Any]) -> bool:
+    if step.get("terminal") is True:
+        return True
+    action = _text(step.get("action")).strip()
+    return bool(re.fullmatch(r"(?:step_\d+_hit|task_timeout|runner_exception|environment_error)", action))
+
+
 def trajectory_to_messages(payload: dict[str, Any], task: Challenge) -> dict[str, Any]:
     """Convert an internal EnIGMA trajectory into the public messages JSONL schema."""
     history = payload.get("history")
@@ -110,6 +117,14 @@ def trajectory_to_messages(payload: dict[str, Any], task: Challenge) -> dict[str
     trajectory = trajectory if isinstance(trajectory, list) else []
     for raw_step in trajectory:
         if not isinstance(raw_step, dict):
+            continue
+        if _is_terminal_step(raw_step):
+            messages.append({
+                "role": "assistant",
+                "content": _text(raw_step.get("terminal_reason") or raw_step.get("action")),
+                "reasoning_content": _text(raw_step.get("thought")),
+            })
+            messages.append({"role": "tool", "content": _text(raw_step.get("observation"))})
             continue
         messages.append({
             "role": "assistant",
@@ -156,6 +171,9 @@ def category_from(metadata: dict[str, Any]) -> str:
 def has_verification_evidence(repo_path: Path, metadata: dict[str, Any]) -> bool:
     verification = metadata.get("verification")
     if isinstance(verification, dict) and verification.get("status") == "eligible":
+        files = verification.get("files")
+        if isinstance(files, list) and files:
+            return all(isinstance(value, str) and (repo_path / value).is_file() for value in files)
         return True
     if metadata.get("verification_method") in {"sha256", "flagcheck"}:
         return True
@@ -190,11 +208,17 @@ def discover_challenges(dataset_root: Path, category: str | None, require_docker
         if not isinstance(name, str) or not name.strip():
             name = repo_path.name
         stable_path = relative_path.as_posix()
-        task_id = f"{safe_component(stable_path.replace('/', '__'))}-{hashlib.sha1(stable_path.encode()).hexdigest()[:10]}"
-        compose = repo_path / "docker-compose.yml"
+        metadata_task_id = metadata.get("task_id")
+        task_id = safe_component(metadata_task_id) if isinstance(metadata_task_id, str) and metadata_task_id.strip() else f"{safe_component(stable_path.replace('/', '__'))}-{hashlib.sha1(stable_path.encode()).hexdigest()[:10]}"
+        metadata_event = metadata.get("event")
+        event = metadata_event.strip() if isinstance(metadata_event, str) and metadata_event.strip() else (relative_path.parts[0] if relative_path.parts else "unknown")
+        compose_value = metadata.get("docker_compose")
+        compose = repo_path / compose_value if isinstance(compose_value, str) and compose_value else repo_path / "docker-compose.yml"
+        if not compose.is_file():
+            compose = repo_path / "docker-compose.yaml"
         challenges.append(Challenge(
             challenge_json=str(challenge_json.resolve()), repo_path=str(repo_path.resolve()),
-            relative_path=stable_path, event=relative_path.parts[0] if relative_path.parts else "unknown",
+            relative_path=stable_path, event=event,
             name=name.strip(), category=challenge_category, task_id=task_id,
             dockerfile_path=str(dockerfile.resolve()) if dockerfile.is_file() else "",
             compose_path=str(compose.resolve()) if compose.is_file() else "",
@@ -327,7 +351,10 @@ def run_checked(command: list[str], cwd: Path) -> None:
 
 def stage_challenge(source_dir: Path, workspace: Path) -> Path:
     staged_repo = workspace / "repo"
-    shutil.copytree(source_dir, staged_repo)
+    def ignore_private(_directory: str, names: list[str]) -> set[str]:
+        excluded = {"solution", "writeup", "writeups", "flag", "flag.txt", "flag.json"}
+        return {name for name in names if name.lower() in excluded}
+    shutil.copytree(source_dir, staged_repo, ignore=ignore_private)
     run_checked(["git", "init"], staged_repo)
     run_checked(["git", "add", "."], staged_repo)
     run_checked(["git", "-c", "user.name=EnIGMA Batch", "-c", "user.email=enigma-batch@example.invalid", "commit", "-m", "Stage CTF-Dojo challenge for EnIGMA+"], staged_repo)
