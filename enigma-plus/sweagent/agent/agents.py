@@ -1,4 +1,4 @@
-﻿# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.  
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.  
 
 # SPDX-License-Identifier: CC-BY-NC-4.0
 
@@ -29,6 +29,7 @@ from sweagent.agent.models import (
     APIStats,
     ContextWindowExceededError,
     CostLimitExceededError,
+    EmptyModelResponseError,
     ModelArguments,
     get_model,
 )
@@ -973,6 +974,13 @@ class Agent:
             return self.check_format_and_requery(self.forward_model(observation, state))
         except KeyboardInterrupt:
             raise
+        except EmptyModelResponseError as e:
+            self.logger.warning(f"Model API returned no usable response: {e}")
+            return (
+                f"Exit due to model API response error: {e}",
+                "exit_api",
+                f"model API response error: {e}",
+            )
         except RuntimeError as e:
             self.logger.warning(f"Runtime error: {e}")
             return (

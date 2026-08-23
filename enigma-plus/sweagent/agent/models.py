@@ -13,6 +13,7 @@ import yaml
 from collections import defaultdict
 from dataclasses import dataclass, fields
 from pathlib import Path
+from typing import Any
 import boto3
 from botocore.config import Config
 import together
@@ -22,6 +23,8 @@ from openai import AzureOpenAI, BadRequestError, OpenAI
 from simple_parsing.helpers.serialization.serializable import FrozenSerializable, Serializable
 from tenacity import (
     retry,
+    retry_any,
+    retry_if_exception_type,
     retry_if_not_exception_type,
     stop_after_attempt,
     wait_random_exponential,
@@ -75,6 +78,144 @@ def extract_thought(result: str, reasoning_content: str | None = None) -> str:
         return str(reasoning_content).strip()
     match = re.search(r"<think>(.*?)</think>", result or "", flags=re.DOTALL | re.IGNORECASE)
     return match.group(1).strip() if match else ""
+
+class EmptyModelResponseError(RuntimeError):
+    """Raised when a model gateway returns no usable assistant response."""
+
+
+def _tool_call_parts(tool_call: dict[str, Any]) -> tuple[str, Any]:
+    """Return a provider-independent tool name and arguments."""
+    function = tool_call.get("function")
+    if isinstance(function, dict):
+        name = function.get("name") or tool_call.get("name") or ""
+        arguments = function.get("arguments")
+    else:
+        name = tool_call.get("name") or ""
+        arguments = tool_call.get("arguments")
+    if arguments is None:
+        arguments = tool_call.get("input", {})
+    if isinstance(arguments, str):
+        try:
+            arguments = json.loads(arguments)
+        except json.JSONDecodeError:
+            arguments = {"command": arguments}
+    return str(name), arguments
+
+
+def _tool_call_to_agent_response(tool_call: dict[str, Any]) -> str:
+    """Convert a structured tool call to the CTF agent's text action format."""
+    name, arguments = _tool_call_parts(tool_call)
+    normalized_name = name.lower()
+    if isinstance(arguments, dict):
+        command = arguments.get("command") or arguments.get("cmd") or arguments.get("script")
+        if normalized_name == "submit":
+            command = command or arguments.get("flag") or arguments.get("submission") or arguments.get("answer")
+        if command is None and normalized_name in {"bash", "shell", "run_command", "execute", "execute_command"}:
+            command = arguments.get("input")
+        if command is None and name:
+            command = " ".join(str(value) for value in arguments.values() if value is not None)
+    else:
+        command = arguments
+    if not name and not command:
+        return ""
+    if command is None or not str(command).strip():
+        command = name
+    elif normalized_name == "submit":
+        command = f"submit {command}"
+    elif normalized_name not in {"bash", "shell", "run_command", "execute", "execute_command", "command", "tool"}:
+        command = f"{name} {command}"
+    fence = chr(96) * 3
+    return fence + chr(10) + str(command).strip() + chr(10) + fence
+
+
+def extract_messages_api_response(data: dict[str, Any]) -> tuple[str, str]:
+    """Extract text/reasoning from Anthropic or OpenAI-compatible JSON responses."""
+    if not isinstance(data, dict):
+        raise EmptyModelResponseError("Messages API returned a non-object JSON response")
+
+    text_parts: list[str] = []
+    reasoning_parts: list[str] = []
+    tool_calls: list[dict[str, Any]] = []
+
+    def consume_content(content: Any) -> None:
+        if isinstance(content, str):
+            text_parts.append(content)
+        elif isinstance(content, dict):
+            value = content.get("text") or content.get("content")
+            if isinstance(value, str):
+                text_parts.append(value)
+            elif str(content.get("type", "")).lower() in {"tool_use", "tool_call", "function"}:
+                tool_calls.append(content)
+        elif isinstance(content, list):
+            for block in content:
+                if isinstance(block, str):
+                    text_parts.append(block)
+                elif isinstance(block, dict):
+                    block_type = str(block.get("type", "")).lower()
+                    if block_type in {"thinking", "reasoning"}:
+                        value = block.get("thinking") or block.get("reasoning_content") or block.get("text")
+                        if value:
+                            reasoning_parts.append(str(value))
+                    elif block_type in {"tool_use", "tool_call", "function"}:
+                        tool_calls.append(block)
+                    else:
+                        value = block.get("text") or block.get("content")
+                        if isinstance(value, str):
+                            text_parts.append(value)
+
+    content = data.get("content")
+    if content is not None:
+        consume_content(content)
+
+    choices = data.get("choices")
+    if isinstance(choices, list) and choices and isinstance(choices[0], dict):
+        message = choices[0].get("message") or choices[0].get("delta") or {}
+        if isinstance(message, dict):
+            consume_content(message.get("content"))
+            message_reasoning = message.get("reasoning_content") or message.get("reasoning") or message.get("thinking")
+            if message_reasoning:
+                reasoning_parts.append(str(message_reasoning))
+            calls = message.get("tool_calls")
+            if isinstance(calls, list):
+                tool_calls.extend(call for call in calls if isinstance(call, dict))
+        top_level_calls = choices[0].get("tool_calls")
+        if isinstance(top_level_calls, list):
+            tool_calls.extend(call for call in top_level_calls if isinstance(call, dict))
+
+    output = data.get("output")
+    if output is not None:
+        consume_content(output)
+    for key in ("output_text", "text"):
+        value = data.get(key)
+        if isinstance(value, str):
+            text_parts.append(value)
+    top_level_reasoning = data.get("reasoning_content") or data.get("reasoning") or data.get("thinking")
+    if top_level_reasoning:
+        reasoning_parts.append(str(top_level_reasoning))
+
+    if tool_calls:
+        if len(tool_calls) > 1:
+            logger.warning("Messages API returned %d tool calls; executing only the first", len(tool_calls))
+        tool_response = _tool_call_to_agent_response(tool_calls[0])
+        if tool_response:
+            text_parts.append(tool_response)
+
+    result = chr(10).join(part for part in text_parts if part)
+    if not result.strip():
+        keys = sorted(str(key) for key in data.keys())
+        block_types: list[str] = []
+        if isinstance(content, list):
+            block_types.extend(str(block.get("type", "unknown")) for block in content if isinstance(block, dict))
+        logger.warning(
+            "Messages API empty response: keys=%s block_types=%s stop_reason=%s usage=%s",
+            keys,
+            block_types,
+            data.get("stop_reason"),
+            data.get("usage", {}),
+        )
+        raise EmptyModelResponseError("Messages API returned no usable text or tool call")
+    return result, chr(10).join(reasoning_parts).strip()
+
 
 def clean_result(result):
     # First, split on </think> and take everything after the first one (if any)
@@ -409,24 +550,52 @@ class MessagesAPIModel(BaseModel):
             raise ValueError("--messages_api_url is required for glm52_* models")
         self.api_key = args.messages_api_key or "EMPTY"
 
-    @retry(wait=wait_random_exponential(min=1, max=15), reraise=True, stop=stop_after_attempt(_MAX_RETRIES), retry=retry_if_not_exception_type((CostLimitExceededError, RuntimeError)))
+    @retry(
+        wait=wait_random_exponential(min=1, max=15),
+        reraise=True,
+        stop=stop_after_attempt(_MAX_RETRIES),
+        retry=retry_any(
+            retry_if_exception_type(EmptyModelResponseError),
+            retry_if_not_exception_type((CostLimitExceededError, RuntimeError)),
+        ),
+    )
     def query(self, history: list[dict[str, str]]) -> str:
-        system = "\n".join(entry["content"] for entry in history if entry["role"] == "system")
+        system = chr(10).join(entry["content"] for entry in history if entry["role"] == "system")
         messages = anthropic_history_to_messages(self, history)
-        payload = {"model": self.api_model, "messages": messages, "max_tokens": self.model_metadata.get("max_tokens", 8192), "temperature": self.args.temperature, "top_p": self.args.top_p}
+        payload = {
+            "model": self.api_model,
+            "messages": messages,
+            "max_tokens": self.model_metadata.get("max_tokens", 8192),
+            "temperature": self.args.temperature,
+            "top_p": self.args.top_p,
+        }
         if system:
             payload["system"] = system
-        response = requests.post(self.api_url, headers={"x-api-key": self.api_key, "Authorization": f"Bearer {self.api_key}", "anthropic-version": "2023-06-01", "content-type": "application/json"}, json=payload, timeout=3600)
+        response = requests.post(
+            self.api_url,
+            headers={
+                "x-api-key": self.api_key,
+                "Authorization": f"Bearer {self.api_key}",
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            },
+            json=payload,
+            timeout=3600,
+        )
         response.raise_for_status()
         data = response.json()
-        content = data.get("content", [])
-        result = "".join(block.get("text", "") for block in content if isinstance(block, dict)) if isinstance(content, list) else str(content)
-        if not result.strip():
-            raise RuntimeError("Messages API returned no text content")
-        usage = data.get("usage", {})
-        self.update_stats(int(usage.get("input_tokens", 0)), int(usage.get("output_tokens", 0)))
-        self.last_thought = extract_thought(result)
-        return clean_result(result)
+        result, reasoning = extract_messages_api_response(data)
+        usage = data.get("usage") if isinstance(data.get("usage"), dict) else {}
+        self.update_stats(
+            int(usage.get("input_tokens", usage.get("prompt_tokens", 0))),
+            int(usage.get("output_tokens", usage.get("completion_tokens", 0))),
+        )
+        self.last_thought = extract_thought(result, reasoning)
+        cleaned = clean_result(result)
+        if not cleaned.strip():
+            raise EmptyModelResponseError("Messages API response became empty after cleanup")
+        return cleaned
+
 
 class AnthropicModel(BaseModel):
     def _get_provider_configs(self, configs: dict) -> tuple[dict, dict]:
