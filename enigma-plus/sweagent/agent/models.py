@@ -128,6 +128,21 @@ def _tool_call_to_agent_response(tool_call: dict[str, Any]) -> str:
     return fence + chr(10) + str(command).strip() + chr(10) + fence
 
 
+def _tool_call_to_shell_action(tool_call: dict[str, Any]) -> str:
+    """Extract the executable shell action from a native Anthropic tool_use."""
+    name, arguments = _tool_call_parts(tool_call)
+    if isinstance(arguments, dict):
+        command = arguments.get("command") or arguments.get("cmd") or arguments.get("script")
+        if command is None and name.lower() == "submit":
+            command = arguments.get("flag") or arguments.get("submission") or arguments.get("answer")
+    else:
+        command = arguments
+    command = str(command or "").strip()
+    if name.lower() == "submit" and command and not command.startswith("submit "):
+        command = f"submit {command}"
+    return command
+
+
 def extract_messages_api_response_details(data: dict[str, Any]) -> dict[str, Any]:
     """Extract a Messages response without discarding its structured blocks.
 
@@ -209,14 +224,16 @@ def extract_messages_api_response_details(data: dict[str, Any]) -> dict[str, Any
         reasoning_parts.append(str(top_level_reasoning))
         content_blocks.append({"type": "thinking", "thinking": str(top_level_reasoning)})
 
+    text_content = chr(10).join(part for part in text_parts if part)
+    action_text = text_content
     if tool_calls:
         if len(tool_calls) > 1:
             logger.warning("Messages API returned %d tool calls; executing only the first", len(tool_calls))
         tool_response = _tool_call_to_agent_response(tool_calls[0])
         if tool_response:
-            text_parts.append(tool_response)
+            action_text = chr(10).join(part for part in [text_content, tool_response] if part)
 
-    result = chr(10).join(part for part in text_parts if part)
+    result = action_text
     if not result.strip():
         keys = sorted(str(key) for key in data.keys())
         block_types = [str(block.get("type", "unknown")) for block in content_blocks]
@@ -231,6 +248,8 @@ def extract_messages_api_response_details(data: dict[str, Any]) -> dict[str, Any
     return {
         "content_blocks": content_blocks,
         "content_text": result,
+        "text_content": text_content,
+        "tool_calls": copy.deepcopy(tool_calls),
         "reasoning": chr(10).join(reasoning_parts).strip(),
         "stop_reason": data.get("stop_reason"),
         "usage": copy.deepcopy(data.get("usage")) if isinstance(data.get("usage"), dict) else {},
@@ -343,9 +362,11 @@ class BaseModel:
         # still returns a text projection because the existing parser expects it.
         self.last_content_blocks: list[dict[str, Any]] = []
         self.last_content_text = ""
+        self.last_text_content = ""
         self.last_raw_response: dict[str, Any] = {}
         self.last_stop_reason: str | None = None
         self.last_usage: dict[str, Any] = {}
+        self.last_tool_calls: list[dict[str, Any]] = []
         # Load configurations from YAML
         configs = load_model_configs()
         defaults = configs['defaults']
@@ -594,7 +615,30 @@ class MessagesAPIModel(BaseModel):
     )
     def query(self, history: list[dict[str, str]]) -> str:
         system = chr(10).join(entry["content"] for entry in history if entry["role"] == "system")
-        messages = anthropic_history_to_messages(self, history)
+        # Preserve native assistant blocks and tool_result blocks when they
+        # are present; converting everything to strings defeats tool use.
+        messages = []
+        for entry in history:
+            role = entry.get("role")
+            if role == "system":
+                continue
+            blocks = entry.get("content_blocks")
+            if role == "assistant" and isinstance(blocks, list) and blocks:
+                messages.append({"role": "assistant", "content": copy.deepcopy(blocks)})
+            else:
+                messages.append({"role": role, "content": entry.get("content", "")})
+        # Anthropic requires alternating roles. Combine adjacent messages.
+        compiled = []
+        for message in messages:
+            if compiled and compiled[-1]["role"] == message["role"]:
+                left, right = compiled[-1]["content"], message["content"]
+                if isinstance(left, list):
+                    left.extend(right if isinstance(right, list) else [{"type": "text", "text": str(right)}])
+                else:
+                    compiled[-1]["content"] = str(left) + "\n" + str(right)
+            else:
+                compiled.append(message)
+        messages = compiled
         payload = {
             "model": self.api_model,
             "messages": messages,
@@ -602,6 +646,18 @@ class MessagesAPIModel(BaseModel):
             "temperature": self.args.temperature,
             "top_p": self.args.top_p,
         }
+        # Ask the Messages-compatible gateway for a native Anthropic tool_use.
+        # The agent still retains a text-parser fallback for gateways/models
+        # that ignore this field.
+        payload["tools"] = [{
+            "name": "Bash",
+            "description": "Execute a shell command in the task container.",
+            "input_schema": {
+                "type": "object",
+                "properties": {"command": {"type": "string"}},
+                "required": ["command"],
+            },
+        }]
         if system:
             payload["system"] = system
         response = requests.post(
@@ -627,9 +683,11 @@ class MessagesAPIModel(BaseModel):
         self.last_raw_response = copy.deepcopy(details["raw_response"])
         self.last_stop_reason = details["stop_reason"]
         self.last_usage = copy.deepcopy(usage)
+        self.last_tool_calls = copy.deepcopy(details.get("tool_calls", []))
         self.last_thought = details["reasoning"] or extract_thought(details["content_text"])
         cleaned = clean_result(details["content_text"])
         self.last_content_text = cleaned
+        self.last_text_content = details.get("text_content", "")
         if not cleaned.strip():
             raise EmptyModelResponseError("Messages API response became empty after cleanup")
         return cleaned

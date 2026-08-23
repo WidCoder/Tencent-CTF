@@ -96,42 +96,6 @@ def _messages_tool_call(step: dict[str, Any]) -> dict[str, Any]:
     return {"name": "Bash", "arguments": {"command": _text(step.get("action")).strip()}}
 
 
-def _messages_tool_calls_from_blocks(blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Project structured Anthropic tool blocks to the public tool_calls field."""
-    calls: list[dict[str, Any]] = []
-    for block in blocks:
-        block_type = str(block.get("type", "")).lower()
-        if block_type == "tool_use":
-            calls.append({"name": _text(block.get("name")) or "tool", "arguments": block.get("input", {})})
-        elif block_type in {"tool_call", "function"}:
-            function = block.get("function") if isinstance(block.get("function"), dict) else block
-            arguments = function.get("arguments", function.get("input", {}))
-            if isinstance(arguments, str):
-                try:
-                    arguments = json.loads(arguments)
-                except json.JSONDecodeError:
-                    arguments = {"command": arguments}
-            calls.append({"name": _text(function.get("name")) or "tool", "arguments": arguments})
-    return calls
-
-
-def _content_blocks_for_step(step: dict[str, Any]) -> list[dict[str, Any]]:
-    """Return structured blocks, with a lossless-enough fallback for old traces."""
-    blocks = step.get("content_blocks")
-    if isinstance(blocks, list) and all(isinstance(block, dict) for block in blocks):
-        return json.loads(json.dumps(blocks, ensure_ascii=False))
-    fallback: list[dict[str, Any]] = []
-    thought = _text(step.get("thought"))
-    response = _text(step.get("content_text") or step.get("response"))
-    if thought:
-        fallback.append({"type": "thinking", "thinking": thought})
-    if response:
-        fallback.append({"type": "text", "text": response})
-    if not response and _text(step.get("action")).strip():
-        fallback.append({"type": "tool_use", "name": "Bash", "input": {"command": _text(step.get("action")).strip()}})
-    return fallback
-
-
 def _is_terminal_step(step: dict[str, Any]) -> bool:
     if step.get("terminal") is True:
         return True
@@ -140,55 +104,34 @@ def _is_terminal_step(step: dict[str, Any]) -> bool:
 
 
 def trajectory_to_messages(payload: dict[str, Any], task: Challenge) -> dict[str, Any]:
-    """Convert an internal EnIGMA trajectory to a dual-track messages JSONL record."""
+    """Convert an internal EnIGMA trajectory into the public messages JSONL schema."""
     history = payload.get("history")
     history = history if isinstance(history, list) else []
     system = next((entry for entry in history if isinstance(entry, dict) and entry.get("role") == "system"), None)
     initial_user = next((entry for entry in history if isinstance(entry, dict) and entry.get("role") == "user"), None)
     messages: list[dict[str, Any]] = []
-
     if system is not None:
-        system_text = _text(system.get("content"))
-        messages.append({
-            "role": "system",
-            "content": system_text,
-            "content_blocks": system.get("content_blocks") if isinstance(system.get("content_blocks"), list) else [{"type": "text", "text": system_text}],
-        })
-    user_text = _text(initial_user.get("content")) if initial_user is not None else task.name
-    messages.append({
-        "role": "user",
-        "content": user_text,
-        "content_blocks": initial_user.get("content_blocks") if isinstance(initial_user, dict) and isinstance(initial_user.get("content_blocks"), list) else [{"type": "text", "text": user_text}],
-    })
-
+        messages.append({"role": "system", "content": _text(system.get("content"))})
+    messages.append({"role": "user", "content": _text(initial_user.get("content")) if initial_user is not None else task.name})
     trajectory = payload.get("trajectory")
     trajectory = trajectory if isinstance(trajectory, list) else []
     for raw_step in trajectory:
         if not isinstance(raw_step, dict):
             continue
-        blocks = _content_blocks_for_step(raw_step)
         if _is_terminal_step(raw_step):
-            terminal_text = _text(raw_step.get("terminal_reason") or raw_step.get("action"))
             messages.append({
                 "role": "assistant",
-                "content": terminal_text,
-                "content_blocks": blocks or [{"type": "text", "text": terminal_text}],
+                "content": _text(raw_step.get("terminal_reason") or raw_step.get("action")),
                 "reasoning_content": _text(raw_step.get("thought")),
             })
             messages.append({"role": "tool", "content": _text(raw_step.get("observation"))})
             continue
-        assistant = {
+        messages.append({
             "role": "assistant",
-            "content": _text(raw_step.get("content_text") or raw_step.get("response")),
-            "content_blocks": blocks,
+            "content": "",
             "reasoning_content": _text(raw_step.get("thought")),
-        }
-        tool_calls = _messages_tool_calls_from_blocks(blocks)
-        if tool_calls:
-            assistant["tool_calls"] = tool_calls
-        elif _text(raw_step.get("action")).strip():
-            assistant["tool_calls"] = [_messages_tool_call(raw_step)]
-        messages.append(assistant)
+            "tool_calls": [_messages_tool_call(raw_step)],
+        })
         messages.append({"role": "tool", "content": _text(raw_step.get("observation"))})
     return {"id": task.task_id, "sample_type": "main", "messages": messages}
 

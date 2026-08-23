@@ -31,6 +31,7 @@ from sweagent.agent.models import (
     CostLimitExceededError,
     EmptyModelResponseError,
     ModelArguments,
+    _tool_call_to_shell_action,
     get_model,
 )
 from sweagent.agent.parsing import FormatError, ParseFunction
@@ -394,9 +395,12 @@ class Agent:
     def _append_history(self, item: HistoryItem) -> None:
         """Adds an item to history while keeping hook calls backward compatible."""
         for hook in self.hooks:
+            hook_content = item.get("content", "") or ""
+            if not isinstance(hook_content, str):
+                hook_content = json.dumps(hook_content, ensure_ascii=False)
             hook.on_query_message_added(
                 role=item.get("role", ""),
-                content=item.get("content", "") or "",
+                content=hook_content,
                 agent=item.get("agent", self.name),
                 is_demo=item.get("is_demo", False),
                 thought=item.get("thought", ""),
@@ -409,6 +413,7 @@ class Agent:
         return {
             "content_blocks": copy.deepcopy(getattr(self.model, "last_content_blocks", [])),
             "content_text": getattr(self.model, "last_content_text", "") or "",
+            "text_content": getattr(self.model, "last_text_content", "") or "",
             "raw_response": copy.deepcopy(getattr(self.model, "last_raw_response", {})),
             "stop_reason": getattr(self.model, "last_stop_reason", None),
             "usage": copy.deepcopy(getattr(self.model, "last_usage", {})),
@@ -896,7 +901,25 @@ class Agent:
         message = "\n".join(messages)
 
         self.logger.info(f"濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏缁愭鎱ㄥ鍡楀姦?MODEL INPUT\n{message}")
-        self._append_history({"role": "user", "content": message, "agent": self.name})
+        # For a native Anthropic tool call, return the real environment
+        # observation as a tool_result block. Keep the rendered prompt text as
+        # an additional text block so existing state/observation context is not
+        # lost. Other model providers continue using a plain string message.
+        previous = self.history[-1] if self.history else {}
+        previous_blocks = previous.get("content_blocks", []) if isinstance(previous, dict) else []
+        native_block = next((b for b in previous_blocks
+                             if isinstance(b, dict) and b.get("type") == "tool_use"), None)
+        if native_block and observation is not None and self.model.args.model_name.startswith("glm52"):
+            tool_result = {
+                "type": "tool_result",
+                "tool_use_id": native_block.get("id", ""),
+                "content": observation,
+            }
+            history_content: Any = [tool_result, {"type": "text", "text": message}]
+            self._append_history({"role": "user", "content": history_content,
+                                  "agent": self.name})
+        else:
+            self._append_history({"role": "user", "content": message, "agent": self.name})
 
         for hook in self.hooks:
             hook.on_model_query(query=self.local_history, agent=self.name)
@@ -954,6 +977,19 @@ class Agent:
             if not self._strict_action_is_valid(action):
                 raise FormatError("action must be one standalone command")
             return thought, action, output
+        # Native Anthropic Messages response: execute the tool_use directly.
+        # This must happen before the legacy Markdown/code-block parser, which
+        # otherwise turns a valid structured response into ``exit_format``.
+        native_calls = getattr(self.model, "last_tool_calls", [])
+        if native_calls:
+            native_action = _tool_call_to_shell_action(native_calls[0])
+            if native_action and not self.should_block_action(native_action):
+                self.info["native_tool_call"] = True
+                self.info["native_tool_name"] = native_calls[0].get("name", "")
+                return getattr(self.model, "last_thought", "") or "", native_action, output
+            self.info["native_tool_call"] = True
+            self.info["last_parse_error"] = "invalid_native_tool_call"
+            return "Exit due to invalid native tool call", "exit_format", output
         format_fails = blocklist_fails = 0
         while format_fails + blocklist_fails <= 10:
             try:
@@ -1333,7 +1369,3 @@ class Agent:
         if return_type == "info_trajectory":
             return self.info, self.trajectory
         return self.trajectory[-1][return_type]
-
-
-
-
