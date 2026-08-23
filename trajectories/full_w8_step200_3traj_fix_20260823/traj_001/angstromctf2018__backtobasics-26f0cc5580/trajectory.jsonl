@@ -1,0 +1,1 @@
+{"id":"angstromctf2018__backtobasics-26f0cc5580","sample_type":"main","messages":[{"role":"user","content":"backtobasics"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

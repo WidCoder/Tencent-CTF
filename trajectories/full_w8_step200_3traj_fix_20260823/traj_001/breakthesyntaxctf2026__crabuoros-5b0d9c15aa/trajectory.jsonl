@@ -1,0 +1,1 @@
+{"id":"breakthesyntaxctf2026__crabuoros-5b0d9c15aa","sample_type":"main","messages":[{"role":"user","content":"crabuoros"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

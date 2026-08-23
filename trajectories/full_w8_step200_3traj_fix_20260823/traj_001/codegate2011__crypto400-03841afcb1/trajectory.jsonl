@@ -1,0 +1,1 @@
+{"id":"codegate2011__crypto400-03841afcb1","sample_type":"main","messages":[{"role":"user","content":"crypto400"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

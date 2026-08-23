@@ -1,0 +1,1 @@
+{"id":"amateursctf__uncrackable-c1d77ff9b8","sample_type":"main","messages":[{"role":"user","content":"uncrackable"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

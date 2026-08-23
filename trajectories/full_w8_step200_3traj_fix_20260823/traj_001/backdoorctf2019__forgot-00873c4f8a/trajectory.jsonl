@@ -1,0 +1,1 @@
+{"id":"backdoorctf2019__forgot-00873c4f8a","sample_type":"main","messages":[{"role":"user","content":"forgot"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

@@ -1,0 +1,1 @@
+{"id":"angstromctf2016__asmtracing-66ce8a074b","sample_type":"main","messages":[{"role":"user","content":"asmtracing"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

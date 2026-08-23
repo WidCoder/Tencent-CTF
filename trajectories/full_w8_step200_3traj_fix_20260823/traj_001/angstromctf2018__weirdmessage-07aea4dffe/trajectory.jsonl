@@ -1,0 +1,1 @@
+{"id":"angstromctf2018__weirdmessage-07aea4dffe","sample_type":"main","messages":[{"role":"user","content":"weirdmessage"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

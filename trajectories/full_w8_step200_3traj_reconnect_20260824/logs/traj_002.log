@@ -1,0 +1,1 @@
+ERROR: docker_bridge_capacity_guard: bridge has 13 containers, at or above configured limit 8

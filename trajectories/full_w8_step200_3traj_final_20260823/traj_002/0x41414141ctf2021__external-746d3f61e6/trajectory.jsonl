@@ -1,0 +1,1 @@
+{"id":"0x41414141ctf2021__external-746d3f61e6","sample_type":"main","messages":[{"role":"user","content":"external"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

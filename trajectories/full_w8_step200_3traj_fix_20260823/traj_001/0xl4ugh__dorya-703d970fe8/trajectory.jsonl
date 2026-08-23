@@ -1,0 +1,1 @@
+{"id":"0xl4ugh__dorya-703d970fe8","sample_type":"main","messages":[{"role":"user","content":"dorya"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

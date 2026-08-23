@@ -1,0 +1,1 @@
+{"id":"backdoorctf2019__rsanne-9747e3d8d2","sample_type":"main","messages":[{"role":"user","content":"rsanne"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

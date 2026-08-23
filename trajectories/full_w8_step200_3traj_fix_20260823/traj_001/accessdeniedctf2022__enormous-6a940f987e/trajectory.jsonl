@@ -1,0 +1,1 @@
+{"id":"accessdeniedctf2022__enormous-6a940f987e","sample_type":"main","messages":[{"role":"user","content":"enormous"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

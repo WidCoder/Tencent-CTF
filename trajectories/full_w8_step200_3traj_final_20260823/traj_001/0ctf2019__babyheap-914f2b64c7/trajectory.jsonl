@@ -1,0 +1,1 @@
+{"id":"0ctf2019__babyheap-914f2b64c7","sample_type":"main","messages":[{"role":"user","content":"babyheap"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to attach container to CTF network: Container sweagent-enigma-latest-743e9b566a not found"}]}

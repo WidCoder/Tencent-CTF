@@ -1,0 +1,1 @@
+{"id":"asisctf2013__simpleofficer-59f455959e","sample_type":"main","messages":[{"role":"user","content":"simpleofficer"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

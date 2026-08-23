@@ -940,7 +940,7 @@ class SWEEnv(gym.Env):
             done: whether task is over
             info: additional information (e.g. debugging information)
         """
-        info: AgentInfo = {}
+        info: AgentInfo = {"return_code": None}
         # Make sure to have the right keys even if the submission is missing/empty
         info.update(self._get_edited_files_with_context(patch=""))  # type: ignore
 
@@ -1037,6 +1037,8 @@ class SWEEnv(gym.Env):
         except Exception:
             observation += "\nEXECUTION FAILED OR COMMAND MALFORMED"
             self.logger.exception("Unknown exception")
+
+        info["return_code"] = self.returncode
 
         # Record submission and end episode if submit keyword found
         submission = self.get_submission(observation)
@@ -1345,17 +1347,15 @@ class SWEEnv(gym.Env):
                 from sweagent.environment.utils import check_docker_subnet_availability
                 subnet_status = check_docker_subnet_availability()
                 
-                # If we're approaching subnet limits, try to clean up old networks first
+                # Do not remove ctfnet-* networks here. This method runs in every
+                # worker, and a global cleanup can delete another worker's network
+                # between its creation and container attachment. That race causes
+                # intermittent "network not found"/404 errors at workers > 1.
                 if subnet_status.get('subnet_usage_warning', False):
-                    self.logger.warning("Docker subnet usage is high, attempting cleanup of old networks...")
-                    try:
-                        from sweagent.environment.utils import cleanup_all_dynamic_networks
-                        cleanup_all_dynamic_networks()
-                        self.logger.info("Cleaned up old dynamic networks to free subnet space")
-                        # Check again after cleanup
-                        subnet_status = check_docker_subnet_availability()
-                    except Exception as e:
-                        self.logger.warning(f"Failed to clean up old networks: {e}")
+                    self.logger.warning(
+                        "Docker subnet usage is high; skipping global dynamic-network "
+                        "cleanup because other workers may still be starting."
+                    )
                 
                 if subnet_status.get('subnet_usage_critical', False):
                     self.logger.warning("CRITICAL: Docker subnet exhaustion detected!")
@@ -1477,7 +1477,30 @@ class SWEEnv(gym.Env):
                 try:
                     # Check if container is already attached to avoid conflicts
                     if self.container_obj:
-                        self.container_obj.reload()
+                        try:
+                            self.container_obj.reload()
+                        except docker.errors.NotFound:
+                            # Docker may auto-remove the non-persistent agent
+                            # while Compose services are starting. Recreate only
+                            # this task's agent and keep its challenge network.
+                            self.logger.warning(
+                                "Agent container disappeared before network attachment; "
+                                "recreating it and retrying."
+                            )
+                            if self.container is not None:
+                                try:
+                                    self.container.terminate()
+                                except Exception:
+                                    pass
+                            self.container = None
+                            self.container_obj = None
+                            self._init_container()
+                            self._init_scripts()
+                            self.logger.info(
+                                f"Recreated agent container {self.container_name} "
+                                "before network attachment"
+                            )
+
                         network_settings = self.container_obj.attrs.get('NetworkSettings', {})
                         networks = network_settings.get('Networks', {})
                         
@@ -2471,7 +2494,11 @@ class SWEEnv(gym.Env):
         if verifier:
             command = verifier if isinstance(verifier, list) else shlex.split(str(verifier))
             if not command:
-                return True
+                self._last_flag_verification.update({
+                    "flag_verified": "unknown",
+                    "flag_verification_evidence": "empty verifier command",
+                })
+                return False
 
             challenge_root = source_roots[0] if source_roots else None
             # Resolve importer-produced relative checker paths against the staged task.
@@ -2510,10 +2537,15 @@ class SWEEnv(gym.Env):
                     "flag_verified": "unknown",
                     "flag_verification_evidence": "script verifier unavailable",
                 })
-                return True
+                return False
 
-        # No plaintext flag and no verifier: terminate cleanly as unknown.
-        return True
+        # No plaintext flag and no verifier: do not accept an unverifiable submission.
+        self._last_flag_verification.update({
+            "flag_verified": "unknown",
+            "flag_verification_evidence": "no verifier evidence",
+        })
+        return False
+
     def get_submission(self, output: str) -> str | None:
         """
         Function for extracting diff patch submission at the end of an episode.

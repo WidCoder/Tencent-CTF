@@ -1,0 +1,1 @@
+{"id":"byuctf2024__multiplied-7f0ff56ab5","sample_type":"main","messages":[{"role":"user","content":"multiplied"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

@@ -1,0 +1,1 @@
+{"id":"backdoorctf2019__echo-6502dc4978","sample_type":"main","messages":[{"role":"user","content":"echo"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

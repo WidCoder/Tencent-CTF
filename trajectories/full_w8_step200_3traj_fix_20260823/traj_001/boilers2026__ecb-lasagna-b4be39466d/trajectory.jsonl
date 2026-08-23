@@ -1,0 +1,1 @@
+{"id":"boilers2026__ecb-lasagna-b4be39466d","sample_type":"main","messages":[{"role":"user","content":"ecb-lasagna"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

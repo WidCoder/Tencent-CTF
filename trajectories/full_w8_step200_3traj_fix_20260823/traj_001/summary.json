@@ -1,0 +1,19 @@
+{
+  "batch_errors": [],
+  "docker_bridge_containers_at_end": null,
+  "docker_bridge_containers_at_start": 2,
+  "environment_error": 0,
+  "generated_at": "2026-08-23T16:33:03+00:00",
+  "generated_trajectories": 249,
+  "generation_failed": 249,
+  "pending": 582,
+  "run_status": {
+    "error": 249,
+    "failed": 0,
+    "generated": 0
+  },
+  "skipped": 0,
+  "total_tasks": 831,
+  "unsolved": 249,
+  "verified_solved": 0
+}

@@ -1,0 +1,1 @@
+{"id":"asisctf2014__randomimage-343c139fc3","sample_type":"main","messages":[{"role":"user","content":"randomimage"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

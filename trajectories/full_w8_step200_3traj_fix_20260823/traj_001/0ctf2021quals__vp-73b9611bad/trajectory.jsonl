@@ -1,0 +1,1 @@
+{"id":"0ctf2021quals__vp-73b9611bad","sample_type":"main","messages":[{"role":"user","content":"vp"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to create CTF network: 400 Client Error for http+docker://localhost/v1.52/networks/create: Bad Request (\"all predefined address pools have been fully subnetted\")"}]}

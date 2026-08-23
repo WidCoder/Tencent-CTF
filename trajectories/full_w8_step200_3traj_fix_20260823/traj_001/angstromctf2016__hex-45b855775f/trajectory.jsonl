@@ -1,0 +1,1 @@
+{"id":"angstromctf2016__hex-45b855775f","sample_type":"main","messages":[{"role":"user","content":"hex"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

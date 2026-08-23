@@ -1,0 +1,1 @@
+{"id":"angstromctf2016__formatone-98879638e5","sample_type":"main","messages":[{"role":"user","content":"formatone"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

@@ -1,0 +1,1 @@
+{"id":"asisctf2013__dice-9a740c2fe7","sample_type":"main","messages":[{"role":"user","content":"dice"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

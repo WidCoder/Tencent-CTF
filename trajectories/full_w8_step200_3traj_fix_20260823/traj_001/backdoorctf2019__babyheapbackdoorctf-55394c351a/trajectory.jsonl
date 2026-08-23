@@ -1,0 +1,1 @@
+{"id":"backdoorctf2019__babyheapbackdoorctf-55394c351a","sample_type":"main","messages":[{"role":"user","content":"babyheapbackdoorctf"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

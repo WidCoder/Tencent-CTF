@@ -1,0 +1,1 @@
+{"id":"angstromctf2022__amongus-7f5512976a","sample_type":"main","messages":[{"role":"user","content":"amongus"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

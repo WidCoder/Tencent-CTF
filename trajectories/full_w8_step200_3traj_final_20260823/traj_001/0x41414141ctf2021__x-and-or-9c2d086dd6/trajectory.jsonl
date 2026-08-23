@@ -1,0 +1,1 @@
+{"id":"0x41414141ctf2021__x-and-or-9c2d086dd6","sample_type":"main","messages":[{"role":"user","content":"x-and-or"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

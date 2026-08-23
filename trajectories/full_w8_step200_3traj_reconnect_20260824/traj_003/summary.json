@@ -1,0 +1,25 @@
+{
+  "batch_errors": [
+    {
+      "code": "docker_bridge_capacity_guard",
+      "message": "bridge has 13 containers, at or above configured limit 8",
+      "time": "2026-08-23T16:04:14+00:00"
+    }
+  ],
+  "docker_bridge_containers_at_end": 13,
+  "docker_bridge_containers_at_start": 13,
+  "environment_error": 0,
+  "generated_at": "2026-08-23T16:04:14+00:00",
+  "generated_trajectories": 0,
+  "generation_failed": 0,
+  "pending": 831,
+  "run_status": {
+    "error": 0,
+    "failed": 0,
+    "generated": 0
+  },
+  "skipped": 0,
+  "total_tasks": 831,
+  "unsolved": 0,
+  "verified_solved": 0
+}

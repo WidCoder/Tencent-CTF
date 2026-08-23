@@ -1,0 +1,1 @@
+{"id":"angstromctf2017__knockknock-12b3cb841a","sample_type":"main","messages":[{"role":"user","content":"knockknock"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

@@ -1,0 +1,1 @@
+{"id":"angstromctf2016__endian-d1fb7a611d","sample_type":"main","messages":[{"role":"user","content":"endian"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

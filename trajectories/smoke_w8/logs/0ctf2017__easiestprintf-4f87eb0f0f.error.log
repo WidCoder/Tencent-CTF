@@ -1,0 +1,28 @@
+timestamp: 2026-08-23T16:17:01+00:00
+challenge_json: /data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2017/easiestprintf/challenge.json
+repo_path: /data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2017/easiestprintf
+dockerfile_path: /data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2017/easiestprintf/Dockerfile
+command: /home/ubuntu/miniconda3/envs/enigma/bin/python /data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/run.py --model_name glm52_10 --image_name sweagent/enigma:latest --data_path /tmp/enigma-easiestprintf-6bxohfpi/repo/challenge.json --repo_path /tmp/enigma-easiestprintf-6bxohfpi/repo --config_file config/default_ctf.yaml --per_instance_step_limit 20 --trajectory_path /data1/nfs/wangyingqi/Cyber-Zero/trajectories/smoke_w8/0ctf2017__easiestprintf-4f87eb0f0f/enigma_output/attempt-20260824T001541197095-76e2a2f6 --messages_api_url http://127.0.0.1:23106/v1/messages --messages_api_key EMPTY
+
+error:
+
+
+stdout:
+
+
+stderr:
+
+
+traceback:
+Traceback (most recent call last):
+  File "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/scripts/ctfdojo_batch_generate.py", line 486, in run_one_task
+    result = subprocess.run(command, cwd=ENIGMA_ROOT, capture_output=True, text=True,
+  File "/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/subprocess.py", line 505, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+  File "/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/subprocess.py", line 1154, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+  File "/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/subprocess.py", line 2021, in _communicate
+    ready = selector.select(timeout)
+  File "/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/selectors.py", line 416, in select
+    fd_event_list = self._selector.poll(timeout)
+KeyboardInterrupt

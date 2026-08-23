@@ -1,0 +1,1 @@
+{"id":"angstromctf2016__imageencryptor-3fd7f8a719","sample_type":"main","messages":[{"role":"user","content":"imageencryptor"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}
