@@ -1,0 +1,1 @@
+{"id":"tjctf2026__polaroid-da427d304a","sample_type":"main","messages":[{"role":"user","content":"polaroid"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

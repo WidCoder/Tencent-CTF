@@ -1311,8 +1311,11 @@ def get_docker_compose(
                 logger.info(f"Created dynamic docker-compose at {actual_compose_path} with port mappings: {port_mappings}")
             except Exception as e:
                 logger.error(f"Failed to create dynamic docker-compose: {e}")
-                actual_compose_path = docker_compose_path
-                port_mappings = {}
+                try:
+                    cleanup_dynamic_network(dynamic_network_name)
+                except Exception as cleanup_error:
+                    logger.warning(f"Failed to cleanup dynamic network {dynamic_network_name}: {cleanup_error}")
+                raise RuntimeError(f"Failed to create dynamic docker-compose: {e}")
     
     # CRITICAL FIX FOR PARALLEL EXECUTION: Generate unique project name
     # Docker Compose uses the directory name as project name by default, causing conflicts
@@ -1437,10 +1440,24 @@ def get_docker_compose(
             
     except subprocess.TimeoutExpired:
         logger.error(f"❌ Docker Compose startup timed out after {DOCKER_COMPOSE_STARTUP_DELAY} seconds!")
-        compose.kill()  # Kill the hanging process
+        compose.kill()
+        if dynamic_ports and container_name_suffix:
+            try:
+                cleanup_dynamic_network(dynamic_network_name)
+            except Exception as cleanup_error:
+                logger.warning(f"Failed to cleanup dynamic network {dynamic_network_name}: {cleanup_error}")
+        if actual_compose_path != docker_compose_path and actual_compose_path.name.startswith("docker-compose-"):
+            actual_compose_path.unlink(missing_ok=True)
         raise RuntimeError(f"Docker Compose startup timed out after {DOCKER_COMPOSE_STARTUP_DELAY} seconds")
     except Exception as e:
         logger.error(f"Failed to start docker-compose: {e}")
+        if dynamic_ports and container_name_suffix:
+            try:
+                cleanup_dynamic_network(dynamic_network_name)
+            except Exception as cleanup_error:
+                logger.warning(f"Failed to cleanup dynamic network {dynamic_network_name}: {cleanup_error}")
+        if actual_compose_path != docker_compose_path and actual_compose_path.name.startswith("docker-compose-"):
+            actual_compose_path.unlink(missing_ok=True)
         raise e
     
     return actual_compose_path, port_mappings, project_name

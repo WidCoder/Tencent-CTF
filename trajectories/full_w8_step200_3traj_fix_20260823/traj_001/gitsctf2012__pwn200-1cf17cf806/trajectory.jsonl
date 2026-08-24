@@ -1,0 +1,1 @@
+{"id":"gitsctf2012__pwn200-1cf17cf806","sample_type":"main","messages":[{"role":"user","content":"pwn200"},{"role":"assistant","content":"environment_reset","reasoning_content":""},{"role":"tool","content":"CTF server is not accessible even after restart attempts. Task terminated."}]}

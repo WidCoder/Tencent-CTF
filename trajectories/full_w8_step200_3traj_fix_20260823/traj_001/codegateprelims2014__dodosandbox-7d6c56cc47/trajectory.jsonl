@@ -1,0 +1,1 @@
+{"id":"codegateprelims2014__dodosandbox-7d6c56cc47","sample_type":"main","messages":[{"role":"user","content":"dodosandbox"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

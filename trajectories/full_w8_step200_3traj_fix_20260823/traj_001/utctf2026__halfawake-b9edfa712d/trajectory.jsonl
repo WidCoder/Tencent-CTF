@@ -1,0 +1,1 @@
+{"id":"utctf2026__halfawake-b9edfa712d","sample_type":"main","messages":[{"role":"user","content":"halfawake"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"('Subprocess exited unexpectedly.\\nCurrent buffer: ', '')"}]}

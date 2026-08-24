@@ -1,0 +1,1 @@
+{"id":"cybergame2026__ch23-plaintext-f6acec28b9","sample_type":"main","messages":[{"role":"user","content":"ch23-plaintext"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

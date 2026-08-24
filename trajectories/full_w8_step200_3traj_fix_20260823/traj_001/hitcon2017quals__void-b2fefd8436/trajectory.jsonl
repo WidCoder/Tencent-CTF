@@ -1,0 +1,1 @@
+{"id":"hitcon2017quals__void-b2fefd8436","sample_type":"main","messages":[{"role":"user","content":"void"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

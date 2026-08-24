@@ -1,0 +1,1 @@
+{"id":"r3ctf2024__hackcam-8a6792059a","sample_type":"main","messages":[{"role":"user","content":"hackcam"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

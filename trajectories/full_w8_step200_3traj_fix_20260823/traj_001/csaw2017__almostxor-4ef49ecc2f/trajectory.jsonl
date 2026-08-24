@@ -1,0 +1,1 @@
+{"id":"csaw2017__almostxor-4ef49ecc2f","sample_type":"main","messages":[{"role":"user","content":"almostxor"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

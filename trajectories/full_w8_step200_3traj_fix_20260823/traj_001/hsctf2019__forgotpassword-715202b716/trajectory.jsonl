@@ -1,0 +1,1 @@
+{"id":"hsctf2019__forgotpassword-715202b716","sample_type":"main","messages":[{"role":"user","content":"forgotpassword"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

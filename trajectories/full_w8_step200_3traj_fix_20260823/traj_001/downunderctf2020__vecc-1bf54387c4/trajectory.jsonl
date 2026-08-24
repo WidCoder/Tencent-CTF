@@ -1,0 +1,1 @@
+{"id":"downunderctf2020__vecc-1bf54387c4","sample_type":"main","messages":[{"role":"user","content":"vecc"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

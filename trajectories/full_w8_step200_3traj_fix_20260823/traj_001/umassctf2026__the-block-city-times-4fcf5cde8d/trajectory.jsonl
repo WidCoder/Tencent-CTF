@@ -1,0 +1,1 @@
+{"id":"umassctf2026__the-block-city-times-4fcf5cde8d","sample_type":"main","messages":[{"role":"user","content":"the-block-city-times"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to attach container to CTF network: Container disappeared after creation"}]}

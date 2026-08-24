@@ -1,0 +1,1 @@
+{"id":"cryptoctf2021__lower-e4768a4bc9","sample_type":"main","messages":[{"role":"user","content":"lower"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

@@ -1,0 +1,1 @@
+{"id":"cryptoctf2021__wolf-781b54ca8e","sample_type":"main","messages":[{"role":"user","content":"wolf"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to attach container to CTF network: Container sweagent-enigma-latest-68103c1051 not found"}]}

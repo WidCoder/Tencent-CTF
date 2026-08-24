@@ -1,0 +1,1 @@
+{"id":"breakthesyntaxctf2026__seashells-9437d583af","sample_type":"main","messages":[{"role":"user","content":"seashells"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to attach container to CTF network: Container sweagent-enigma-latest-7476ec6d93 not found"}]}

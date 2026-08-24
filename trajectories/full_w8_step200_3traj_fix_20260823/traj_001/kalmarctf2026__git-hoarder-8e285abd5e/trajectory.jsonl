@@ -1,0 +1,1 @@
+{"id":"kalmarctf2026__git-hoarder-8e285abd5e","sample_type":"main","messages":[{"role":"user","content":"git-hoarder"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to attach container to CTF network: Container sweagent-enigma-latest-ccfe3f5cbd not found"}]}

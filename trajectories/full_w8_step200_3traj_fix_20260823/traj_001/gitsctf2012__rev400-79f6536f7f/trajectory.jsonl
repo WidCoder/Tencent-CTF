@@ -1,0 +1,1 @@
+{"id":"gitsctf2012__rev400-79f6536f7f","sample_type":"main","messages":[{"role":"user","content":"rev400"},{"role":"assistant","content":"environment_reset","reasoning_content":""},{"role":"tool","content":"CTF server is not accessible even after restart attempts. Task terminated."}]}

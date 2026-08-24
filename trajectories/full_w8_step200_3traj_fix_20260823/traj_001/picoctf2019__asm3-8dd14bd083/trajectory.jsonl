@@ -1,0 +1,1 @@
+{"id":"picoctf2019__asm3-8dd14bd083","sample_type":"main","messages":[{"role":"user","content":"asm3"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

@@ -1,0 +1,1 @@
+{"id":"csawctf2014__bigdata-e46864bd7d","sample_type":"main","messages":[{"role":"user","content":"bigdata"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

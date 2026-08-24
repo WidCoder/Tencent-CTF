@@ -1,0 +1,1 @@
+{"id":"downunderctf2025__shrsa-de9fc8d56f","sample_type":"main","messages":[{"role":"user","content":"shrsa"},{"role":"assistant","content":"environment_reset","reasoning_content":""},{"role":"tool","content":"CTF server is not accessible even after restart attempts. Task terminated."}]}

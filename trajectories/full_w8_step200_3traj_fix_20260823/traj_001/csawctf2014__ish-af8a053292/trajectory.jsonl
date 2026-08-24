@@ -1,0 +1,1 @@
+{"id":"csawctf2014__ish-af8a053292","sample_type":"main","messages":[{"role":"user","content":"ish"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

@@ -1,0 +1,1 @@
+{"id":"sekaictf2025__alterego-cb827e02ef","sample_type":"main","messages":[{"role":"user","content":"alterego"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to attach container to CTF network: Failed to get container object."}]}

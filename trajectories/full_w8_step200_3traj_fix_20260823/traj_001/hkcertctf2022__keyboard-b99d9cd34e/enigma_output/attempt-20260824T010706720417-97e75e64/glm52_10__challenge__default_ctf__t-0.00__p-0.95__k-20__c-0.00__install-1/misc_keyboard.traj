@@ -1,0 +1,40 @@
+{
+  "trajectory_schema_version": 2,
+  "environment": "swe_main",
+  "trajectory": [
+    {
+      "step_id": 1,
+      "thought": "",
+      "action": "runner_exception",
+      "tool_name": "unknown",
+      "tool_args": "",
+      "observation": "('Subprocess exited unexpectedly.\\nCurrent buffer: ', '')",
+      "return_code": null,
+      "execution_time": 0.0,
+      "error": "RuntimeError",
+      "terminal": true,
+      "response": "",
+      "state": "",
+      "content_blocks": [],
+      "raw_response": {},
+      "usage": {},
+      "content_text": "",
+      "stop_reason": null,
+      "context_compressed": false
+    }
+  ],
+  "history": [],
+  "info": {
+    "traceback": "Traceback (most recent call last):\n  File \"/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/agent/agents.py\", line 1326, in run\n    self.init_environment_vars(env)\n  File \"/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/agent/agents.py\", line 1060, in init_environment_vars\n    self.set_environment_vars(env, self.config.env_variables)\n  File \"/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/agent/agents.py\", line 1103, in set_environment_vars\n    raise e\n  File \"/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/agent/agents.py\", line 1081, in set_environment_vars\n    output = env.communicate(commands)\n  File \"/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/environment/swe_env.py\", line 2286, in communicate\n    output, valid = self._check_syntax(input)\n  File \"/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/environment/swe_env.py\", line 2219, in _check_syntax\n    output = self._communicate(f\"/bin/bash -n <<'EOF'\\n{input}\\nEOF\\n\")\n  File \"/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/environment/swe_env.py\", line 2184, in _communicate\n    return self._communicate_experimental(input, timeout_duration, no_output_timeout_duration)\n  File \"/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/environment/swe_env.py\", line 2069, in _communicate_experimental\n    buffer, exit_code = read_with_timeout_experimental(\n  File \"/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/environment/utils.py\", line 715, in read_with_timeout_experimental\n    raise RuntimeError(msg, body)\nRuntimeError: ('Subprocess exited unexpectedly.\\nCurrent buffer: ', '')\n",
+    "exit_status": "runner_exception",
+    "terminal_reason": "('Subprocess exited unexpectedly.\\nCurrent buffer: ', '')",
+    "error_type": "RuntimeError",
+    "flag_submitted": false,
+    "flag_verified": "unknown",
+    "episode_end_time": "2026-08-23T17:08:09Z",
+    "total_steps": 1,
+    "trajectory_schema_version": 2,
+    "artifact_type": "agent_trace"
+  },
+  "context_events": []
+}

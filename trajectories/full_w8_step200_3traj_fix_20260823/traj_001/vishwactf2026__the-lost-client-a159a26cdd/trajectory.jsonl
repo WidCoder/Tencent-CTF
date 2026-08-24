@@ -1,0 +1,1 @@
+{"id":"vishwactf2026__the-lost-client-a159a26cdd","sample_type":"main","messages":[{"role":"user","content":"the-lost-client"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

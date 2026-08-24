@@ -1,0 +1,1 @@
+{"id":"patriotctf2022__hike-e43b46b2d8","sample_type":"main","messages":[{"role":"user","content":"hike"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

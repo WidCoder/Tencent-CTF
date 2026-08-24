@@ -96,6 +96,42 @@ def _messages_tool_call(step: dict[str, Any]) -> dict[str, Any]:
     return {"name": "Bash", "arguments": {"command": _text(step.get("action")).strip()}}
 
 
+def _messages_tool_calls_from_blocks(blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Project structured Anthropic tool blocks to the public tool_calls field."""
+    calls: list[dict[str, Any]] = []
+    for block in blocks:
+        block_type = str(block.get("type", "")).lower()
+        if block_type == "tool_use":
+            calls.append({"name": _text(block.get("name")) or "tool", "arguments": block.get("input", {})})
+        elif block_type in {"tool_call", "function"}:
+            function = block.get("function") if isinstance(block.get("function"), dict) else block
+            arguments = function.get("arguments", function.get("input", {}))
+            if isinstance(arguments, str):
+                try:
+                    arguments = json.loads(arguments)
+                except json.JSONDecodeError:
+                    arguments = {"command": arguments}
+            calls.append({"name": _text(function.get("name")) or "tool", "arguments": arguments})
+    return calls
+
+
+def _content_blocks_for_step(step: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return structured blocks, with a lossless-enough fallback for old traces."""
+    blocks = step.get("content_blocks")
+    if isinstance(blocks, list) and all(isinstance(block, dict) for block in blocks):
+        return json.loads(json.dumps(blocks, ensure_ascii=False))
+    fallback: list[dict[str, Any]] = []
+    thought = _text(step.get("thought"))
+    response = _text(step.get("response") if step.get("response") is not None else step.get("content_text"))
+    if thought:
+        fallback.append({"type": "thinking", "thinking": thought})
+    if response:
+        fallback.append({"type": "text", "text": response})
+    if not response and _text(step.get("action")).strip():
+        fallback.append({"type": "tool_use", "name": "Bash", "input": {"command": _text(step.get("action")).strip()}})
+    return fallback
+
+
 def _is_terminal_step(step: dict[str, Any]) -> bool:
     if step.get("terminal") is True:
         return True
@@ -104,34 +140,55 @@ def _is_terminal_step(step: dict[str, Any]) -> bool:
 
 
 def trajectory_to_messages(payload: dict[str, Any], task: Challenge) -> dict[str, Any]:
-    """Convert an internal EnIGMA trajectory into the public messages JSONL schema."""
+    """Convert an internal EnIGMA trajectory to a dual-track messages JSONL record."""
     history = payload.get("history")
     history = history if isinstance(history, list) else []
     system = next((entry for entry in history if isinstance(entry, dict) and entry.get("role") == "system"), None)
     initial_user = next((entry for entry in history if isinstance(entry, dict) and entry.get("role") == "user"), None)
     messages: list[dict[str, Any]] = []
+
     if system is not None:
-        messages.append({"role": "system", "content": _text(system.get("content"))})
-    messages.append({"role": "user", "content": _text(initial_user.get("content")) if initial_user is not None else task.name})
+        system_text = _text(system.get("content"))
+        messages.append({
+            "role": "system",
+            "content": system_text,
+            "content_blocks": system.get("content_blocks") if isinstance(system.get("content_blocks"), list) else [{"type": "text", "text": system_text}],
+        })
+    user_text = _text(initial_user.get("content")) if initial_user is not None else task.name
+    messages.append({
+        "role": "user",
+        "content": user_text,
+        "content_blocks": initial_user.get("content_blocks") if isinstance(initial_user, dict) and isinstance(initial_user.get("content_blocks"), list) else [{"type": "text", "text": user_text}],
+    })
+
     trajectory = payload.get("trajectory")
     trajectory = trajectory if isinstance(trajectory, list) else []
     for raw_step in trajectory:
         if not isinstance(raw_step, dict):
             continue
+        blocks = _content_blocks_for_step(raw_step)
         if _is_terminal_step(raw_step):
+            terminal_text = _text(raw_step.get("terminal_reason") or raw_step.get("action"))
             messages.append({
                 "role": "assistant",
-                "content": _text(raw_step.get("terminal_reason") or raw_step.get("action")),
+                "content": terminal_text,
+                "content_blocks": blocks or [{"type": "text", "text": terminal_text}],
                 "reasoning_content": _text(raw_step.get("thought")),
             })
             messages.append({"role": "tool", "content": _text(raw_step.get("observation"))})
             continue
-        messages.append({
+        assistant = {
             "role": "assistant",
-            "content": "",
+            "content": _text(raw_step.get("response") if raw_step.get("response") is not None else raw_step.get("content_text")),
+            "content_blocks": blocks,
             "reasoning_content": _text(raw_step.get("thought")),
-            "tool_calls": [_messages_tool_call(raw_step)],
-        })
+        }
+        tool_calls = _messages_tool_calls_from_blocks(blocks)
+        if tool_calls:
+            assistant["tool_calls"] = tool_calls
+        elif _text(raw_step.get("action")).strip():
+            assistant["tool_calls"] = [_messages_tool_call(raw_step)]
+        messages.append(assistant)
         messages.append({"role": "tool", "content": _text(raw_step.get("observation"))})
     return {"id": task.task_id, "sample_type": "main", "messages": messages}
 
@@ -284,7 +341,7 @@ def episode_status_from_trajectory(payload: dict[str, Any]) -> dict[str, Any]:
     exit_status = info.get("exit_status")
     if not isinstance(exit_status, str) or not exit_status:
         return {"episode_status": "running", "episode_complete": False}
-    if exit_status == "submitted":
+    if isinstance(exit_status, str) and exit_status.startswith("submitted"):
         status = "completed"
     elif exit_status in {"task_timeout", "timeout"}:
         status = "timeout"
@@ -292,12 +349,13 @@ def episode_status_from_trajectory(payload: dict[str, Any]) -> dict[str, Any]:
         status = "step_limit"
     elif exit_status == "exit_format":
         status = "format_error"
-    elif any(token in exit_status for token in ("environment", "container", "server_crashed", "docker")):
+    elif exit_status in {"ctf_server_unavailable", "ctf_server_crashed"}:
+        return {"episode_status": exit_status, "episode_complete": False}
+    elif any(token in exit_status for token in ("environment", "container", "server_crashed", "unavailable", "docker")):
         status = "environment_error"
     else:
         status = "early_exit"
-    return {"episode_status": status, "episode_complete": status != "running" and isinstance(trajectory, list)}
-
+    return {"episode_status": status, "episode_complete": status == "completed" or (status != "running" and isinstance(trajectory, list))}
 
 def outcome_status_from(flags: dict[str, Any], episode: dict[str, Any], trajectory_generated: bool) -> str:
     if flags.get("flag_verified") is True and episode.get("episode_status") == "completed":
@@ -331,8 +389,11 @@ def enrich_completed_records(state: dict[str, Any], output_dir: Path, tasks: lis
 
 def completed(state: dict[str, Any], output_dir: Path, task: Challenge) -> bool:
     record = state["tasks"].get(task.relative_path, {})
-    return record.get("run_status") == "generated" and record.get("episode_status") != "running" and valid_trajectory(trajectory_path(output_dir, task))
-
+    return (
+        record.get("run_status") == "generated"
+        and record.get("episode_complete") is True
+        and valid_trajectory(trajectory_path(output_dir, task))
+    )
 
 def task_record(task: Challenge, **extra: Any) -> dict[str, Any]:
     record = {
@@ -392,14 +453,34 @@ def docker_bridge_container_count() -> int:
     return len(containers)
 
 
-def cleanup_agent_containers(baseline: set[str] | None, image_name: str = AGENT_IMAGE) -> dict[str, Any]:
-    """Delete only containers in (current exact-image set - baseline)."""
+def cleanup_agent_containers(
+    baseline: set[str] | None,
+    image_name: str = AGENT_IMAGE,
+    resource_token: str | None = None,
+) -> dict[str, Any]:
+    """Delete only this worker's agent containers.
+
+    A shared image baseline is not sufficient under parallel execution: a
+    sibling worker can create a container after our baseline and be mistaken
+    for ours. New batch workers embed ``resource_token`` in the container
+    name, so cleanup is scoped to that token. The baseline fallback preserves
+    compatibility for callers outside the batch runner.
+    """
     cleanup: dict[str, Any] = {"attempted": baseline is not None, "removed_container_ids": [], "failed_container_ids": []}
     if baseline is None:
         cleanup["error"] = "agent container baseline unavailable"
         return cleanup
     try:
-        created_ids = sorted(docker_agent_container_ids(image_name) - baseline)
+        if resource_token:
+            result = subprocess.run(
+                ["docker", "ps", "-aq", "--filter", f"ancestor={image_name}", "--filter", f"name={resource_token}"],
+                capture_output=True, text=True, check=False,
+            )
+            if result.returncode:
+                raise RuntimeError(result.stderr.strip() or result.stdout.strip() or "docker ps failed")
+            created_ids = sorted({line.strip() for line in result.stdout.splitlines() if line.strip()})
+        else:
+            created_ids = sorted(docker_agent_container_ids(image_name) - baseline)
     except Exception as error:
         cleanup["error"] = str(error)
         return cleanup
@@ -412,6 +493,58 @@ def cleanup_agent_containers(baseline: set[str] | None, image_name: str = AGENT_
             cleanup["failed_container_ids"].append(container_id)
     return cleanup
 
+
+def cleanup_attempt_resources(resource_token: str) -> dict[str, Any]:
+    """Remove Docker resources owned by one batch attempt.
+
+    The outer timeout can terminate ``run.py`` before its normal ``close``
+    path runs.  Dynamic compose services and their ``ctfnet-*`` network then
+    remain behind and eventually exhaust Docker's address pools.  Every batch
+    attempt gets a random token which is embedded in the generated resource
+    names; only matching resources are removed here, so parallel workers are
+    not affected.
+    """
+    result: dict[str, Any] = {
+        "resource_token": resource_token,
+        "removed_containers": [],
+        "failed_containers": [],
+        "removed_networks": [],
+        "failed_networks": [],
+    }
+    if not resource_token:
+        result["error"] = "empty resource token"
+        return result
+
+    def list_ids(command: list[str]) -> list[str]:
+        completed = subprocess.run(command, capture_output=True, text=True, check=False)
+        if completed.returncode:
+            raise RuntimeError(completed.stderr.strip() or completed.stdout.strip() or "docker list failed")
+        return [line.strip() for line in completed.stdout.splitlines() if line.strip()]
+
+    try:
+        container_ids = list_ids(["docker", "ps", "-aq", "--filter", f"name={resource_token}"])
+    except Exception as error:
+        result["container_list_error"] = str(error)
+        container_ids = []
+    for container_id in container_ids:
+        try:
+            completed = subprocess.run(["docker", "rm", "-f", container_id], capture_output=True, text=True, check=False)
+            (result["removed_containers"] if completed.returncode == 0 else result["failed_containers"]).append(container_id)
+        except OSError:
+            result["failed_containers"].append(container_id)
+
+    try:
+        network_ids = list_ids(["docker", "network", "ls", "-q", "--filter", f"name=ctfnet-{resource_token}"])
+    except Exception as error:
+        result["network_list_error"] = str(error)
+        network_ids = []
+    for network_id in network_ids:
+        try:
+            completed = subprocess.run(["docker", "network", "rm", network_id], capture_output=True, text=True, check=False)
+            (result["removed_networks"] if completed.returncode == 0 else result["failed_networks"]).append(network_id)
+        except OSError:
+            result["failed_networks"].append(network_id)
+    return result
 
 def docker_network_exhausted(*output: str) -> bool:
     detail = "\n".join(output).lower()
@@ -466,6 +599,7 @@ def run_one_task(request: WorkerRequest) -> dict[str, Any]:
     task = request.challenge
     output_dir = Path(request.output_dir)
     attempt_id = f"attempt-{dt.datetime.now().strftime('%Y%m%dT%H%M%S%f')}-{uuid.uuid4().hex[:8]}"
+    resource_token = f"batch-{uuid.uuid4().hex[:12]}"
     runner_output = output_dir / task.task_id / "enigma_output" / attempt_id
     error_log = output_dir / LOGS_DIR_NAME / f"{task.task_id}.error.log"
     command: list[str] = []
@@ -483,8 +617,10 @@ def run_one_task(request: WorkerRequest) -> dict[str, Any]:
                 "--messages_api_url", request.messages_api_url, "--messages_api_key", request.messages_api_key]
             baseline = docker_agent_container_ids(request.image_name)
             try:
+                run_env = os.environ.copy()
+                run_env["ENIGMA_BATCH_ATTEMPT_ID"] = resource_token
                 result = subprocess.run(command, cwd=ENIGMA_ROOT, capture_output=True, text=True,
-                                        check=False, timeout=request.task_timeout or None)
+                                        check=False, timeout=request.task_timeout or None, env=run_env)
             except subprocess.TimeoutExpired as error:
                 timeout_error = error
         source = find_trajectory(runner_output)
@@ -543,7 +679,10 @@ def run_one_task(request: WorkerRequest) -> dict[str, Any]:
             steps=len(payload.get("trajectory", [])), outcome_status=outcome_status_from(flags, episode, True), **episode, **flags)
         write_public_trajectory(destination, payload, task)
     finally:
-        cleanup = cleanup_agent_containers(baseline, request.image_name)
+        cleanup = cleanup_agent_containers(baseline, request.image_name, resource_token)
+        attempt_cleanup = cleanup_attempt_resources(resource_token)
+        if 'record' in locals():
+            record["attempt_resource_cleanup"] = attempt_cleanup
         if 'record' in locals():
             record["container_cleanup"] = cleanup
     return record
@@ -597,21 +736,72 @@ def trajectory_quality(records: list[dict[str, Any]]) -> dict[str, int]:
     return counts
 def reporting_counts(records: list[dict[str, Any]]) -> dict[str, int]:
     generated = [record for record in records if record.get("trajectory_generated")]
-    return {"generated_trajectories": len(generated), "verified_solved": sum(record.get("outcome_status") == "solved" for record in generated),
-            "unsolved": sum(record.get("outcome_status") == "unsolved" for record in generated),
-            "generation_failed": sum(record.get("run_status") in {"failed", "error"} for record in records),
-            "environment_error": sum(record.get("episode_status") == "environment_error" for record in records)}
+    flag_submitted = sum(bool(record.get("flag_submitted")) for record in records)
+    flag_verified = sum(record.get("flag_verified") is True for record in records)
+    flag_unknown = sum(record.get("flag_verified") == "unknown" and bool(record.get("flag_submitted")) for record in records)
+    flag_not_attempted = sum(not bool(record.get("flag_submitted")) and record.get("flag_verified") is not True for record in records)
+    return {
+        "generated_trajectories": len(generated),
+        "trajectory_generated": len(generated),
+        "verified_solved": sum(record.get("outcome_status") == "solved" for record in generated),
+        "unsolved": sum(record.get("outcome_status") == "unsolved" for record in generated),
+        "generation_failed": sum(record.get("run_status") in {"failed", "error"} for record in records),
+        "environment_error": sum(record.get("episode_status") == "environment_error" for record in records),
+        "flag_submitted": flag_submitted,
+        "flag_verified": flag_verified,
+        "flag_status_unknown": flag_unknown,
+        "flag_not_attempted": flag_not_attempted,
+    }
 
 
 def build_summary(tasks: list[Challenge], state: dict[str, Any], skipped: int) -> dict[str, Any]:
     records = [state["tasks"].get(task.relative_path, {}) for task in tasks]
     counts = reporting_counts(records)
+    categories: dict[str, dict[str, int]] = {}
+    for task in tasks:
+        record = state["tasks"].get(task.relative_path, {})
+        category = task.category or "unknown"
+        category_counts = categories.setdefault(category, {"trajectory_generated": 0, "flag_submitted": 0, "flag_verified": 0})
+        if record.get("trajectory_generated"):
+            category_counts["trajectory_generated"] += 1
+        if record.get("flag_submitted"):
+            category_counts["flag_submitted"] += 1
+        if record.get("flag_verified") is True:
+            category_counts["flag_verified"] += 1
+    cleanup_removed = sum(
+        len(record.get("container_cleanup", {}).get("removed_container_ids", []))
+        for record in records
+        if isinstance(record.get("container_cleanup"), dict)
+    )
+    attempt_cleanup_removed = sum(
+        len(record.get("attempt_resource_cleanup", {}).get("removed_containers", []))
+        + len(record.get("attempt_resource_cleanup", {}).get("removed_networks", []))
+        for record in records
+        if isinstance(record.get("attempt_resource_cleanup"), dict)
+    )
+    attempt_cleanup_failed = sum(
+        len(record.get("attempt_resource_cleanup", {}).get("failed_containers", []))
+        + len(record.get("attempt_resource_cleanup", {}).get("failed_networks", []))
+        for record in records
+        if isinstance(record.get("attempt_resource_cleanup"), dict)
+    )
+    cleanup_failed = sum(
+        len(record.get("container_cleanup", {}).get("failed_container_ids", []))
+        for record in records
+        if isinstance(record.get("container_cleanup"), dict)
+    )
     return {"generated_at": utc_now(), "total_tasks": len(tasks), "skipped": skipped,
             "pending": len(tasks) - sum(bool(record) for record in records), **counts,
+            "container_cleanup_removed": cleanup_removed,
+            "container_cleanup_failed": cleanup_failed,
+            "attempt_resource_cleanup_removed": attempt_cleanup_removed,
+            "attempt_resource_cleanup_failed": attempt_cleanup_failed,
+            "categories": categories,
             "run_status": {key: sum(record.get("run_status") == key for record in records) for key in ("generated", "failed", "error")},
             "batch_errors": state.get("batch_errors", []),
             "docker_bridge_containers_at_start": state.get("docker_bridge_containers_at_start"),
             "docker_bridge_containers_at_end": state.get("docker_bridge_containers_at_end")}
+
 def check_command(command: list[str], label: str) -> str | None:
     try:
         result = subprocess.run(command, capture_output=True, text=True, check=False)
@@ -772,17 +962,14 @@ def main() -> int:
         persist_progress(state_path, summary_path, state, tasks, skipped)
         print(f"Discovered {len(tasks)} task(s); running {len(selected)}; skipping {skipped} completed task(s).", flush=True)
         requests = [WorkerRequest(task, str(output_dir), args.model_name, args.image_name, args.config_file, args.step_limit, args.task_timeout, args.python_executable, args.messages_api_url, args.messages_api_key) for task in selected]
-        pending = iter(requests)
+        pending_index = 0
         futures: dict[concurrent.futures.Future[dict[str, Any]], Challenge] = {}
         guard_triggered = False
         interrupted = False
         with concurrent.futures.ProcessPoolExecutor(max_workers=args.workers) as executor:
             while True:
-                while not guard_triggered and len(futures) < args.workers:
-                    try:
-                        request = next(pending)
-                    except StopIteration:
-                        break
+                while not guard_triggered and len(futures) < args.workers and pending_index < len(requests):
+                    request = requests[pending_index]
                     try:
                         bridge_count = docker_bridge_container_count()
                     except Exception as error:
@@ -790,13 +977,24 @@ def main() -> int:
                         guard_triggered = True
                         exit_code = 1
                         break
-                    if args.max_bridge_containers and bridge_count >= args.max_bridge_containers:
+                    # Account for workers that have been submitted but whose
+                    # containers are not visible in ``docker network inspect``
+                    # yet. Without this reservation, workers=8 could submit
+                    # eight more containers on top of an already-populated
+                    # bridge and trigger Docker creation failures.
+                    effective_bridge_count = bridge_count + len(futures)
+                    if args.max_bridge_containers and effective_bridge_count >= args.max_bridge_containers:
+                        if futures:
+                            # Let active workers finish, then re-check and
+                            # resume scheduling without dropping this request.
+                            break
                         message = f"bridge has {bridge_count} containers, at or above configured limit {args.max_bridge_containers}; stopped before {request.challenge.task_id}"
                         record_batch_error(state, output_dir, "docker_bridge_capacity_guard", message)
                         print(f"ERROR: docker_bridge_capacity_guard: {message}", file=sys.stderr)
                         guard_triggered = True
                         exit_code = 1
                         break
+                    pending_index += 1
                     futures[executor.submit(run_one_task, request)] = request.challenge
                 if not futures:
                     break

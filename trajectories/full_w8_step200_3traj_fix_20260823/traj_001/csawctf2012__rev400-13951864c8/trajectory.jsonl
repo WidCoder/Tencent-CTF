@@ -1,0 +1,1 @@
+{"id":"csawctf2012__rev400-13951864c8","sample_type":"main","messages":[{"role":"user","content":"rev400"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

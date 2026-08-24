@@ -1,0 +1,1 @@
+{"id":"zh3r0ctf2021__optimiseme-670acc906c","sample_type":"main","messages":[{"role":"user","content":"optimiseme"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

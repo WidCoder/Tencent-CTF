@@ -1,0 +1,1 @@
+{"id":"patriotctf2023__bookshelf2-ce22bb7c49","sample_type":"main","messages":[{"role":"user","content":"bookshelf2"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to attach container to CTF network: Container sweagent-enigma-latest-2ad4643b7e not found"}]}

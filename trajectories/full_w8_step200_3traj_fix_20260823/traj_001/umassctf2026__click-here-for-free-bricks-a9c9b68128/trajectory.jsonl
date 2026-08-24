@@ -1,0 +1,1 @@
+{"id":"umassctf2026__click-here-for-free-bricks-a9c9b68128","sample_type":"main","messages":[{"role":"user","content":"click-here-for-free-bricks"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

@@ -1,0 +1,1 @@
+{"id":"umassctf2026__deep-down-6fb5b50b9e","sample_type":"main","messages":[{"role":"user","content":"deep-down"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

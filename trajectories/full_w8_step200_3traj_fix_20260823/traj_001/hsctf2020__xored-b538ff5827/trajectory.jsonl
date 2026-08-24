@@ -1,0 +1,1 @@
+{"id":"hsctf2020__xored-b538ff5827","sample_type":"main","messages":[{"role":"user","content":"xored"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

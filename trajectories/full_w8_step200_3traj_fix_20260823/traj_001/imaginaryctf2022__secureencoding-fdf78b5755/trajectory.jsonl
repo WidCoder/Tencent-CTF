@@ -1,0 +1,1 @@
+{"id":"imaginaryctf2022__secureencoding-fdf78b5755","sample_type":"main","messages":[{"role":"user","content":"secureencoding"},{"role":"assistant","content":"environment_reset","reasoning_content":""},{"role":"tool","content":"CTF server is not accessible even after restart attempts. Task terminated."}]}

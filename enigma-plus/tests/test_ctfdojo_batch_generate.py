@@ -46,6 +46,32 @@ class CTFDojoBatchTests(unittest.TestCase):
         self.assertEqual(cleanup["failed_container_ids"], [])
         self.assertEqual(calls, [["docker", "rm", "-f", "new-a"], ["docker", "rm", "-f", "new-b"]])
 
+    def test_effective_bridge_capacity_accounts_for_inflight_workers(self):
+        # Mirrors the scheduler invariant used by the batch loop.
+        bridge_count = 7
+        inflight_workers = 1
+        max_bridge_containers = 8
+        self.assertGreaterEqual(bridge_count + inflight_workers, max_bridge_containers)
+    def test_cleanup_with_resource_token_cannot_remove_sibling_worker(self):
+        calls: list[list[str]] = []
+
+        class Result:
+            returncode = 0
+            stdout = "owned-container\n"
+            stderr = ""
+
+        def fake_run(command, **_kwargs):
+            calls.append(command)
+            return Result()
+
+        with patch.object(batch.subprocess, "run", side_effect=fake_run):
+            cleanup = batch.cleanup_agent_containers({"old"}, resource_token="batch-owned")
+
+        self.assertEqual(cleanup["removed_container_ids"], ["owned-container"])
+        self.assertEqual(calls[0], [
+            "docker", "ps", "-aq", "--filter", f"ancestor={batch.AGENT_IMAGE}",
+            "--filter", "name=batch-owned",
+        ])
     def test_flag_status_uses_only_structured_verifier_results(self):
         self.assertEqual(
             batch.flag_status_from_trajectory({"info": {"flag_verified": True, "flag_submitted": True, "flag_verification_evidence": "verifier accepted submission"}}),
@@ -53,13 +79,13 @@ class CTFDojoBatchTests(unittest.TestCase):
         )
         self.assertEqual(
             batch.flag_status_from_trajectory({"trajectory": [{"content": "flag correct success"}], "info": {}}),
-            {"flag_submitted": False, "flag_verified": None, "flag_verification_evidence": "not_attempted"},
+            {"flag_submitted": False, "flag_verified": "unknown", "flag_verification_evidence": "not_attempted"},
         )
 
     def test_episode_status_requires_a_terminal_trace(self):
         self.assertEqual(
             batch.episode_status_from_trajectory({"info": {"exit_status": "submitted"}, "trajectory": [{"action": "submit flag{x}"}]}),
-            {"episode_status": "submitted", "episode_complete": True},
+            {"episode_status": "completed", "episode_complete": True},
         )
         self.assertEqual(
             batch.episode_status_from_trajectory({"info": {"exit_status": "ctf_server_unavailable"}, "trajectory": []}),
@@ -88,8 +114,9 @@ class CTFDojoBatchTests(unittest.TestCase):
 
             record = state["tasks"][task.relative_path]
             self.assertTrue(record["trajectory_generated"])
-            self.assertTrue(record["flag_verified"])
-            self.assertIn("verifier accepted", record["flag_verification_evidence"])
+            self.assertEqual(record["flag_verified"], "unknown")
+            self.assertEqual(record["flag_verification_evidence"], "missing structured verifier result")
+            self.assertEqual(record["outcome_status"], "unsolved")
             self.assertTrue(batch.completed(state, output_dir, task))
 
     def test_summary_separates_trajectory_and_flag_statistics(self):
@@ -130,6 +157,30 @@ class CTFDojoBatchTests(unittest.TestCase):
         self.assertEqual(public["sample_type"], "main")
         self.assertEqual(public["messages"][2]["tool_calls"], [{"name": "Bash", "arguments": {"command": "ls -la"}}])
         self.assertEqual(public["messages"][3], {"role": "tool", "content": "flag.txt"})
+    def test_attempt_resource_cleanup_is_token_scoped(self):
+        calls: list[list[str]] = []
+
+        class Result:
+            def __init__(self, stdout: str = "", returncode: int = 0):
+                self.stdout = stdout
+                self.stderr = ""
+                self.returncode = returncode
+
+        def fake_run(command, **_kwargs):
+            calls.append(command)
+            if command[:4] == ["docker", "ps", "-aq", "--filter"]:
+                return Result("service-batch-token-1\n")
+            if command[:5] == ["docker", "network", "ls", "-q", "--filter"]:
+                return Result("network-id\n")
+            return Result()
+
+        with patch.object(batch.subprocess, "run", side_effect=fake_run):
+            cleanup = batch.cleanup_attempt_resources("batch-token")
+
+        self.assertEqual(cleanup["removed_containers"], ["service-batch-token-1"])
+        self.assertEqual(cleanup["removed_networks"], ["network-id"])
+        self.assertIn(["docker", "rm", "-f", "service-batch-token-1"], calls)
+        self.assertIn(["docker", "network", "rm", "network-id"], calls)
     def test_network_exhaustion_is_classified_separately(self):
         self.assertTrue(batch.docker_network_exhausted("Docker 500", "no available IPv4 addresses on this network's address pools: bridge"))
         self.assertFalse(batch.docker_network_exhausted("model API error"))

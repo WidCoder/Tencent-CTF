@@ -1,0 +1,1 @@
+{"id":"tjctf2026__voice-in-the-packet-2ad50dde05","sample_type":"main","messages":[{"role":"user","content":"voice-in-the-packet"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

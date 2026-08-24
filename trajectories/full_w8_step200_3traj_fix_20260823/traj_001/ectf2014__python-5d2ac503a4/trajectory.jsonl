@@ -1,0 +1,1 @@
+{"id":"ectf2014__python-5d2ac503a4","sample_type":"main","messages":[{"role":"user","content":"python"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

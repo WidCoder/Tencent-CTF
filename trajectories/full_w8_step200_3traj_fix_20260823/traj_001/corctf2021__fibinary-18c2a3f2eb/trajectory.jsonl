@@ -1,0 +1,1 @@
+{"id":"corctf2021__fibinary-18c2a3f2eb","sample_type":"main","messages":[{"role":"user","content":"fibinary"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

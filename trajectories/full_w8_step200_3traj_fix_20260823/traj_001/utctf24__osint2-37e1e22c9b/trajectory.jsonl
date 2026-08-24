@@ -1,0 +1,1 @@
+{"id":"utctf24__osint2-37e1e22c9b","sample_type":"main","messages":[{"role":"user","content":"osint2"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

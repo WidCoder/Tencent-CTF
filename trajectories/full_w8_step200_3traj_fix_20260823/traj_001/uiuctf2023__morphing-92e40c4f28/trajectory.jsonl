@@ -1,0 +1,1 @@
+{"id":"uiuctf2023__morphing-92e40c4f28","sample_type":"main","messages":[{"role":"user","content":"morphing"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to attach container to CTF network: Failed to get container object."}]}

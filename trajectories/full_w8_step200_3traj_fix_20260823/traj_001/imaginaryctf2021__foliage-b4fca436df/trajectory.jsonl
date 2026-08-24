@@ -1,0 +1,1 @@
+{"id":"imaginaryctf2021__foliage-b4fca436df","sample_type":"main","messages":[{"role":"user","content":"foliage"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

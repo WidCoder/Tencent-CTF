@@ -1,0 +1,1 @@
+{"id":"hitcon2017quals__luaky-2555a44036","sample_type":"main","messages":[{"role":"user","content":"luaky"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

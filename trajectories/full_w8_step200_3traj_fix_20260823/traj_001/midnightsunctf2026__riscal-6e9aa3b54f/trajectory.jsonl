@@ -1,0 +1,1 @@
+{"id":"midnightsunctf2026__riscal-6e9aa3b54f","sample_type":"main","messages":[{"role":"user","content":"riscal"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

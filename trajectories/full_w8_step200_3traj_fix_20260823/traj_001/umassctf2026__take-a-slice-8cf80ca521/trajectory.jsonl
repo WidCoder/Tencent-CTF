@@ -1,0 +1,1 @@
+{"id":"umassctf2026__take-a-slice-8cf80ca521","sample_type":"main","messages":[{"role":"user","content":"take-a-slice"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

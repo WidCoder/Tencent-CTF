@@ -1,0 +1,1 @@
+{"id":"r3ctf2024__simplestkernel-bcc15c14aa","sample_type":"main","messages":[{"role":"user","content":"simplestkernel"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to attach container to CTF network: Container sweagent-enigma-latest-28e134dc10 not found"}]}

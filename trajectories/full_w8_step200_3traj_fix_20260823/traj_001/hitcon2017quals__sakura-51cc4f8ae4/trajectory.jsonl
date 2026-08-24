@@ -1,0 +1,1 @@
+{"id":"hitcon2017quals__sakura-51cc4f8ae4","sample_type":"main","messages":[{"role":"user","content":"sakura"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

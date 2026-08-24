@@ -1,0 +1,1 @@
+{"id":"hsctf2020__apenglish-416f057c5b","sample_type":"main","messages":[{"role":"user","content":"apenglish"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

@@ -1,0 +1,1 @@
+{"id":"vishwactf2026__boot-af2162c54c","sample_type":"main","messages":[{"role":"user","content":"boot"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

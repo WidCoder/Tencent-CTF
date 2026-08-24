@@ -1,0 +1,1 @@
+{"id":"downunderctf2021__substitution-3f397126b6","sample_type":"main","messages":[{"role":"user","content":"substitution"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

@@ -1,0 +1,1 @@
+{"id":"zh3r0ctf2021__injection-ef6005f1a6","sample_type":"main","messages":[{"role":"user","content":"injection"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to attach container to CTF network: Container sweagent-enigma-latest-0dd1d8b3d0 not found"}]}

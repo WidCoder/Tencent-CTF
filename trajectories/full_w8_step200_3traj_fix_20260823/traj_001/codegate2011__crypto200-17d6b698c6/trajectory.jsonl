@@ -1,0 +1,1 @@
+{"id":"codegate2011__crypto200-17d6b698c6","sample_type":"main","messages":[{"role":"user","content":"crypto200"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

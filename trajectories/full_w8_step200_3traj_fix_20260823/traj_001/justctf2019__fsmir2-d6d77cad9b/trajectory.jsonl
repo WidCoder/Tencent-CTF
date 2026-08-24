@@ -1,0 +1,1 @@
+{"id":"justctf2019__fsmir2-d6d77cad9b","sample_type":"main","messages":[{"role":"user","content":"fsmir2"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to attach container to CTF network: Container disappeared after creation"}]}

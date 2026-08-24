@@ -1,0 +1,1 @@
+{"id":"csawctf2011__crypto10-092ad79ea2","sample_type":"main","messages":[{"role":"user","content":"crypto10"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

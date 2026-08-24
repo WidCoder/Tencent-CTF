@@ -1,0 +1,1 @@
+{"id":"sekaictf2025__unfairyplusplus-3f56f77375","sample_type":"main","messages":[{"role":"user","content":"unfairyplusplus"},{"role":"assistant","content":"environment_reset","reasoning_content":""},{"role":"tool","content":"CTF server is not accessible even after restart attempts. Task terminated."}]}

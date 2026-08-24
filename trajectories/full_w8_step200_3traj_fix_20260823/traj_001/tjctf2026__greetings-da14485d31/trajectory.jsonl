@@ -1,0 +1,1 @@
+{"id":"tjctf2026__greetings-da14485d31","sample_type":"main","messages":[{"role":"user","content":"greetings"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to attach container to CTF network: ('Subprocess exited unexpectedly.\\nCurrent buffer: ///PROCESS-DONE:0:PROCESS-DONE///\\n', '')"}]}

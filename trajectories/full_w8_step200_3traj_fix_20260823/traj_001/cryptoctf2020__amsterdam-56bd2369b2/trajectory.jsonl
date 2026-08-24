@@ -1,0 +1,1 @@
+{"id":"cryptoctf2020__amsterdam-56bd2369b2","sample_type":"main","messages":[{"role":"user","content":"amsterdam"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

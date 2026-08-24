@@ -1,0 +1,1 @@
+{"id":"tjctf2026__ox78-033742b99b","sample_type":"main","messages":[{"role":"user","content":"ox78"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

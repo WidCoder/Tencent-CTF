@@ -1,0 +1,1 @@
+{"id":"tjctf2026__remoose-8738c0b8e2","sample_type":"main","messages":[{"role":"user","content":"remoose"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

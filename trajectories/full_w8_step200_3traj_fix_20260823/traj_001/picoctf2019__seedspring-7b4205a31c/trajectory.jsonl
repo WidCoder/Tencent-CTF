@@ -1,0 +1,1 @@
+{"id":"picoctf2019__seedspring-7b4205a31c","sample_type":"main","messages":[{"role":"user","content":"seedspring"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

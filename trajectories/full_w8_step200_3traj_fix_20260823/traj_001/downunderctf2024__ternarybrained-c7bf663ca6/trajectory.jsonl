@@ -1,0 +1,1 @@
+{"id":"downunderctf2024__ternarybrained-c7bf663ca6","sample_type":"main","messages":[{"role":"user","content":"ternarybrained"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

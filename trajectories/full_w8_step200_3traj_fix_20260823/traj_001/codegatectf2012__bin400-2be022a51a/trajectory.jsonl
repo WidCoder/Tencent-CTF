@@ -1,0 +1,1 @@
+{"id":"codegatectf2012__bin400-2be022a51a","sample_type":"main","messages":[{"role":"user","content":"bin400"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

@@ -1,0 +1,1 @@
+{"id":"uoftctf__orca-1bc89c86c6","sample_type":"main","messages":[{"role":"user","content":"orca"},{"role":"assistant","content":"environment_reset","reasoning_content":""},{"role":"tool","content":"CTF server is not accessible even after restart attempts. Task terminated."}]}

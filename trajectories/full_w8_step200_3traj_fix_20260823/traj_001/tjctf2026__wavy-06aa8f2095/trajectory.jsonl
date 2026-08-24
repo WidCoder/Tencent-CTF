@@ -1,0 +1,1 @@
+{"id":"tjctf2026__wavy-06aa8f2095","sample_type":"main","messages":[{"role":"user","content":"wavy"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

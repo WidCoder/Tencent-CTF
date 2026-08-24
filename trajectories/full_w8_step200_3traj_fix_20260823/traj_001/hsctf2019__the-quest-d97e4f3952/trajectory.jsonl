@@ -1,0 +1,1 @@
+{"id":"hsctf2019__the-quest-d97e4f3952","sample_type":"main","messages":[{"role":"user","content":"the-quest"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

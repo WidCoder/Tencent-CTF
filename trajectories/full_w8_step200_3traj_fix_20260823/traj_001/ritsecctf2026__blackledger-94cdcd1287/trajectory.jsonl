@@ -1,0 +1,1 @@
+{"id":"ritsecctf2026__blackledger-94cdcd1287","sample_type":"main","messages":[{"role":"user","content":"blackledger"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

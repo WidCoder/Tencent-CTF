@@ -307,7 +307,16 @@ class SWEEnv(gym.Env):
         self.dynamic_network_name: str | None = None
         # Track docker-compose project name for proper cleanup in parallel execution
         self.docker_compose_project_name: str | None = None
-        self._reset_container()
+        # Environment construction can fail after Docker resources have been
+        # created. Reclaim them before propagating initialization failures.
+        try:
+            self._reset_container()
+        except BaseException:
+            try:
+                self._cleanup_docker_resources(final_cleanup=True)
+            except Exception as cleanup_error:
+                self.logger.warning("Failed to cleanup after environment initialization error: %s", cleanup_error)
+            raise
 
         self.interactive_session: InteractiveSession | None = None
 
@@ -1171,6 +1180,7 @@ class SWEEnv(gym.Env):
         self.container_obj = None
         self._reset_container()
 
+
     @staticmethod
     def _get_container_name(image_name: str) -> str:
         """Return name of container"""
@@ -1180,7 +1190,9 @@ class SWEEnv(gym.Env):
         hash_object = hashlib.sha256(unique_string.encode())
         image_name_sanitized = image_name.replace("/", "-")
         image_name_sanitized = image_name_sanitized.replace(":", "-")
-        return f"{image_name_sanitized}-{hash_object.hexdigest()[:10]}"
+        resource_token = re.sub(r"[^a-z0-9-]", "", os.environ.get("ENIGMA_BATCH_ATTEMPT_ID", "").lower())[:16]
+        prefix = f"{resource_token}-" if resource_token else ""
+        return f"{prefix}{image_name_sanitized}-{hash_object.hexdigest()[:10]}"
 
     # ctf
     def _init_docker_network(self) -> None:
@@ -1338,6 +1350,17 @@ class SWEEnv(gym.Env):
 
     # ctf
     def _init_docker_compose(self) -> None:
+        """Initialize challenge services and clean up if startup fails."""
+        try:
+            return self._init_docker_compose_impl()
+        except BaseException:
+            try:
+                self._cleanup_docker_resources(final_cleanup=True)
+            except Exception as cleanup_error:
+                self.logger.warning("Failed to cleanup Docker compose resources after startup error: %s", cleanup_error)
+            raise
+
+    def _init_docker_compose_impl(self) -> None:
         """
         Handles docker compose initialization for challenge with docker compose file.
         """
@@ -3166,6 +3189,12 @@ class SWEEnv(gym.Env):
         else:
             base_suffix = "auto"
         
+        # Include the batch-attempt token when present. The parent batch
+        # process uses it to reclaim resources after an outer timeout.
+        resource_token = re.sub(r"[^a-z0-9-]", "", os.environ.get("ENIGMA_BATCH_ATTEMPT_ID", "").lower())[:16]
+        if resource_token:
+            base_suffix = f"{resource_token}-{base_suffix}"
+
         # Add additional unique identifiers to prevent conflicts
         pid = os.getpid()
         thread_id = threading.get_ident()
@@ -3185,7 +3214,11 @@ class SWEEnv(gym.Env):
         if len(unique_suffix) > 60:
             # Hash the suffix if it's too long
             hash_suffix = hashlib.sha256(unique_suffix.encode()).hexdigest()[:20]
-            unique_suffix = f"{base_suffix[:20]}-{hash_suffix}"
+            # Keep the resource token outside the hash for timeout cleanup.
+            if resource_token:
+                unique_suffix = f"{resource_token}-{hash_suffix}"
+            else:
+                unique_suffix = f"{base_suffix[:20]}-{hash_suffix}"
         
         self.logger.debug(f"Generated unique container suffix: {unique_suffix}")
         return unique_suffix

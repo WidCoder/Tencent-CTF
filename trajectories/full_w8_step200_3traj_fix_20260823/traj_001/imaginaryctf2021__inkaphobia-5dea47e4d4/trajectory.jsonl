@@ -1,0 +1,1 @@
+{"id":"imaginaryctf2021__inkaphobia-5dea47e4d4","sample_type":"main","messages":[{"role":"user","content":"inkaphobia"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

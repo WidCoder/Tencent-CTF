@@ -1,0 +1,1 @@
+{"id":"thcon2026__047-rhaaah-sh-t-again-4c79fefdf5","sample_type":"main","messages":[{"role":"user","content":"047-rhaaah-sh-t-again"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}
