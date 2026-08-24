@@ -831,3 +831,8 @@ Discovered 831 task(s); running 831; skipping 0 completed task(s).
 [error] zh3r0ctf2021__numpymt-831527213e
 [error] zh3r0ctf2021__estr-cc60012921
 Completed batch: total_tasks=831 generated_trajectories=831 verified_solved=0 unsolved=831 generation_failed=808 environment_error=0
+Discovered 831 task(s); running 808; skipping 23 completed task(s).
+[error] 0ctf2017__diethard-42aa242adb
+[error] 0ctf2018__blackhole-a700794e47
+[error] 0ctf2018__babyheap2018-dd1280c09c
+[error] 0ctf2017__easiestprintf-4f87eb0f0f

@@ -1,1 +1,5 @@
-Starting trajectory 001 at Mon Aug 24 00:17:22 CST 2026
+[2026-08-24 09:31:42+0800] test_root=/data1/nfs/wangyingqi/Cyber-Zero
+[2026-08-24 09:31:42+0800] dataset=/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive
+[2026-08-24 09:31:42+0800] base=/data1/nfs/wangyingqi/Cyber-Zero/trajectories/full_w8_step200_3traj_fix_20260823
+[2026-08-24 09:31:42+0800] workers=8 max_bridge_containers=8
+[2026-08-24 09:31:42+0800] Starting trajectory 001

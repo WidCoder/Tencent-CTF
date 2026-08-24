@@ -43,22 +43,20 @@
       "updated_at": "2026-08-23T16:19:03+00:00"
     },
     "0ctf2017/diethard": {
+      "attempt_resource_cleanup": {
+        "failed_containers": [],
+        "failed_networks": [],
+        "removed_containers": [],
+        "removed_networks": [],
+        "resource_token": "batch-bc0d191b2648"
+      },
       "category": "pwn",
       "challenge_json": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2017/diethard/challenge.json",
       "compose_path": "",
       "container_cleanup": {
         "attempted": true,
         "failed_container_ids": [],
-        "removed_container_ids": [
-          "3fbea0e98b70",
-          "5f7b685882e2",
-          "63849d7efac8",
-          "934c98d63ef6",
-          "ba3282fb3bd7",
-          "df1326954697",
-          "ef89b85c1db5",
-          "f6ab676edd12"
-        ]
+        "removed_container_ids": []
       },
       "dockerfile_path": "",
       "episode_complete": true,
@@ -76,30 +74,30 @@
       "repo_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2017/diethard",
       "run_status": "error",
       "solved": false,
-      "source_trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/full_w8_step200_3traj_fix_20260823/traj_001/0ctf2017__diethard-42aa242adb/enigma_output/attempt-20260824T001728715521-c5e8bbef/glm52_10__challenge__default_ctf__t-0.00__p-0.95__k-20__c-0.00__install-1/pwn_diethard.traj",
-      "steps": 1,
+      "source_trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/full_w8_step200_3traj_fix_20260823/traj_001/0ctf2017__diethard-42aa242adb/enigma_output/attempt-20260824T093157767454-5e51636b/glm52_10__challenge__default_ctf__t-0.00__p-0.95__k-20__c-0.00__install-1/pwn_diethard.traj",
+      "steps": 7,
       "task": "diethard",
       "task_id": "0ctf2017__diethard-42aa242adb",
-      "time": "2026-08-23T16:17:54+00:00",
+      "time": "2026-08-24T01:33:18+00:00",
       "trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/full_w8_step200_3traj_fix_20260823/traj_001/0ctf2017__diethard-42aa242adb/trajectory.jsonl",
       "trajectory_generated": true,
-      "updated_at": "2026-08-23T16:17:54+00:00"
+      "updated_at": "2026-08-24T01:33:18+00:00"
     },
     "0ctf2017/easiestprintf": {
+      "attempt_resource_cleanup": {
+        "failed_containers": [],
+        "failed_networks": [],
+        "removed_containers": [],
+        "removed_networks": [],
+        "resource_token": "batch-a8df6a24ecde"
+      },
       "category": "pwn",
       "challenge_json": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2017/easiestprintf/challenge.json",
       "compose_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2017/easiestprintf/docker-compose.yml",
       "container_cleanup": {
         "attempted": true,
-        "failed_container_ids": [
-          "459048447cc2",
-          "581849c3643f",
-          "afcc3e9aa354"
-        ],
-        "removed_container_ids": [
-          "52245be11c5f",
-          "ae04a9df2dc1"
-        ]
+        "failed_container_ids": [],
+        "removed_container_ids": []
       },
       "dockerfile_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2017/easiestprintf/Dockerfile",
       "episode_complete": true,
@@ -117,33 +115,30 @@
       "repo_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2017/easiestprintf",
       "run_status": "error",
       "solved": false,
-      "source_trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/full_w8_step200_3traj_fix_20260823/traj_001/0ctf2017__easiestprintf-4f87eb0f0f/enigma_output/attempt-20260824T001728728841-f986f669/glm52_10__challenge__default_ctf__t-0.00__p-0.95__k-20__c-0.00__install-1/pwn_easiestprintf.traj",
-      "steps": 1,
+      "source_trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/full_w8_step200_3traj_fix_20260823/traj_001/0ctf2017__easiestprintf-4f87eb0f0f/enigma_output/attempt-20260824T093157780326-4753ccfb/glm52_10__challenge__default_ctf__t-0.00__p-0.95__k-20__c-0.00__install-1/pwn_easiestprintf.traj",
+      "steps": 7,
       "task": "easiestprintf",
       "task_id": "0ctf2017__easiestprintf-4f87eb0f0f",
-      "time": "2026-08-23T16:19:02+00:00",
+      "time": "2026-08-24T01:34:20+00:00",
       "trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/full_w8_step200_3traj_fix_20260823/traj_001/0ctf2017__easiestprintf-4f87eb0f0f/trajectory.jsonl",
       "trajectory_generated": true,
-      "updated_at": "2026-08-23T16:19:02+00:00"
+      "updated_at": "2026-08-24T01:34:20+00:00"
     },
     "0ctf2018/babyheap2018": {
+      "attempt_resource_cleanup": {
+        "failed_containers": [],
+        "failed_networks": [],
+        "removed_containers": [],
+        "removed_networks": [],
+        "resource_token": "batch-69a6c9dcf6d9"
+      },
       "category": "pwn",
       "challenge_json": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2018/babyheap2018/challenge.json",
       "compose_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2018/babyheap2018/docker-compose.yml",
       "container_cleanup": {
         "attempted": true,
-        "failed_container_ids": [
-          "123914a05dc9",
-          "394915a3cb70",
-          "6832affbcf71",
-          "cb31ec54f4c7",
-          "e12642a2b332",
-          "fadf0d68267f"
-        ],
-        "removed_container_ids": [
-          "73ee3fc6409b",
-          "846f5ec7e6f9"
-        ]
+        "failed_container_ids": [],
+        "removed_container_ids": []
       },
       "dockerfile_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2018/babyheap2018/Dockerfile",
       "episode_complete": true,
@@ -161,33 +156,30 @@
       "repo_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2018/babyheap2018",
       "run_status": "error",
       "solved": false,
-      "source_trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/full_w8_step200_3traj_fix_20260823/traj_001/0ctf2018__babyheap2018-dd1280c09c/enigma_output/attempt-20260824T001728742946-4407b552/glm52_10__challenge__default_ctf__t-0.00__p-0.95__k-20__c-0.00__install-1/pwn_babyheap2018.traj",
-      "steps": 1,
+      "source_trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/full_w8_step200_3traj_fix_20260823/traj_001/0ctf2018__babyheap2018-dd1280c09c/enigma_output/attempt-20260824T093157793843-3c87a6de/glm52_10__challenge__default_ctf__t-0.00__p-0.95__k-20__c-0.00__install-1/pwn_babyheap2018.traj",
+      "steps": 7,
       "task": "babyheap2018",
       "task_id": "0ctf2018__babyheap2018-dd1280c09c",
-      "time": "2026-08-23T16:17:45+00:00",
+      "time": "2026-08-24T01:34:17+00:00",
       "trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/full_w8_step200_3traj_fix_20260823/traj_001/0ctf2018__babyheap2018-dd1280c09c/trajectory.jsonl",
       "trajectory_generated": true,
-      "updated_at": "2026-08-23T16:17:45+00:00"
+      "updated_at": "2026-08-24T01:34:17+00:00"
     },
     "0ctf2018/blackhole": {
+      "attempt_resource_cleanup": {
+        "failed_containers": [],
+        "failed_networks": [],
+        "removed_containers": [],
+        "removed_networks": [],
+        "resource_token": "batch-1d87637c5114"
+      },
       "category": "pwn",
       "challenge_json": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2018/blackhole/challenge.json",
       "compose_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2018/blackhole/docker-compose.yml",
       "container_cleanup": {
         "attempted": true,
-        "failed_container_ids": [
-          "123914a05dc9",
-          "394915a3cb70",
-          "73ee3fc6409b",
-          "846f5ec7e6f9",
-          "cb31ec54f4c7",
-          "e12642a2b332"
-        ],
-        "removed_container_ids": [
-          "6832affbcf71",
-          "fadf0d68267f"
-        ]
+        "failed_container_ids": [],
+        "removed_container_ids": []
       },
       "dockerfile_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2018/blackhole/Dockerfile",
       "episode_complete": true,
@@ -205,14 +197,14 @@
       "repo_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2018/blackhole",
       "run_status": "error",
       "solved": false,
-      "source_trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/full_w8_step200_3traj_fix_20260823/traj_001/0ctf2018__blackhole-a700794e47/enigma_output/attempt-20260824T001728756698-ba73475d/glm52_10__challenge__default_ctf__t-0.00__p-0.95__k-20__c-0.00__install-1/pwn_blackhole.traj",
-      "steps": 1,
+      "source_trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/full_w8_step200_3traj_fix_20260823/traj_001/0ctf2018__blackhole-a700794e47/enigma_output/attempt-20260824T093157807756-7a15f6ee/glm52_10__challenge__default_ctf__t-0.00__p-0.95__k-20__c-0.00__install-1/pwn_blackhole.traj",
+      "steps": 7,
       "task": "blackhole",
       "task_id": "0ctf2018__blackhole-a700794e47",
-      "time": "2026-08-23T16:17:45+00:00",
+      "time": "2026-08-24T01:33:59+00:00",
       "trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/full_w8_step200_3traj_fix_20260823/traj_001/0ctf2018__blackhole-a700794e47/trajectory.jsonl",
       "trajectory_generated": true,
-      "updated_at": "2026-08-23T16:17:45+00:00"
+      "updated_at": "2026-08-24T01:33:59+00:00"
     },
     "0ctf2018/freenote2018": {
       "category": "pwn",

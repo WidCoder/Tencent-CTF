@@ -1,9 +1,49 @@
 {
+  "attempt_resource_cleanup_failed": 0,
+  "attempt_resource_cleanup_removed": 0,
   "batch_errors": [],
+  "categories": {
+    "crypto": {
+      "flag_submitted": 1,
+      "flag_verified": 0,
+      "trajectory_generated": 285
+    },
+    "forensics": {
+      "flag_submitted": 1,
+      "flag_verified": 0,
+      "trajectory_generated": 63
+    },
+    "misc": {
+      "flag_submitted": 0,
+      "flag_verified": 0,
+      "trajectory_generated": 112
+    },
+    "pwn": {
+      "flag_submitted": 0,
+      "flag_verified": 0,
+      "trajectory_generated": 179
+    },
+    "rev": {
+      "flag_submitted": 0,
+      "flag_verified": 0,
+      "trajectory_generated": 145
+    },
+    "web": {
+      "flag_submitted": 0,
+      "flag_verified": 0,
+      "trajectory_generated": 47
+    }
+  },
+  "container_cleanup_failed": 546,
+  "container_cleanup_removed": 1427,
   "docker_bridge_containers_at_end": 2,
   "docker_bridge_containers_at_start": 2,
   "environment_error": 0,
-  "generated_at": "2026-08-23T18:09:15+00:00",
+  "flag_not_attempted": 829,
+  "flag_status_unknown": 0,
+  "flag_submitted": 2,
+  "flag_verified": 0,
+  "generated_at": "2026-08-24T01:34:20+00:00",
   "generated_trajectories": 831,
   "generation_failed": 808,
   "pending": 0,
@@ -12,8 +52,9 @@
     "failed": 0,
     "generated": 23
   },
-  "skipped": 0,
+  "skipped": 23,
   "total_tasks": 831,
+  "trajectory_generated": 831,
   "unsolved": 831,
   "verified_solved": 0
 }
