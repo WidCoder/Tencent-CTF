@@ -1,0 +1,50 @@
+{
+  "created_at": "2026-08-24T08:55:01+00:00",
+  "docker_bridge_containers_at_end": 7,
+  "docker_bridge_containers_at_start": 5,
+  "tasks": {
+    "0ctf2017/babyheap": {
+      "attempt_resource_cleanup": {
+        "failed_containers": [],
+        "failed_networks": [],
+        "removed_containers": [],
+        "removed_networks": [],
+        "resource_token": "batch-91d2fbf1eba8"
+      },
+      "category": "pwn",
+      "challenge_json": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2017/babyheap/challenge.json",
+      "compose_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2017/babyheap/docker-compose.yml",
+      "container_cleanup": {
+        "attempted": true,
+        "failed_container_ids": [],
+        "removed_container_ids": []
+      },
+      "dockerfile_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2017/babyheap/Dockerfile",
+      "episode_complete": true,
+      "episode_status": "early_exit",
+      "error": "[Errno Timeout reached while reading from subprocess.\nCurrent buffer: \nWARNING: apt does not have a stable CLI interface. Use with caution in scripts.\n\nGet:1 http://security.ubuntu.com/ubuntu jammy-security InRelease [129 kB]\nGet:2 http://security.ubuntu.com/ubuntu jammy-security/main i386 Packages [1080 kB]\nGet:3 http://security.ubuntu.com/ubuntu jammy-security/main amd64 Packages [4238 kB]\nGet:4 http://archive.ubuntu.com/ubuntu jammy InRelease [270 kB]\nGet:5 http://security.ubuntu.com/ubuntu jammy-security/main amd64 DEP-11 Metadata [96.6 kB]\nGet:6 http://security.ubuntu.com/ubuntu jammy-security/main DEP-11 48x48 Icons [22.9 kB]\nGet:7 http://security.ubuntu.com/ubuntu jammy-security/main DEP-11 64x64 Icons [34.5 kB]\nGet:8 http://security.ubuntu.com/ubuntu jammy-security/main DEP-11 64x64@2 Icons [29 B]\nGet:9 http://security.ubuntu.com/ubuntu jammy-security/restricted i386 Packages [61.1 kB]\nGet:10 http://security.ubuntu.com/ubuntu jammy-security/restricted amd64 Packages [7634 kB]\nGet:11 http://archive.ubuntu.com/ubuntu jammy-updates InRelease [128 kB]\nGet:12 http://archive.ubuntu.com/ubuntu jammy-backports InRelease [127 kB]\nGet:13 http://archive.ubuntu.com/ubuntu jammy/main amd64 Packages [1792 kB]\nGet:14 http://security.ubuntu.com/ubuntu jammy-security/restricted amd64 DEP-11 Metadata [157 B]\nGet:15 http://security.ubuntu.com/ubuntu jammy-security/restricted DEP-11 48x48 Icons [29 B]\nGet:16 http://security.ubuntu.com/ubuntu jammy-security/restricted DEP-11 64x64 Icons [29 B]\nGet:17 http://security.ubuntu.com/ubuntu jammy-security/restricted DEP-11 64x64@2 Icons [29 B]\nGet:18 http://security.ubuntu.com/ubuntu jammy-security/universe amd64 Packages [1315 kB]\nGet:19 http://security.ubuntu.com/ubuntu jammy-security/universe i386 Packages [866 kB]\nGet:20 http://security.ubuntu.com/ubuntu jammy-security/universe amd64 DEP-11 Metadata [170 kB]\nGet:21 http://security.ubuntu.com/ubuntu jammy-security/universe DEP-11 48x48 Icons [83.4 kB]\nGet:22 http://security.ubuntu.com/ubuntu jammy-security/universe DEP-11 64x64 Icons [124 kB]\nGet:23 http://security.ubuntu.com/ubuntu jammy-security/universe DEP-11 64x64@2 Icons [29 B]\nGet:24 http://security.ubuntu.com/ubuntu jammy-security/multiverse i386 Packages [11.3 kB]\nGet:25 http://security.ubuntu.com/ubuntu jammy-security/multiverse amd64 Packages [84.1 kB]\nGet:26 http://security.ubuntu.com/ubuntu jammy-security/multiverse amd64 DEP-11 Metadata [158 B]\nGet:27 http://security.ubuntu.com/ubuntu jammy-security/multiverse DEP-11 48x48 Icons [29 B]\nGet:28 http://security.ubuntu.com/ubuntu jammy-security/multiverse DEP-11 64x64 Icons [29 B]\nGet:29 http://security.ubuntu.com/ubuntu jammy-security/multiverse DEP-11 64x64@2 Icons [29 B]\nGet:30 http://archive.ubuntu.com/ubuntu jammy/main i386 Packages [1324 kB]\nGet:31 http://archive.ubuntu.com/ubuntu jammy/main amd64 DEP-11 Metadata [603 kB]\nGet:32 http://archive.ubuntu.com/ubuntu jammy/main DEP-11 48x48 Icons [100.0 kB]\nGet:33 http://archive.ubuntu.com/ubuntu jammy/main DEP-11 64x64 Icons [148 kB]\nGet:34 http://archive.ubuntu.com/ubuntu jammy/main DEP-11 64x64@2 Icons [15.8 kB]\nGet:35 http://archive.ubuntu.com/ubuntu jammy/restricted amd64 Packages [164 kB]\nGet:36 http://archive.ubuntu.com/ubuntu jammy/restricted i386 Packages [36.7 kB]\nGet:37 http://archive.ubuntu.com/ubuntu jammy/universe i386 Packages [9385 kB]\nGet:38 http://archive.ubuntu.com/ubuntu jammy/universe amd64 Packages [17.5 MB]\nGet:39 http://archive.ubuntu.com/ubuntu jammy/universe amd64 DEP-11 Metadata [5445 kB]\nGet:40 http://archive.ubuntu.com/ubuntu jammy/universe DEP-11 48x48 Icons [3447 kB]\n] \nWARNING: apt does not have a stable CLI interface. Use with caution in scripts.\n\nGet:1 http://security.ubuntu.com/ubuntu jammy-security InRelease [129 kB]\nGet:2 http://security.ubuntu.com/ubuntu jammy-security/main i386 Packages [1080 kB]\nGet:3 http://security.ubuntu.com/ubuntu jammy-security/main amd64 Packages [4238 kB]\nGet:4 http://archive.ubuntu.com/ubuntu jammy InRelease [270 kB]\nGet:5 http://security.ubuntu.com/ubuntu jammy-security/main amd64 DEP-11 Metadata [96.6 kB]\nGet:6 http://security.ubuntu.com/ubuntu jammy-security/main DEP-11 48x48 Icons [22.9 kB]\nGet:7 http://security.ubuntu.com/ubuntu jammy-security/main DEP-11 64x64 Icons [34.5 kB]\nGet:8 http://security.ubuntu.com/ubuntu jammy-security/main DEP-11 64x64@2 Icons [29 B]\nGet:9 http://security.ubuntu.com/ubuntu jammy-security/restricted i386 Packages [61.1 kB]\nGet:10 http://security.ubuntu.com/ubuntu jammy-security/restricted amd64 Packages [7634 kB]\nGet:11 http://archive.ubuntu.com/ubuntu jammy-updates InRelease [128 kB]\nGet:12 http://archive.ubuntu.com/ubuntu jammy-backports InRelease [127 kB]\nGet:13 http://archive.ubuntu.com/ubuntu jammy/main amd64 Packages [1792 kB]\nGet:14 http://security.ubuntu.com/ubuntu jammy-security/restricted amd64 DEP-11 Metadata [157 B]\nGet:15 http://security.ubuntu.com/ubuntu jammy-security/restricted DEP-11 48x48 Icons [29 B]\nGet:16 http://security.ubuntu.com/ubuntu jammy-security/restricted DEP-11 64x64 Icons [29 B]\nGet:17 http://security.ubuntu.com/ubuntu jammy-security/restricted DEP-11 64x64@2 Icons [29 B]\nGet:18 http://security.ubuntu.com/ubuntu jammy-security/universe amd64 Packages [1315 kB]\nGet:19 http://security.ubuntu.com/ubuntu jammy-security/universe i386 Packages [866 kB]\nGet:20 http://security.ubuntu.com/ubuntu jammy-security/universe amd64 DEP-11 Metadata [170 kB]\nGet:21 http://security.ubuntu.com/ubuntu jammy-security/universe DEP-11 48x48 Icons [83.4 kB]\nGet:22 http://security.ubuntu.com/ubuntu jammy-security/universe DEP-11 64x64 Icons [124 kB]\nGet:23 http://security.ubuntu.com/ubuntu jammy-security/universe DEP-11 64x64@2 Icons [29 B]\nGet:24 http://security.ubuntu.com/ubuntu jammy-security/multiverse i386 Packages [11.3 kB]\nGet:25 http://security.ubuntu.com/ubuntu jammy-security/multiverse amd64 Packages [84.1 kB]\nGet:26 http://security.ubuntu.com/ubuntu jammy-security/multiverse amd64 DEP-11 Metadata [158 B]\nGet:27 http://security.ubuntu.com/ubuntu jammy-security/multiverse DEP-11 48x48 Icons [29 B]\nGet:28 http://security.ubuntu.com/ubuntu jammy-security/multiverse DEP-11 64x64 Icons [29 B]\nGet:29 http://security.ubuntu.com/ubuntu jammy-security/multiverse DEP-11 64x64@2 Icons [29 B]\nGet:30 http://archive.ubuntu.com/ubuntu jammy/main i386 Packages [1324 kB]\nGet:31 http://archive.ubuntu.com/ubuntu jammy/main amd64 DEP-11 Metadata [603 kB]\nGet:32 http://archive.ubuntu.com/ubuntu jammy/main DEP-11 48x48 Icons [100.0 kB]\nGet:33 http://archive.ubuntu.com/ubuntu jammy/main DEP-11 64x64 Icons [148 kB]\nGet:34 http://archive.ubuntu.com/ubuntu jammy/main DEP-11 64x64@2 Icons [15.8 kB]\nGet:35 http://archive.ubuntu.com/ubuntu jammy/restricted amd64 Packages [164 kB]\nGet:36 http://archive.ubuntu.com/ubuntu jammy/restricted i386 Packages [36.7 kB]\nGet:37 http://archive.ubuntu.com/ubuntu jammy/universe i386 Packages [9385 kB]\nGet:38 http://archive.ubuntu.com/ubuntu jammy/universe amd64 Packages [17.5 MB]\nGet:39 http://archive.ubuntu.com/ubuntu jammy/universe amd64 DEP-11 Metadata [5445 kB]\nGet:40 http://archive.ubuntu.com/ubuntu jammy/universe DEP-11 48x48 Icons [3447 kB]",
+      "error_code": "TimeoutError",
+      "error_log": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/dns_pilot_20260824_165450/logs/0ctf2017__babyheap-ef570c4099.error.log",
+      "event": "0ctf2017",
+      "exit_status": "runner_exception",
+      "failure_category": "runner_error",
+      "flag_submitted": false,
+      "flag_verification_evidence": "not_attempted",
+      "flag_verified": "unknown",
+      "outcome_status": "unsolved",
+      "relative_path": "0ctf2017/babyheap",
+      "repo_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2017/babyheap",
+      "run_status": "error",
+      "solved": false,
+      "source_trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/dns_pilot_20260824_165450/0ctf2017__babyheap-ef570c4099/enigma_output/attempt-20260824T165501609223-b5cdeae1/glm52_10__challenge__default_ctf__t-0.00__p-0.95__k-20__c-0.00__install-1/pwn_babyheap.traj",
+      "steps": 1,
+      "task": "babyheap",
+      "task_id": "0ctf2017__babyheap-ef570c4099",
+      "time": "2026-08-24T09:04:45+00:00",
+      "trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/dns_pilot_20260824_165450/0ctf2017__babyheap-ef570c4099/trajectory.jsonl",
+      "trajectory_generated": true,
+      "updated_at": "2026-08-24T09:04:45+00:00"
+    }
+  },
+  "version": 2
+}

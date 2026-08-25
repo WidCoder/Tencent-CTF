@@ -1,0 +1,15 @@
+usage: ctfdojo_batch_generate.py [-h] --dataset_root DATASET_ROOT --output_dir
+                                 OUTPUT_DIR --model_name MODEL_NAME
+                                 [--image_name IMAGE_NAME]
+                                 [--config_file CONFIG_FILE]
+                                 [--step_limit STEP_LIMIT]
+                                 [--task_timeout TASK_TIMEOUT]
+                                 [--workers WORKERS]
+                                 [--max_bridge_containers MAX_BRIDGE_CONTAINERS]
+                                 [--category CATEGORY] [--max_tasks MAX_TASKS]
+                                 [--require_dockerfile] [--include_unverified]
+                                 [--python_executable PYTHON_EXECUTABLE]
+                                 [--messages_api_url MESSAGES_API_URL]
+                                 [--messages_api_key MESSAGES_API_KEY]
+                                 [--dry_run] [--force_unlock] [--resume]
+ctfdojo_batch_generate.py: error: unrecognized arguments: --max_dynamic_networks 24

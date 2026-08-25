@@ -9,6 +9,11 @@ import shutil
 from pathlib import Path
 from typing import Iterable
 
+try:
+    import yaml
+except ImportError:  # pragma: no cover - optional for conversion-only environments
+    yaml = None
+
 LOGGER = logging.getLogger("google_ctf_import")
 
 CATEGORIES = {
@@ -20,6 +25,64 @@ ROUND_NAMES = {"qual", "quals", "qualification", "qualifications", "final", "fin
 SKIP_DIR_NAMES = {".git", ".github", "__pycache__", ".venv", "venv", "node_modules"}
 SECRET_FILE_NAMES = {"flag", "flag.txt", "flag.json"}
 HASH_FILE_NAMES = {"flag.sha256", ".flag.sha256", "flag.sha256.txt"}
+DESCRIPTION_FILE_NAMES = {"readme", "readme.md", "readme.txt", "description.md", "description.txt"}
+PLAINTEXT_FLAG_RE = re.compile(r"(?i)\b(?:ctf|flag|pwn\.college|gc)\{[^\r\n}]{2,256}\}")
+
+
+def read_source_metadata(source: Path) -> dict:
+    """Read safe routing metadata without copying plaintext solutions."""
+    for name in ("challenge.yaml", "challenge.yml", "metadata.yaml", "metadata.yml"):
+        path = source / name
+        if not path.is_file():
+            continue
+        try:
+            if yaml is not None:
+                value = yaml.safe_load(path.read_text(encoding="utf-8", errors="replace"))
+            else:
+                value = {}
+                for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+                    match = re.match(r"^\s*([A-Za-z_][\w-]*)\s*:\s*(.*?)\s*$", line)
+                    if match:
+                        raw = match.group(2).strip().strip("'\"")
+                        if raw.isdigit():
+                            value[match.group(1)] = int(raw)
+                        elif raw and raw.lower() not in {"null", "~"}:
+                            value[match.group(1)] = raw
+        except Exception as error:
+            LOGGER.warning("Unable to parse metadata file %s: %s", path, error)
+            continue
+        if isinstance(value, dict):
+            nested = value.get("challenge")
+            return {**value, **nested} if isinstance(nested, dict) else value
+    return {}
+
+
+def runtime_metadata(source: Path) -> dict:
+    raw = read_source_metadata(source)
+    result: dict = {}
+    for key in ("target_host", "flag_format", "proto"):
+        value = raw.get(key)
+        if isinstance(value, str) and value.strip():
+            result[key] = value.strip()
+    for key in ("box", "server_name"):
+        value = raw.get(key)
+        if isinstance(value, str) and value.strip():
+            result["box"] = value.strip()
+            break
+    for key in ("internal_port", "port"):
+        value = raw.get(key)
+        if isinstance(value, int) and not isinstance(value, bool) and value > 0:
+            result["internal_port"] = value
+            break
+        if isinstance(value, str) and value.strip().isdigit() and int(value) > 0:
+            result["internal_port"] = int(value)
+            break
+    return result
+
+
+def is_private_verifier_name(name: str) -> bool:
+    lowered = name.lower()
+    return lowered in HASH_FILE_NAMES or "flagcheck" in lowered
 
 
 def canonical_category(value: str) -> str:
@@ -173,7 +236,7 @@ def verification_metadata(copied: list[str]) -> dict:
     hash_files = [path for path in copied if Path(path).name.lower() in HASH_FILE_NAMES]
     checker_files = [path for path in copied if "flagcheck" in Path(path).name.lower()]
     if hash_files:
-        return {"status": "eligible", "method": "sha256", "files": hash_files}
+        return {"status": "eligible", "method": "sha256", "files": hash_files, "hash_input": "full"}
     if checker_files:
         return {"status": "eligible", "method": "flagcheck", "files": checker_files}
     return {"status": "pending_validation", "method": "unknown", "files": []}
@@ -193,10 +256,31 @@ def read_description(path: Path) -> tuple[str, bool]:
                     original,
                 )
                 cleaned = re.sub(r"(?im)^\s*(?:solution|answer)\s*(?:=|:)\s*.+$\n?", "", cleaned)
+                cleaned = PLAINTEXT_FLAG_RE.sub("[REDACTED_FLAG]", cleaned)
                 return cleaned.strip(), cleaned != original
             except OSError:
                 pass
     return f"Google CTF challenge: {path.name}", False
+
+
+def extract_plaintext_flag(path: Path) -> str | None:
+    """Return one unambiguous flag found in a public description, if any.
+
+    Generic mentions such as ``submit the flag`` are intentionally ignored.
+    Multiple different candidates are rejected for manual review rather than
+    guessing which value is authoritative.
+    """
+    candidates: set[str] = set()
+    for name in ("DESCRIPTION.md", "description.md", "README.md", "readme.md"):
+        candidate = path / name
+        if not candidate.is_file():
+            continue
+        try:
+            text = candidate.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        candidates.update(match.group(0).strip() for match in PLAINTEXT_FLAG_RE.finditer(text))
+    return next(iter(candidates)) if len(candidates) == 1 else None
 
 
 def copy_tree_contents(source: Path, target: Path, root: Path, visited: set[str] | None = None) -> None:
@@ -214,7 +298,10 @@ def copy_tree_contents(source: Path, target: Path, root: Path, visited: set[str]
     except (OSError, ValueError):
         return
     for item in entries:
-        if item.name in SKIP_DIR_NAMES or item.name.lower() in SECRET_FILE_NAMES:
+        if (item.name in SKIP_DIR_NAMES
+                or item.name.lower() in SECRET_FILE_NAMES
+                or item.name.lower() in DESCRIPTION_FILE_NAMES
+                or is_private_verifier_name(item.name)):
             continue
         try:
             resolved_item = item.resolve()

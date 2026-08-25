@@ -1,0 +1,4 @@
+Discovered 831 task(s); running 831; skipping 0 completed task(s).
+[error] 0ctf2017__babyheap-ef570c4099
+ERROR: docker_bridge_capacity_guard: bridge has 8 containers, at or above configured limit 8; stopped before 0ctf2017__diethard-42aa242adb
+Completed batch: total_tasks=831 generated_trajectories=1 verified_solved=0 unsolved=1 generation_failed=1 environment_error=0

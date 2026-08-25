@@ -1,0 +1,7 @@
+category	exit_code	total	generated	failed	environment_error	output
+crypto	1	1	1	1	0	/data1/nfs/wangyingqi/Cyber-Zero/trajectories/category_smoke_20260824_220048/crypto
+forensics	1	1	1	1	0	/data1/nfs/wangyingqi/Cyber-Zero/trajectories/category_smoke_20260824_220048/forensics
+misc	1	1	1	1	0	/data1/nfs/wangyingqi/Cyber-Zero/trajectories/category_smoke_20260824_220048/misc
+pwn	1	1	1	1	0	/data1/nfs/wangyingqi/Cyber-Zero/trajectories/category_smoke_20260824_220048/pwn
+rev	1	1	1	1	0	/data1/nfs/wangyingqi/Cyber-Zero/trajectories/category_smoke_20260824_220048/rev
+web	1	1	1	1	0	/data1/nfs/wangyingqi/Cyber-Zero/trajectories/category_smoke_20260824_220048/web

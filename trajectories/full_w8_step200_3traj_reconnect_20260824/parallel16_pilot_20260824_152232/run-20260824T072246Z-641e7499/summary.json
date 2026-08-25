@@ -1,0 +1,50 @@
+{
+  "attempt_resource_cleanup_failed": 0,
+  "attempt_resource_cleanup_removed": 0,
+  "batch_errors": [],
+  "categories": {
+    "crypto": {
+      "flag_submitted": 0,
+      "flag_verified": 0,
+      "trajectory_generated": 1
+    },
+    "misc": {
+      "flag_submitted": 0,
+      "flag_verified": 0,
+      "trajectory_generated": 1
+    },
+    "pwn": {
+      "flag_submitted": 0,
+      "flag_verified": 0,
+      "trajectory_generated": 13
+    },
+    "rev": {
+      "flag_submitted": 0,
+      "flag_verified": 0,
+      "trajectory_generated": 1
+    }
+  },
+  "container_cleanup_failed": 0,
+  "container_cleanup_removed": 0,
+  "docker_bridge_containers_at_end": 4,
+  "docker_bridge_containers_at_start": 1,
+  "environment_error": 0,
+  "flag_not_attempted": 16,
+  "flag_status_unknown": 0,
+  "flag_submitted": 0,
+  "flag_verified": 0,
+  "generated_at": "2026-08-24T07:44:43+00:00",
+  "generated_trajectories": 16,
+  "generation_failed": 8,
+  "pending": 0,
+  "run_status": {
+    "error": 8,
+    "failed": 0,
+    "generated": 8
+  },
+  "skipped": 0,
+  "total_tasks": 16,
+  "trajectory_generated": 16,
+  "unsolved": 16,
+  "verified_solved": 0
+}

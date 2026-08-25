@@ -612,6 +612,12 @@ class Main:
                     logger.warning(f"闂傦拷?Failed on {self.env.record['instance_id']}: {e}")
                 else:
                     logger.warning("闂傦拷?Failed on unknown instance")
+                # A model/task timeout already has a terminal trajectory.
+                # Resetting would create a second container and can race
+                # with the normal cleanup path.
+                if isinstance(e, TimeoutError) or self.agent.info.get("exit_status") in {"model_timeout", "task_timeout"}:
+                    self.env.close()
+                    continue
                 self.env.reset_container()
                 continue
         self.env.close()

@@ -1,0 +1,52 @@
+{
+  "created_at": "2026-08-24T13:55:30+00:00",
+  "docker_bridge_containers_at_end": 11,
+  "docker_bridge_containers_at_start": 11,
+  "docker_dynamic_networks_at_end": 1,
+  "docker_dynamic_networks_at_start": 1,
+  "tasks": {
+    ".": {
+      "attempt_resource_cleanup": {
+        "failed_containers": [],
+        "failed_networks": [],
+        "removed_containers": [],
+        "removed_networks": [],
+        "resource_token": "batch-42205a76a3a5"
+      },
+      "category": "pwn",
+      "challenge_json": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2017/babyheap/challenge.json",
+      "compose_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2017/babyheap/docker-compose.yml",
+      "container_cleanup": {
+        "attempted": true,
+        "failed_container_ids": [],
+        "removed_container_ids": []
+      },
+      "dockerfile_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2017/babyheap/Dockerfile",
+      "episode_complete": false,
+      "episode_status": "ctf_server_unavailable",
+      "error": "CTF server is not accessible even after restart attempts. Task terminated.",
+      "error_code": "environment_error",
+      "error_log": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/babyheap_fixed_20260824_215530/logs/unnamed-3a52ce7809.error.log",
+      "event": "unknown",
+      "exit_status": "ctf_server_unavailable",
+      "failure_category": "runner_error",
+      "flag_submitted": false,
+      "flag_verification_evidence": "not_attempted",
+      "flag_verified": null,
+      "outcome_status": "unsolved",
+      "relative_path": ".",
+      "repo_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2017/babyheap",
+      "run_status": "error",
+      "solved": false,
+      "source_trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/babyheap_fixed_20260824_215530/unnamed-3a52ce7809/enigma_output/attempt-20260824T215530452062-0f42370a/glm52_10__challenge__default_ctf__t-0.00__p-0.95__k-20__c-0.00__install-1/pwn_babyheap.traj",
+      "steps": 1,
+      "task": "babyheap",
+      "task_id": "unnamed-3a52ce7809",
+      "time": "2026-08-24T14:00:30+00:00",
+      "trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/babyheap_fixed_20260824_215530/unnamed-3a52ce7809/trajectory.jsonl",
+      "trajectory_generated": true,
+      "updated_at": "2026-08-24T14:00:30+00:00"
+    }
+  },
+  "version": 2
+}

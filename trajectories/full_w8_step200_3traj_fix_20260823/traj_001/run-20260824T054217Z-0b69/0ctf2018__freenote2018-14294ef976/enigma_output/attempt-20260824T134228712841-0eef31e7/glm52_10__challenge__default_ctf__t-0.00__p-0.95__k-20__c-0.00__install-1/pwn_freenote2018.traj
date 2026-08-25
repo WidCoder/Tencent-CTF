@@ -1,0 +1,32 @@
+{
+  "trajectory_schema_version": 2,
+  "environment": "swe_main",
+  "trajectory": [
+    {
+      "step_id": 1,
+      "thought": "",
+      "action": "runner_exception",
+      "tool_name": "unknown",
+      "tool_args": "",
+      "observation": "Docker Compose startup failed with return code 1: time=\"2026-08-24T13:42:36+08:00\" level=warning msg=\"/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/enigma-freenote2018-h82lq5n5/repo/docker-compose-83dc773f.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion\"\ntime=\"2026-08-24T13:42:36+08:00\" level=warning msg=\"Docker Compose is configured to build using Bake, but buildx isn't installed\"\nwrite /home/ubuntu/.docker/buildx/refs/default/default/.tmp-if8m6dzcm5isgixvlfs62vubz1201782214: no space left on device\n",
+      "return_code": null,
+      "execution_time": 0.0,
+      "error": "RuntimeError",
+      "terminal": true,
+      "response": ""
+    }
+  ],
+  "history": [],
+  "info": {
+    "artifact_type": "synthetic_error",
+    "trajectory_schema_version": 2,
+    "exit_status": "runner_exception",
+    "terminal_reason": "Docker Compose startup failed with return code 1: time=\"2026-08-24T13:42:36+08:00\" level=warning msg=\"/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/enigma-freenote2018-h82lq5n5/repo/docker-compose-83dc773f.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion\"\ntime=\"2026-08-24T13:42:36+08:00\" level=warning msg=\"Docker Compose is configured to build using Bake, but buildx isn't installed\"\nwrite /home/ubuntu/.docker/buildx/refs/default/default/.tmp-if8m6dzcm5isgixvlfs62vubz1201782214: no space left on device\n",
+    "error_type": "RuntimeError",
+    "traceback": "Traceback (most recent call last):\n  File \"/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/run.py\", line 590, in main\n    if self.run(index) is False:\n  File \"/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/run.py\", line 370, in run\n    observation, info = self.env.reset(index)\n  File \"/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/environment/swe_env.py\", line 676, in reset\n    self._init_docker_compose()\n  File \"/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/environment/swe_env.py\", line 1355, in _init_docker_compose\n    return self._init_docker_compose_impl()\n  File \"/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/environment/swe_env.py\", line 1469, in _init_docker_compose_impl\n    self.docker_compose, self.port_mappings, actual_project_name = get_docker_compose(\n  File \"/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/environment/utils.py\", line 1461, in get_docker_compose\n    raise e\n  File \"/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/environment/utils.py\", line 1437, in get_docker_compose\n    raise RuntimeError(f\"Docker Compose startup failed with return code {return_code}: {output}\")\nRuntimeError: Docker Compose startup failed with return code 1: time=\"2026-08-24T13:42:36+08:00\" level=warning msg=\"/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/enigma-freenote2018-h82lq5n5/repo/docker-compose-83dc773f.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion\"\ntime=\"2026-08-24T13:42:36+08:00\" level=warning msg=\"Docker Compose is configured to build using Bake, but buildx isn't installed\"\nwrite /home/ubuntu/.docker/buildx/refs/default/default/.tmp-if8m6dzcm5isgixvlfs62vubz1201782214: no space left on device\n\n",
+    "flag_submitted": false,
+    "flag_verified": "unknown",
+    "episode_end_time": "2026-08-24T05:42:42.112839+00:00",
+    "total_steps": 1
+  }
+}

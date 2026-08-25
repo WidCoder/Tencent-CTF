@@ -1,0 +1,52 @@
+{
+  "created_at": "2026-08-24T14:33:45+00:00",
+  "docker_bridge_containers_at_end": 15,
+  "docker_bridge_containers_at_start": 14,
+  "docker_dynamic_networks_at_end": 1,
+  "docker_dynamic_networks_at_start": 1,
+  "tasks": {
+    "0ctf2019/elements": {
+      "attempt_resource_cleanup": {
+        "failed_containers": [],
+        "failed_networks": [],
+        "removed_containers": [],
+        "removed_networks": [],
+        "resource_token": "batch-81f75adc5c39"
+      },
+      "category": "rev",
+      "challenge_json": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2019/elements/challenge.json",
+      "compose_path": "",
+      "container_cleanup": {
+        "attempted": true,
+        "failed_container_ids": [],
+        "removed_container_ids": []
+      },
+      "dockerfile_path": "",
+      "episode_complete": true,
+      "episode_status": "early_exit",
+      "error": "Dynamic network ctfnet-batch-81f75adc5c-550485ae83c17fcf0644 not ready after 60s",
+      "error_code": "RuntimeError",
+      "error_log": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/category_smoke_20260824_220048/rev/logs/0ctf2019__elements-12c9366ea1.error.log",
+      "event": "0ctf2019",
+      "exit_status": "runner_exception",
+      "failure_category": "runner_error",
+      "flag_submitted": false,
+      "flag_verification_evidence": "not_attempted",
+      "flag_verified": null,
+      "outcome_status": "unsolved",
+      "relative_path": "0ctf2019/elements",
+      "repo_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2019/elements",
+      "run_status": "error",
+      "solved": false,
+      "source_trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/category_smoke_20260824_220048/rev/0ctf2019__elements-12c9366ea1/enigma_output/attempt-20260824T223345615472-8f92d9da/glm52_10__challenge__default_ctf__t-0.00__p-0.95__k-20__c-0.00__install-1/rev_elements.traj",
+      "steps": 1,
+      "task": "elements",
+      "task_id": "0ctf2019__elements-12c9366ea1",
+      "time": "2026-08-24T14:35:02+00:00",
+      "trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/category_smoke_20260824_220048/rev/0ctf2019__elements-12c9366ea1/trajectory.jsonl",
+      "trajectory_generated": true,
+      "updated_at": "2026-08-24T14:35:02+00:00"
+    }
+  },
+  "version": 2
+}

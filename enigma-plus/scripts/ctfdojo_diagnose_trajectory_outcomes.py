@@ -44,9 +44,6 @@ def structured_verdict(info: dict[str, Any]) -> dict[str, Any]:
         return {"flag_submitted": True, "flag_verified": True, "flag_verification_evidence": evidence if isinstance(evidence, str) else "verifier accepted submission"}
     if verified is False:
         return {"flag_submitted": True, "flag_verified": False, "flag_verification_evidence": evidence if isinstance(evidence, str) else "verifier rejected submission"}
-    # Legacy CTF trajectories set this exact state after validate_submission.
-    if info.get("exit_status") == "submitted" and info.get("submission") not in (None, ""):
-        return {"flag_submitted": True, "flag_verified": True, "flag_verification_evidence": "verifier accepted submission (legacy exit_status)"}
     if info.get("submission") not in (None, "") or str(info.get("exit_status", "")).startswith("submitted"):
         return {"flag_submitted": True, "flag_verified": None, "flag_verification_evidence": "unknown"}
     return {"flag_submitted": False, "flag_verified": None, "flag_verification_evidence": "unknown"}
@@ -189,7 +186,7 @@ def main() -> int:
     for relative_path, record in state["tasks"].items():
         if not isinstance(record, dict) or not record.get("trajectory_generated", record.get("status") == "success"):
             continue
-        if record.get("flag_verified") is not None:
+        if record.get("flag_verified") in (True, False):
             continue
         payloads = [(path, payload) for path in trajectory_paths(output_dir, record) if (payload := read_json(path)) is not None]
         verdict, verdict_sources, conflict = merged_verdict(record, payloads)

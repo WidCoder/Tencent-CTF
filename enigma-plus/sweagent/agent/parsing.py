@@ -104,6 +104,7 @@ class ThoughtActionParser(ParseFunction):
 
     _error_message = """\
     Your output was not formatted correctly. You must always include one discussion and one command as part of your response. Make sure you do not have multiple discussion/command tags.
+    The command may be multiline (for example a single heredoc or `python3 -c` block), but it must be contained in exactly one fenced code block. Do not include a second command block.
     Please make sure your output precisely matches the following format:
     DISCUSSION
     Discuss here with yourself about what your planning and what you're going to do in this step.

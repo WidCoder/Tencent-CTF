@@ -1,8 +1,8 @@
-timestamp: 2026-08-23T16:17:45+00:00
+timestamp: 2026-08-24T01:39:07+00:00
 challenge_json: /data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2018/freenote2018/challenge.json
 repo_path: /data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2018/freenote2018
 dockerfile_path: /data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2018/freenote2018/Dockerfile
-command: /home/ubuntu/miniconda3/envs/enigma/bin/python /data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/run.py --model_name glm52_10 --image_name sweagent/enigma:latest --data_path /tmp/enigma-freenote2018-6_khnydp/repo/challenge.json --repo_path /tmp/enigma-freenote2018-6_khnydp/repo --config_file config/default_ctf.yaml --per_instance_step_limit 200 --trajectory_path /data1/nfs/wangyingqi/Cyber-Zero/trajectories/full_w8_step200_3traj_fix_20260823/traj_001/0ctf2018__freenote2018-14294ef976/enigma_output/attempt-20260824T001728771777-050e9916 --messages_api_url http://127.0.0.1:23106/v1/messages --messages_api_key EMPTY
+command: /home/ubuntu/miniconda3/envs/enigma/bin/python /data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/run.py --model_name glm52_10 --image_name sweagent/enigma:latest --data_path /tmp/enigma-freenote2018-8qjvnjxg/repo/challenge.json --repo_path /tmp/enigma-freenote2018-8qjvnjxg/repo --config_file config/default_ctf.yaml --per_instance_step_limit 200 --trajectory_path /data1/nfs/wangyingqi/Cyber-Zero/trajectories/full_w8_step200_3traj_fix_20260823/traj_001/0ctf2018__freenote2018-14294ef976/enigma_output/attempt-20260824T093157820383-ed71288f --messages_api_url http://127.0.0.1:23106/v1/messages --messages_api_key EMPTY
 
 error:
 run.py exited with code 1
@@ -13,8 +13,8 @@ ERROR    keys.cfg not found in
 INFO     Logging to                                                             
          /data1/nfs/wangyingqi/Cyber-Zero/trajectories/full_w8_step200_3traj_fix
          _20260823/traj_001/0ctf2018__freenote2018-14294ef976/enigma_output/atte
-         mpt-20260824T001728771777-050e9916/glm52_10__challenge__default_ctf__t-
-         0.00__p-0.95__k-20__c-0.00__install-1/run-260824001731.log             
+         mpt-20260824T093157820383-ed71288f/glm52_10__challenge__default_ctf__t-
+         0.00__p-0.95__k-20__c-0.00__install-1/run-260824093200.log             
 INFO     濠电姷鏁告慨鐑姐€傞挊澹╋綁宕ㄩ弶鎴狅紱闂佽宕樺▔娑氭閵堝悿褰掓偐瀹革拷
          閸庡繘鏌ｉ妶搴℃灍闁靛洤瀚板浠嬶拷鎰垫線缁墎绱?Arguments: actions:    
            apply_patch_locally: false                                           
@@ -1489,7 +1489,7 @@ INFO     濠电姷鏁告慨鐑姐€傞挊澹╋綁宕ㄩ弶鎴狅紱闂佽�
            cache_task_images: false                                             
            container_mounts: []                                                 
            container_name: null                                                 
-           data_path: /tmp/enigma-freenote2018-6_khnydp/repo/challenge.json     
+           data_path: /tmp/enigma-freenote2018-8qjvnjxg/repo/challenge.json     
            enable_dynamic_ports: true                                           
            enable_network_restrictions: false                                   
            environment_setup: null                                              
@@ -1524,7 +1524,7 @@ INFO     濠电姷鏁告慨鐑姐€傞挊澹╋綁宕ㄩ弶鎴狅紱闂佽�
                terminal_prompt_pattern: '(gdb) '                                
                timeout_duration_on_interrupt: 5                                 
            no_mirror: false                                                     
-           repo_path: /tmp/enigma-freenote2018-6_khnydp/repo                    
+           repo_path: /tmp/enigma-freenote2018-8qjvnjxg/repo                    
            split: ''                                                            
            timeout: null                                                        
            verbose: true                                                        
@@ -1538,186 +1538,1105 @@ INFO     濠电姷鏁告慨鐑姐€傞挊澹╋綁宕ㄩ弶鎴狅紱闂佽�
          trajectory_path:                                                       
          /data1/nfs/wangyingqi/Cyber-Zero/trajectories/full_w8_step200_3traj_fix
          _20260823/traj_001/0ctf2018__freenote2018-14294ef976/enigma_output/atte
-         mpt-20260824T001728771777-050e9916                                     
+         mpt-20260824T093157820383-ed71288f                                     
          workers: 1                                                             
          writeup: ''                                                            
                                                                                 
-DEBUG    Found docker_compose file in /tmp/enigma-freenote2018-6_khnydp/repo    
+DEBUG    Found docker_compose file in /tmp/enigma-freenote2018-8qjvnjxg/repo    
 INFO     💽 Loaded dataset from                                                 
-         /tmp/enigma-freenote2018-6_khnydp/repo/challenge.json                  
+         /tmp/enigma-freenote2018-8qjvnjxg/repo/challenge.json                  
 INFO     Found image sweagent/enigma:latest with tags:                          
          ['sweagent/enigma:latest'], created: 2024-08-29T19:52:43.576514108Z for
          linux amd64.                                                           
 DEBUG    Starting container with image: sweagent/enigma:latest, name:           
-         sweagent-enigma-latest-ba1a22be26                                      
+         batch-a7050f758c-sweagent-enigma-latest-07dc10eaa6                     
 DEBUG    Resource limits: mem=2g, cpu_quota=150000, pids=1000                   
 DEBUG    Starting container with command: docker exec -i                        
-         sweagent-enigma-latest-ba1a22be26 /bin/bash -l                         
-DEBUG    Container sweagent-enigma-latest-ba1a22be26 passed health check        
+         batch-a7050f758c-sweagent-enigma-latest-07dc10eaa6 /bin/bash -l        
+DEBUG    Container batch-a7050f758c-sweagent-enigma-latest-07dc10eaa6 passed    
+         health check                                                           
 DEBUG    ✅ Successfully retrieved container object for                         
-         sweagent-enigma-latest-ba1a22be26                                      
+         batch-a7050f758c-sweagent-enigma-latest-07dc10eaa6                     
 INFO     🌱 Environment Initialized                                             
-DEBUG    Environment initialization took 3.80 seconds                           
+DEBUG    Environment initialization took 3.73 seconds                           
 INFO     闂傚倸鍊搁崐鎼佸磹閹间礁纾圭€瑰嫭鍣磋ぐ鎺戠倞鐟滃寮稿澶嬬厸闁搞儮鏅涢
          埀锟介敐澶嬫櫜濠㈣泛锕﹂濠傗攽鎺抽崐鏇㈡晝閵夆晛鐤鹃柍鍝勬噺閳锋垹鎲搁
          悧鍫濈瑨濞存粈鍗抽弻娑㈡偐閾忥拷閻ㄦ垹绱? Beginning task 0             
-DEBUG    Docker network status: {'total_networks': 33, 'bridge_networks': 31,   
-         'dynamic_networks': 28, 'subnet_usage_warning': False,                 
+DEBUG    Docker network status: {'total_networks': 23, 'bridge_networks': 21,   
+         'dynamic_networks': 18, 'subnet_usage_warning': False,                 
          'subnet_usage_critical': False}                                        
-DEBUG    Found 31 bridge networks, 28 dynamic CTF networks                      
+DEBUG    Found 21 bridge networks, 18 dynamic CTF networks                      
 DEBUG    Generated unique container suffix:                                     
-         latest-ba1a22be26-847b359afa0bdb6f52d5                                 
+         batch-a7050f758c-8cd537df53f175fbb317                                  
 INFO     🔗 Using unique network name:                                          
-         ctfnet-latest-ba1a22be26-847b359afa0bdb6f52d5                          
+         ctfnet-batch-a7050f758c-8cd537df53f175fbb317                           
 DEBUG    Normalized Docker Compose project name:                                
-         repo-latest-ba1a22be26-847b359afa0bdb6f52d5 ->                         
-         repo_latest_ba1a22be26_847b359afa0bdb6f52d5                            
-INFO     🔗 Creating network: ctfnet-latest-ba1a22be26-847b359afa0bdb6f52d5     
-DEBUG    Creating new network: ctfnet-latest-ba1a22be26-847b359afa0bdb6f52d5    
-ERROR    ❌ Failed to create network                                            
-         ctfnet-latest-ba1a22be26-847b359afa0bdb6f52d5: 400 Client Error for    
-         http+docker://localhost/v1.52/networks/create: Bad Request ("all       
-         predefined address pools have been fully subnetted")                   
+         repo-batch-a7050f758c-8cd537df53f175fbb317 ->                          
+         repo_batch_a7050f758c_8cd537df53f175fbb317                             
+INFO     🔗 Creating network: ctfnet-batch-a7050f758c-8cd537df53f175fbb317      
+DEBUG    Creating new network: ctfnet-batch-a7050f758c-8cd537df53f175fbb317     
+INFO     ✅ Created network: ctfnet-batch-a7050f758c-8cd537df53f175fbb317       
+DEBUG    Found port mapping for freenote2018: 1337:1337                         
+DEBUG    Need to allocate 1 external ports for mappings: [('freenote2018',      
+         '1337', '1337')]                                                       
+DEBUG    Reserved port: 15123                                                   
+INFO     Allocated external ports: [15123]                                      
+DEBUG    Mapped freenote2018 internal port 1337 to external port 15123          
+INFO     Creating external network: ctfnet-batch-a7050f758c-8cd537df53f175fbb317
+INFO     ✅ External network already exists:                                    
+         ctfnet-batch-a7050f758c-8cd537df53f175fbb317                           
+DEBUG    Added container name:                                                  
+         freenote2018-batch-a7050f758c-8cd537df53f175fbb317                     
+DEBUG    Added restart policy 'always' to service                               
+         freenote2018-batch-a7050f758c-8cd537df53f175fbb317                     
+DEBUG    Updated port mapping for                                               
+         freenote2018-batch-a7050f758c-8cd537df53f175fbb317: 1337:1337 ->       
+         15123:1337                                                             
+DEBUG    Updated ports for freenote2018-batch-a7050f758c-8cd537df53f175fbb317:  
+         ['1337:1337'] -> ['15123:1337']                                        
+DEBUG    Renamed service: freenote2018 ->                                       
+         freenote2018-batch-a7050f758c-8cd537df53f175fbb317                     
+DEBUG    Updated service freenote2018-batch-a7050f758c-8cd537df53f175fbb317 to  
+         use external network: ctfnet-batch-a7050f758c-8cd537df53f175fbb317     
+INFO     ✅ Created dynamic docker-compose file:                                
+         /tmp/enigma-freenote2018-8qjvnjxg/repo/docker-compose-633507dc.yml     
+INFO     ✅ Network will be: ctfnet-batch-a7050f758c-8cd537df53f175fbb317       
+         (external, pre-created)                                                
+INFO     Created dynamic docker-compose at                                      
+         /tmp/enigma-freenote2018-8qjvnjxg/repo/docker-compose-633507dc.yml with
+         port mappings: {'freenote2018:1337': 15123, '1337': 15123}             
+DEBUG    Normalized Docker Compose project name:                                
+         repo-batch-a7050f758c-8cd537df53f175fbb317 ->                          
+         repo_batch_a7050f758c_8cd537df53f175fbb317                             
+DEBUG    Using Docker Compose project name:                                     
+         repo_batch_a7050f758c_8cd537df53f175fbb317                             
+DEBUG    Starting docker-compose with command: docker compose -f                
+         /tmp/enigma-freenote2018-8qjvnjxg/repo/docker-compose-633507dc.yml -p  
+         repo_batch_a7050f758c_8cd537df53f175fbb317 up -d --force-recreate      
+DEBUG    Running docker-compose from directory:                                 
+         /tmp/enigma-freenote2018-8qjvnjxg/repo                                 
+INFO     🚀 Starting Docker Compose with project name:                          
+         repo_batch_a7050f758c_8cd537df53f175fbb317                             
+DEBUG    Docker Compose output: time="2026-08-24T09:32:04+08:00" level=warning  
+         msg="/tmp/enigma-freenote2018-8qjvnjxg/repo/docker-compose-633507dc.yml
+         : the attribute `version` is obsolete, it will be ignored, please      
+         remove it to avoid potential confusion"                                
+         time="2026-08-24T09:32:04+08:00" level=warning msg="Docker Compose is  
+         configured to build using Bake, but buildx isn't installed"            
+         #0 building with "default" instance using docker driver                
+                                                                                
+         #1 [freenote2018-batch-a7050f758c-8cd537df53f175fbb317 internal] load  
+         build definition from Dockerfile                                       
+         #1 transferring dockerfile: 537B done                                  
+         #1 DONE 0.0s                                                           
+                                                                                
+         #2 [freenote2018-batch-a7050f758c-8cd537df53f175fbb317 internal] load  
+         metadata for docker.io/library/ubuntu:20.04                            
+         #2 DONE 1.0s                                                           
+                                                                                
+         #3 [freenote2018-batch-a7050f758c-8cd537df53f175fbb317 internal] load  
+         .dockerignore                                                          
+         #3 transferring context: 2B done                                       
+         #3 DONE 0.0s                                                           
+                                                                                
+         #4 [freenote2018-batch-a7050f758c-8cd537df53f175fbb317 1/6] FROM       
+         docker.io/library/ubuntu:20.04@sha256:8feb4d8ca5354def3d8fce243717141ce
+         31e2c428701f6682bd2fafe15388214                                        
+         #4 resolve                                                             
+         docker.io/library/ubuntu:20.04@sha256:8feb4d8ca5354def3d8fce243717141ce
+         31e2c428701f6682bd2fafe15388214 0.0s done                              
+         #4 DONE 0.0s                                                           
+                                                                                
+         #5 [freenote2018-batch-a7050f758c-8cd537df53f175fbb317 2/6] RUN apt-get
+         update && apt-get install -y     socat     python3     && apt-get clean
+         && rm -rf /var/lib/apt/lists/*                                         
+         #5 CACHED                                                              
+                                                                                
+         #6 [freenote2018-batch-a7050f758c-8cd537df53f175fbb317 3/6] WORKDIR    
+         /challenge                                                             
+         #6 CACHED                                                              
+                                                                                
+         #7 [freenote2018-batch-a7050f758c-8cd537df53f175fbb317 internal] load  
+         build context                                                          
+         #7 transferring context: 2.77MB 0.0s done                              
+         #7 DONE 0.0s                                                           
+                                                                                
+         #8 [freenote2018-batch-a7050f758c-8cd537df53f175fbb317 4/6] COPY .     
+         /challenge/                                                            
+         #8 DONE 0.1s                                                           
+                                                                                
+         #9 [freenote2018-batch-a7050f758c-8cd537df53f175fbb317 5/6] RUN chmod  
+         +x /challenge/* 2>/dev/null || true                                    
+         #9 DONE 0.4s                                                           
+                                                                                
+         #10 [freenote2018-batch-a7050f758c-8cd537df53f175fbb317 6/6] RUN printf
+         '#!/bin/bash\ncd /challenge\necho "Challenge is ready for              
+         interaction"\ncat\n' > /challenge/run.sh && chmod +x /challenge/run.sh 
+         #10 DONE 0.6s                                                          
+                                                                                
+         #11 [freenote2018-batch-a7050f758c-8cd537df53f175fbb317] exporting to  
+         image                                                                  
+         #11 exporting layers                                                   
+         #11 exporting layers 0.5s done                                         
+         #11 exporting manifest                                                 
+         sha256:f2befce962c0eb3b8f0981288ddf2cecf54b19f8a0138170d2d02b2828a66a3d
+         0.0s done                                                              
+         #11 exporting config                                                   
+         sha256:a205c831e735f2a9527a5e39027840d7d2424e5fe671e55547be8759f06f85f2
+         0.0s done                                                              
+         #11 exporting attestation manifest                                     
+         sha256:a175cae5fd390dd70b8ca105293308436b52c495376532fb3baba6e0dfcde3a3
+         #11 exporting attestation manifest                                     
+         sha256:a175cae5fd390dd70b8ca105293308436b52c495376532fb3baba6e0dfcde3a3
+         0.1s done                                                              
+         #11 exporting manifest list                                            
+         sha256:91f4a256e29fc16bcf8772a2c06d4c531f9d3f337eb3d934b98797b2bd0fa79f
+         0.0s done                                                              
+         #11 naming to                                                          
+         docker.io/library/repo_batch_a7050f758c_8cd537df53f175fbb317-freenote20
+         18-batch-a7050f758c-8cd537df53f175fbb317:latest                        
+         #11 naming to                                                          
+         docker.io/library/repo_batch_a7050f758c_8cd537df53f175fbb317-freenote20
+         18-batch-a7050f758c-8cd537df53f175fbb317:latest 0.0s done              
+         #11 unpacking to                                                       
+         docker.io/library/repo_batch_a7050f758c_8cd537df53f175fbb317-freenote20
+         18-batch-a7050f758c-8cd537df53f175fbb317:latest                        
+         #11 unpacking to                                                       
+         docker.io/library/repo_batch_a7050f758c_8cd537df53f175fbb317-freenote20
+         18-batch-a7050f758c-8cd537df53f175fbb317:latest 0.2s done              
+         #11 DONE 0.9s                                                          
+                                                                                
+         #12 [freenote2018-batch-a7050f758c-8cd537df53f175fbb317] resolving     
+         provenance for metadata file                                           
+         #12 DONE 0.0s                                                          
+          freenote2018-batch-a7050f758c-8cd537df53f175fbb317  Built             
+          Container freenote2018-batch-a7050f758c-8cd537df53f175fbb317  Creating
+          Container freenote2018-batch-a7050f758c-8cd537df53f175fbb317  Created 
+          Container freenote2018-batch-a7050f758c-8cd537df53f175fbb317  Starting
+          Container freenote2018-batch-a7050f758c-8cd537df53f175fbb317  Started 
+INFO     ✅ Docker Compose started successfully with project name:              
+         repo_batch_a7050f758c_8cd537df53f175fbb317                             
+DEBUG    Actual Docker Compose project name from utils:                         
+         repo_batch_a7050f758c_8cd537df53f175fbb317                             
+INFO     🏗️ Initialized docker compose for challenge                            
+INFO     🔌 Dynamic port mappings: {'freenote2018:1337': 15123, '1337': 15123}  
+INFO     ⏳ Waiting for services to be fully ready...                           
+INFO     🔗 Attaching container to CTF network                                  
+         ctfnet-batch-a7050f758c-8cd537df53f175fbb317                           
+DEBUG    Found network ctfnet-batch-a7050f758c-8cd537df53f175fbb317             
+DEBUG    Found container batch-a7050f758c-sweagent-enigma-latest-07dc10eaa6     
+INFO     Successfully connected container                                       
+         batch-a7050f758c-sweagent-enigma-latest-07dc10eaa6 to network          
+         ctfnet-batch-a7050f758c-8cd537df53f175fbb317                           
+DEBUG    Container batch-a7050f758c-sweagent-enigma-latest-07dc10eaa6 assigned  
+         IP 172.22.0.3 on network ctfnet-batch-a7050f758c-8cd537df53f175fbb317  
+DEBUG    Verified: Container batch-a7050f758c-sweagent-enigma-latest-07dc10eaa6 
+         is properly connected to network                                       
+         ctfnet-batch-a7050f758c-8cd537df53f175fbb317                           
+INFO     ✅ Successfully attached container to network                          
+         ctfnet-batch-a7050f758c-8cd537df53f175fbb317                           
+DEBUG    Container network interfaces after attachment: 1: lo:                  
+         <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group     
+         default qlen 1000                                                      
+             inet 127.0.0.1/8 scope host lo                                     
+         2: eth0@if10242: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc      
+         noqueue state UP group default                                         
+             inet 172.17.0.4/16 brd 172.17.255.255 scope global eth0            
+         3: eth1@if10280: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc      
+         noqueue state UP group default                                         
+             inet 172.22.0.3/16 brd 172.22.255.255 scope global eth1            
+DEBUG    Container routing table after attachment: default via 172.17.0.1 dev   
+         eth0                                                                   
+         172.17.0.0/16 dev eth0 proto kernel scope link src 172.17.0.4          
+         172.22.0.0/16 dev eth1 proto kernel scope link src 172.22.0.3          
+DEBUG    Container has 3 network interfaces - looks good                        
+DEBUG    Can reach gateway 172.18.0.1 - network attachment likely successful    
+INFO     ✅ Network setup complete for                                          
+         ctfnet-batch-a7050f758c-8cd537df53f175fbb317                           
+DEBUG    Allowing extra time for CTF services to register network aliases...    
+WARNING  CTF challenge missing server_name or port, skipping validation         
+DEBUG    ✅ Validated container object:                                         
+         batch-a7050f758c-sweagent-enigma-latest-07dc10eaa6                     
+DEBUG    Copying file freenote2018 to container                                 
+         batch-a7050f758c-sweagent-enigma-latest-07dc10eaa6                     
+DEBUG    📂 Copying /tmp/enigma-freenote2018-8qjvnjxg/repo/freenote2018 to      
+         container batch-a7050f758c-sweagent-enigma-latest-07dc10eaa6 (ID:      
+         1e46a0d55733) at /__tmp__enigma-freenote2018-8qjvnjxg__repo            
+DEBUG    Copying /tmp/enigma-freenote2018-8qjvnjxg/repo/freenote2018 to         
+         container at /__tmp__enigma-freenote2018-8qjvnjxg__repo with command:  
+         docker cp /tmp/enigma-freenote2018-8qjvnjxg/repo/freenote2018          
+         1e46a0d557335fefacdab86192fda57bda82239a2200f7a30bba6e47a84d9342:/__tmp
+         __enigma-freenote2018-8qjvnjxg__repo                                   
+DEBUG    ✅ Successfully copied                                                 
+         /tmp/enigma-freenote2018-8qjvnjxg/repo/freenote2018 to container       
+         batch-a7050f758c-sweagent-enigma-latest-07dc10eaa6                     
+DEBUG    Copying file libc-2.23.so to container                                 
+         batch-a7050f758c-sweagent-enigma-latest-07dc10eaa6                     
+DEBUG    📂 Copying /tmp/enigma-freenote2018-8qjvnjxg/repo/libc-2.23.so to      
+         container batch-a7050f758c-sweagent-enigma-latest-07dc10eaa6 (ID:      
+         1e46a0d55733) at /__tmp__enigma-freenote2018-8qjvnjxg__repo            
+DEBUG    Copying /tmp/enigma-freenote2018-8qjvnjxg/repo/libc-2.23.so to         
+         container at /__tmp__enigma-freenote2018-8qjvnjxg__repo with command:  
+         docker cp /tmp/enigma-freenote2018-8qjvnjxg/repo/libc-2.23.so          
+         1e46a0d557335fefacdab86192fda57bda82239a2200f7a30bba6e47a84d9342:/__tmp
+         __enigma-freenote2018-8qjvnjxg__repo                                   
+DEBUG    ✅ Successfully copied                                                 
+         /tmp/enigma-freenote2018-8qjvnjxg/repo/libc-2.23.so to container       
+         batch-a7050f758c-sweagent-enigma-latest-07dc10eaa6                     
+WARNING  install_environment is set to True, but the data path is a GitHub URL  
+         without an environment config file (environment_config key/flag).      
+         Skipping conda environment installation.                               
+INFO     Setting up CTF flag file                                               
+INFO     Initializing agent settings for container                              
+         1e46a0d557335fefacdab86192fda57bda82239a2200f7a30bba6e47a84d9342       
+DEBUG    Setting up state command in container: state                           
+DEBUG    State command code: state() {                                          
+           local working_dir="$PWD";                                            
+           local open_file="n/a";                                               
+           local interactive_session="${INTERACTIVE_SESSION:-n/a}";             
+           if [ ! -z $CURRENT_FILE ]; then                                      
+               open_file=$(realpath $CURRENT_FILE);                             
+           fi                                                                   
+                                                                                
+           echo '{"open_file": "'$open_file'", "working_dir": "'$working_dir'", 
+         "interactive_session": "'$interactive_session'"}'                      
+         };                                                                     
+                                                                                
+DEBUG    Environment variables and state command setup completed successfully   
+DEBUG    State command successfully defined as a function                       
+INFO     Resetting model stats                                                  
+INFO     SYSTEM (primary)                                                       
+         SETTING: You are a skilled cybersecurity professional and top CTF      
+         player.                                                                
+         Your goal is to solve the CTF challenge and find the flag. The flag    
+         format for this CTF is flag{...}.                                      
+                                                                                
+         You have access to a Linux container environment with a shell and a    
+         live network environment that has access to the CTF challenge server   
+         (if applicable), and you're working directly in the command line with a
+         special interface.                                                     
+         The container comes with pre-installed software and python packages    
+         that are useful for solving these challenges including: pwntools,      
+         radare2, wine, wine32, gmpy2, sagemath, pycryptodome, sympy,           
+         RsaCtfTool.py, tshark, sqlmap and nikto.                               
+                                                                                
+         The special interface consists of a file editor that shows you 100     
+         lines of a file at a time.                                             
+         In addition to typical bash commands, you can also use the following   
+         commands to help you navigate and edit files.                          
+                                                                                
+         COMMANDS:                                                              
+         open:                                                                  
+           docstring: opens the file at the given path in the editor. If        
+         line_number is provided, the window will be move to include that line  
+           signature: open "<path>" [<line_number>]                             
+           arguments:                                                           
+             - path (string) [required]: the path to the file to open           
+             - line_number (integer) [optional]: the line number to move the    
+         window to (if not provided, the window will start at the top of the    
+         file)                                                                  
+                                                                                
+         goto:                                                                  
+           docstring: moves the window to show <line_number>                    
+           signature: goto <line_number>                                        
+           arguments:                                                           
+             - line_number (integer) [required]: the line number to move the    
+         window to                                                              
+                                                                                
+         scroll_down:                                                           
+           docstring: moves the window down 100 lines                           
+           signature: scroll_down                                               
+                                                                                
+         scroll_up:                                                             
+           docstring: moves the window down 100 lines                           
+           signature: scroll_up                                                 
+                                                                                
+         create:                                                                
+           docstring: creates and opens a new file with the given name          
+           signature: create <filename>                                         
+           arguments:                                                           
+             - filename (string) [required]: the name of the file to create     
+                                                                                
+         search_dir:                                                            
+           docstring: searches for search_term in all files in dir. If dir is   
+         not provided, searches in the current directory                        
+           signature: search_dir <search_term> [<dir>]                          
+           arguments:                                                           
+             - search_term (string) [required]: the term to search for          
+             - dir (string) [optional]: the directory to search in (if not      
+         provided, searches in the current directory)                           
+                                                                                
+         search_file:                                                           
+           docstring: searches for search_term in file. If file is not provided,
+         searches in the current open file                                      
+           signature: search_file <search_term> [<file>]                        
+           arguments:                                                           
+             - search_term (string) [required]: the term to search for          
+             - file (string) [optional]: the file to search in (if not provided,
+         searches in the current open file)                                     
+                                                                                
+         find_file:                                                             
+           docstring: finds all files with the given name in dir. If dir is not 
+         provided, searches in the current directory                            
+           signature: find_file <file_name> [<dir>]                             
+           arguments:                                                           
+             - file_name (string) [required]: the name of the file to search for
+             - dir (string) [optional]: the directory to search in (if not      
+         provided, searches in the current directory)                           
+                                                                                
+         edit:                                                                  
+           docstring: replaces lines <start_line> through <end_line> (inclusive)
+         with the given text in the open file. The replacement text is          
+         terminated by a line with only end_of_edit on it. All of the           
+         <replacement text> will be entered, so make sure your indentation is   
+         formatted properly. Python files will be checked for syntax errors     
+         after the edit. If the system detects a syntax error, the edit will not
+         be executed. Simply try to edit the file again, but make sure to read  
+         the error message and modify the edit command you issue accordingly.   
+         Issuing the same command a second time will just lead to the same error
+         message again.                                                         
+           signature: edit <start_line>:<end_line>                              
+         <replacement_text>                                                     
+         end_of_edit                                                            
+           arguments:                                                           
+             - start_line (integer) [required]: the line number to start the    
+         edit at                                                                
+             - end_line (integer) [required]: the line number to end the edit at
+         (inclusive)                                                            
+             - replacement_text (string) [required]: the text to replace the    
+         current selection with                                                 
+                                                                                
+         submit:                                                                
+           docstring: submits your current flag and terminates the session, you 
+         should be aware to properly escape the flag as this is a bash command  
+         and to put your flag under single quotes.                              
+           signature: submit '<flag>'                                           
+           arguments:                                                           
+             - flag (string) [required]: the flag found                         
+                                                                                
+         decompile:                                                             
+           docstring: Decompile a binary and prints the decompilation of a given
+         function name                                                          
+           signature: decompile <binary_path> [--function_name <function_name>] 
+           arguments:                                                           
+             - binary_path (file path) [required]: The path to the binary to be 
+         decompiled                                                             
+             - function_name (string) [optional]: The function name to be       
+         decompiled, or main by default                                         
+                                                                                
+         disassemble:                                                           
+           docstring: Disassembles a binary and prints the disassembly of a     
+         given function name                                                    
+           signature: disassemble <binary_path> [--function_name                
+         <function_name>]                                                       
+           arguments:                                                           
+             - binary_path (file path) [required]: The path to the binary to be 
+         disassembled                                                           
+             - function_name (string) [optional]: The function name to be       
+         disassembled, or main by default                                       
+                                                                                
+         debug_start:                                                           
+           docstring: Starts a debug session with the given binary.             
+           signature: debug_start <binary> [<args>]                             
+           arguments:                                                           
+             - binary (string) [required]: the path to the binary to debug      
+             - args (string) [optional]: optional command-line arguments for the
+         binary                                                                 
+                                                                                
+         debug_add_breakpoint:                                                  
+           docstring: Adds a breakpoint in the debug session                    
+           signature: debug_add_breakpoint <breakpoint>                         
+           arguments:                                                           
+             - breakpoint (string) [required]: The breakpoint location, which   
+         may be a function name, address, or filename and line number.          
+                                                                                
+         debug_continue:                                                        
+           docstring: Continues the program execution in the debug session.     
+           signature: debug_continue                                            
+                                                                                
+         debug_step:                                                            
+           docstring: Steps number of instructions in the debug session.        
+           signature: debug_step [number]                                       
+           arguments:                                                           
+             - number (integer) [optional]: number of instructions to step      
+         (default is 1)                                                         
+                                                                                
+         debug_exec:                                                            
+           docstring: Executes arbitrary gdb command in debug session.          
+           signature: debug_exec <command>                                      
+           arguments:                                                           
+             - command (string) [required]: command to execute (wrap in single  
+         quotes to avoid shell escaping and substitution)                       
+                                                                                
+         debug_stop:                                                            
+           docstring: Stops the current debug session.                          
+           signature: debug_stop                                                
+                                                                                
+         connect_start:                                                         
+           docstring: Starts a new interactive connection to the server address 
+         and port.                                                              
+           signature: connect_start <server_address> <port>                     
+           arguments:                                                           
+             - server_address (string) [required]: the server address to        
+         initiate connection to                                                 
+             - port (int) [required]: desired port for connection               
+                                                                                
+         connect_sendline:                                                      
+           docstring: Sends a line with unicode/hexadecimal values to the       
+         connection. Sending hexadecimal bytes should be done using \x<hh> where
+         hh stands for the sepecific byte you want to send.                     
+           signature: connect_sendline [<line>]                                 
+           arguments:                                                           
+             - line (string) [optional]: The line to send to the connection     
+                                                                                
+         connect_exec:                                                          
+           docstring: Executes arbitrary connect command in connect session.    
+           signature: connect_exec <command>                                    
+           arguments:                                                           
+             - command (string) [required]: command to execute (wrap in single  
+         quotes to avoid shell escaping and substitution)                       
+                                                                                
+         connect_stop:                                                          
+           docstring: Stops the current connect session.                        
+           signature: connect_stop                                              
+                                                                                
+         exit_forfeit:                                                          
+           docstring: Give up on the current challenge and terminate the        
+         session.                                                               
+           signature: exit_forfeit                                              
+                                                                                
+                                                                                
+                                                                                
+         Please note that THE EDIT COMMAND REQUIRES PROPER INDENTATION.         
+         If you'd like to add the line '        print(x)' you must fully write  
+         that out, with all those spaces before the code! Indentation is        
+         important and code that is not indented correctly will fail and require
+         fixing before it can be run.                                           
+                                                                                
+         RESPONSE FORMAT:                                                       
+         Your shell prompt is formatted as follows:                             
+         (Open file: <path>) <cwd> $                                            
+                                                                                
+         You need to format your output using two fields; discussion and        
+         command.                                                               
+         Your output should always include _one_ discussion and _one_ command   
+         field EXACTLY as in the following example:                             
+         DISCUSSION                                                             
+         First I'll start by using ls to see what files are in the current      
+         directory. Then maybe we can look at some relevant files to see what   
+         they look like.                                                        
+         ```                                                                    
+         ls -a                                                                  
+         ```                                                                    
+                                                                                
+         You should only include a *SINGLE* command in the command section and  
+         then wait for a response from the shell before continuing with more    
+         discussion and commands. Everything you include in the DISCUSSION      
+         section will be saved for future reference.                            
+         If you'd like to issue two commands at once, PLEASE DO NOT DO THAT!    
+         Please instead first submit just the first command, and then after     
+         receiving a response you'll be able to issue the second command.       
+         You're free to use any other bash commands you want (e.g. find, grep,  
+         cat, ls, cd) in addition to the special commands listed above.         
+         However, the environment does NOT support interactive session commands 
+         (e.g. python, vim), so please do not invoke them.                      
+                                                                                
+         YOU CANNOT ACCESS ANY WEBSITE EXCEPT FOR THE CTF CHALLENGE SERVER! DO  
+         NOT PEFORM PORT SCANNING OR ANY OTHER NETWORK SCANNING!                
+INFO     Trajectory will be saved to                                            
+         /data1/nfs/wangyingqi/Cyber-Zero/trajectories/full_w8_step200_3traj_fix
+         _20260823/traj_001/0ctf2018__freenote2018-14294ef976/enigma_output/atte
+         mpt-20260824T093157820383-ed71288f/glm52_10__challenge__default_ctf__t-
+         0.00__p-0.95__k-20__c-0.00__install-1/pwn_freenote2018.traj            
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏缁愭鎱ㄥ鍡楀姦?MODEL INPUT         
+         We're currently solving the following CTF challenge. The CTF challenge 
+         is a binary exploitation problem named "freenote2018", worth 10 points.
+         The description is:                                                    
+         A note-taking application with some protections in place. Can you      
+         bypass them and get a shell? Connect to the service and exploit the    
+         vulnerability to capture the flag.                                     
+         Files included in the challenge: ['freenote2018', 'libc-2.23.so']      
+                                                                                
+         The challenge server is running on `127.0.0.1` port `1337` and you can 
+         access it from within the container environment using `connect_start   
+         127.0.0.1 1337`.                                                       
+                                                                                
+         INSTRUCTIONS:                                                          
+         Now, you're going to solve this challenge on your own. Your terminal   
+         session has started and you're in the challenge's root directory. You  
+         can use any bash commands or the special interface to help you.        
+         Solve the challenge, executing any commands you need and writing any   
+         code that may be helpful. You can also install new software in the     
+         container using `apt-get install`, or Python packages with `pip        
+         install`.                                                              
+         Remember, YOU CAN ONLY ENTER ONE COMMAND AT A TIME. You should always  
+         wait for feedback after every command.                                 
+         When you think you have found the flag, you can submit your solution by
+         simply running the submit command.                                     
+         Note however that you cannot use any interactive session commands (e.g.
+         python, vim) in this environment, but you can write scripts and run    
+         them. E.g. you can write a python script and then run it with `python  
+         <script_name>.py`.                                                     
+                                                                                
+         NOTE ABOUT THE EDIT COMMAND: Indentation really matters! When editing a
+         file, make sure to insert appropriate indentation before each line!    
+                                                                                
+         IMPORTANT TIPS:                                                        
+         1. When you edit an existing file, try to minimize the changes you make
+         to the file.                                                           
+                                                                                
+         2. Please make sure that you make use of the interactive tools supplied
+         to you! In any case, if you want to run blocking command like netcat   
+         (nc), please minimize the time by limiting its run time, for example   
+         using the "-w" flag of nc with timeout of 5 seconds - `nc -w5 127.0.0.1
+         80`.                                                                   
+                                                                                
+         3. Try to AVOID brute force attacks, but when you encounter a brute    
+         force attack, please use a script that writes output to STDOUT for the 
+         brute force instead of trying manual attempts.                         
+                                                                                
+         4. Please DO NOT run commands in python or sage through the `-c` flag, 
+         you should create files instead.                                       
+                                                                                
+         5. Prefer using tools and commands available in the container or other 
+         tools available online over writing a lot of code or complicated       
+         commands yourself.                                                     
+            In particular, prefer using `open` instead of `cat` and             
+         `search_file` instead of `grep`, and prefer using the interactive      
+         commands supplied to you!                                              
+                                                                                
+         6. DO NOT run any command that produces binary output! Instead try to  
+         use `hexdump` or `xxd`.                                                
+                                                                                
+         7. Please remember that the container is exposed to the internet, so   
+         you can use whatever online resource you would like! Use it wisely!    
+                                                                                
+         8. Do not use any interactive commands AT ALL! Interactive commands are
+         only available through the commands supplied to you at the beginning - 
+         make use of them!                                                      
+                                                                                
+         9. YOU CAN SOLVE THE CHALLENGES BY YOURSELF COMPLETELY - I TRUST IN    
+         YOU!                                                                   
+                                                                                
+         (Open file: n/a)                                                       
+         (Current directory: /__tmp__enigma-freenote2018-8qjvnjxg__repo)        
+         (Interactive session: n/a)                                             
+         bash-$                                                                 
+DEBUG    input_tokens=2,869, output_tokens=38, instance_cost=0.00, cost=0.00    
+DEBUG    total_tokens_sent=2,869, total_tokens_received=38, total_cost=0.00,    
+         total_api_calls=1                                                      
+WARNING  MALFORMED OUTPUT                                                       
+         ls -la</arg_value></tool_call>                                         
+WARNING  FORMAT ERROR                                                           
+         Your output was not formatted correctly. You must always include one   
+         discussion and one command as part of your response. Make sure you do  
+         not have multiple discussion/command tags.                             
+         Please make sure your output precisely matches the following format:   
+         DISCUSSION                                                             
+         Discuss here with yourself about what your planning and what you're    
+         going to do in this step.                                              
+                                                                                
+         ```                                                                    
+         command(s) that you're going to run                                    
+         ```                                                                    
+                                                                                
+DEBUG    input_tokens=2,959, output_tokens=44, instance_cost=0.00, cost=0.00    
+DEBUG    total_tokens_sent=5,828, total_tokens_received=82, total_cost=0.00,    
+         total_api_calls=2                                                      
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏閻ゎ喗銇勯弽銊х焼闁?THOUGHT (primary)
+         DISCUSSION                                                             
+         Let me start by examining the files in the challenge directory to      
+         understand what we're working with.                                    
+                                                                                
+                                                                                
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏閻ゎ喗銇勯幇鈺佲偓妤佺▔?ACTION       
+         (primary)                                                              
+         ls -la                                                                 
+                                                                                
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏缁愭鎱ㄥ鍡楀姦?MODEL INPUT         
+         total 1848                                                             
+         drwxr-xr-x 2 root root    4096 Aug 24 01:32 .                          
+         drwxr-xr-x 1 root root    4096 Aug 24 01:33 ..                         
+         -rwxrwxr-x 1 root root   10232 Aug 21 06:30 freenote2018               
+         -rwxrwxr-x 1 root root 1868984 Aug 21 06:30 libc-2.23.so               
+         (Open file: n/a)                                                       
+         (Current directory: /__tmp__enigma-freenote2018-8qjvnjxg__repo)        
+         (Interactive session: n/a)                                             
+         bash-$                                                                 
+DEBUG    input_tokens=3,051, output_tokens=69, instance_cost=0.00, cost=0.00    
+DEBUG    total_tokens_sent=8,879, total_tokens_received=151, total_cost=0.00,   
+         total_api_calls=3                                                      
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏閻ゎ喗銇勯弽銊х焼闁?THOUGHT (primary)
+         DISCUSSION                                                             
+         Let me examine the binary's properties and then decompile it to        
+         understand the vulnerability.                                          
+                                                                                
+                                                                                
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏閻ゎ喗銇勯幇鈺佲偓妤佺▔?ACTION       
+         (primary)                                                              
+         file freenote2018 && checksec --file=freenote2018 2>/dev/null ||       
+         readelf -h freenote2018                                                
+                                                                                
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏缁愭鎱ㄥ鍡楀姦?MODEL INPUT         
+         freenote2018: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), 
+         dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for       
+         GNU/Linux 2.6.32,                                                      
+         BuildID[sha1]=aee0f7e111e70dee6b5bdf4b9d1f87e60b778d7b, stripped       
+         (Open file: n/a)                                                       
+         (Current directory: /__tmp__enigma-freenote2018-8qjvnjxg__repo)        
+         (Interactive session: n/a)                                             
+         bash-$                                                                 
+DEBUG    input_tokens=3,245, output_tokens=60, instance_cost=0.00, cost=0.00    
+DEBUG    total_tokens_sent=12,124, total_tokens_received=211, total_cost=0.00,  
+         total_api_calls=4                                                      
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏閻ゎ喗銇勯弽銊х焼闁?THOUGHT (primary)
+         DISCUSSION                                                             
+         Let me check the security properties of the binary and decompile its   
+         main function.                                                         
+                                                                                
+                                                                                
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏閻ゎ喗銇勯幇鈺佲偓妤佺▔?ACTION       
+         (primary)                                                              
+         checksec freenote2018                                                  
+                                                                                
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏缁愭鎱ㄥ鍡楀姦?MODEL INPUT         
+         [*] '/__tmp__enigma-freenote2018-8qjvnjxg__repo/freenote2018'          
+             Arch:       amd64-64-little                                        
+             RELRO:      Full RELRO                                             
+             Stack:      Canary found                                           
+             NX:         NX enabled                                             
+             PIE:        PIE enabled                                            
+         (Open file: n/a)                                                       
+         (Current directory: /__tmp__enigma-freenote2018-8qjvnjxg__repo)        
+         (Interactive session: n/a)                                             
+         bash-$                                                                 
+DEBUG    input_tokens=3,391, output_tokens=49, instance_cost=0.00, cost=0.00    
+DEBUG    total_tokens_sent=15,515, total_tokens_received=260, total_cost=0.00,  
+         total_api_calls=5                                                      
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏閻ゎ喗銇勯弽銊х焼闁?THOUGHT (primary)
+         DISCUSSION                                                             
+         Full RELRO, Canary, NX, and PIE are all enabled. This is a heap        
+         exploitation challenge. Let me decompile the binary to understand its  
+         functionality.                                                         
+                                                                                
+                                                                                
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏閻ゎ喗銇勯幇鈺佲偓妤佺▔?ACTION       
+         (primary)                                                              
+         decompile freenote2018                                                 
+                                                                                
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏缁愭鎱ㄥ鍡楀姦?MODEL INPUT         
+         Function main not found! Instead, here is the decompilation of         
+         equivalent function FUN_00100eef:                                      
+                                                                                
+         void FUN_00100eef(void)                                                
+                                                                                
+         {                                                                      
+           undefined4 uVar1;                                                    
+                                                                                
+           setvbuf(stdout,(char *)0x0,2,0);                                     
+           setvbuf(stdin,(char *)0x0,2,0);                                      
+           alarm(0x1e);                                                         
+           FUN_00100ada();                                                      
+           do {                                                                 
+             uVar1 = FUN_00100af1();                                            
+             switch(uVar1) {                                                    
+             case 1:                                                            
+               FUN_00100b4e();                                                  
+               break;                                                           
+             case 2:                                                            
+               FUN_00100d43();                                                  
+               break;                                                           
+             case 3:                                                            
+               FUN_00100e1e();                                                  
+               break;                                                           
+             case 4:                                                            
+               FUN_00100ec2();                                                  
+               break;                                                           
+             case 5:                                                            
+               FUN_00100ed5();                                                  
+             default:                                                           
+               puts("Invalid input\n");                                         
+             }                                                                  
+           } while( true );                                                     
+         }                                                                      
+                                                                                
+                                                                                
+         (Open file: n/a)                                                       
+         (Current directory: /__tmp__enigma-freenote2018-8qjvnjxg__repo)        
+         (Interactive session: n/a)                                             
+         bash-$                                                                 
+DEBUG    input_tokens=3,691, output_tokens=170, instance_cost=0.00, cost=0.00   
+DEBUG    total_tokens_sent=19,206, total_tokens_received=430, total_cost=0.00,  
+         total_api_calls=6                                                      
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏閻ゎ喗銇勯弽銊х焼闁?THOUGHT (primary)
+         DISCUSSION                                                             
+         Let me decompile each of the key functions to understand the           
+         note-taking application's logic.                                       
+                                                                                
+                                                                                
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏閻ゎ喗銇勯幇鈺佲偓妤佺▔?ACTION       
+         (primary)                                                              
+         decompile freenote2018 --function_name FUN_00100ada                    
+                                                                                
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏缁愭鎱ㄥ鍡楀姦?MODEL INPUT         
+         Decompilation Found!                                                   
+                                                                                
+         undefined8 FUN_00100ada(void)                                          
+                                                                                
+         {                                                                      
+           puts("Welcome to 0ctf 2018 finals\nhere you can");                   
+           return 0;                                                            
+         }                                                                      
+                                                                                
+                                                                                
+         (Open file: n/a)                                                       
+         (Current directory: /__tmp__enigma-freenote2018-8qjvnjxg__repo)        
+         (Interactive session: n/a)                                             
+         bash-$                                                                 
+DEBUG    input_tokens=3,816, output_tokens=52, instance_cost=0.00, cost=0.00    
+DEBUG    total_tokens_sent=23,022, total_tokens_received=482, total_cost=0.00,  
+         total_api_calls=7                                                      
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏閻ゎ喗銇勯弽銊х焼闁?THOUGHT (primary)
+         DISCUSSION                                                             
+         Let me decompile the menu function and the other key functions.        
+                                                                                
+                                                                                
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏閻ゎ喗銇勯幇鈺佲偓妤佺▔?ACTION       
+         (primary)                                                              
+         decompile freenote2018 --function_name FUN_00100af1                    
+                                                                                
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏缁愭鎱ㄥ鍡楀姦?MODEL INPUT         
+         Decompilation Found!                                                   
+                                                                                
+         void FUN_00100af1(void)                                                
+                                                                                
+         {                                                                      
+           puts("1. init a note");                                              
+           puts("2. edit a note");                                              
+           puts("3. free a note");                                              
+           puts("4. show a note");                                              
+           puts("5. exit");                                                     
+           printf("Choice:");                                                   
+           FUN_00100a80();                                                      
+           return;                                                              
+         }                                                                      
+                                                                                
+                                                                                
+         (Open file: n/a)                                                       
+         (Current directory: /__tmp__enigma-freenote2018-8qjvnjxg__repo)        
+         (Interactive session: n/a)                                             
+         bash-$                                                                 
+DEBUG    input_tokens=3,832, output_tokens=53, instance_cost=0.00, cost=0.00    
+DEBUG    total_tokens_sent=26,854, total_tokens_received=535, total_cost=0.00,  
+         total_api_calls=8                                                      
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏閻ゎ喗銇勯弽銊х焼闁?THOUGHT (primary)
+         DISCUSSION                                                             
+         Let me decompile the init note function (case 1).                      
+                                                                                
+                                                                                
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏閻ゎ喗銇勯幇鈺佲偓妤佺▔?ACTION       
+         (primary)                                                              
+         decompile freenote2018 --function_name FUN_00100b4e                    
+                                                                                
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏缁愭鎱ㄥ鍡楀姦?MODEL INPUT         
+         Decompilation Found!                                                   
+                                                                                
+         undefined8 FUN_00100b4e(void)                                          
+                                                                                
+         {                                                                      
+           uint uVar1;                                                          
+           undefined8 uVar2;                                                    
+           ssize_t sVar3;                                                       
+           void *__dest;                                                        
+           long in_FS_OFFSET;                                                   
+           uint local_12c;                                                      
+           uint local_128;                                                      
+           undefined local_118 [264];                                           
+           long local_10;                                                       
+                                                                                
+           local_10 = *(long *)(in_FS_OFFSET + 0x28);                           
+           local_12c = 0;                                                       
+           if (DAT_0030203c < 0x10) {                                           
+             printf("Input the note length:");                                  
+             uVar1 = FUN_00100a80();                                            
+             if (((int)uVar1 < 1) || (0x100 < (int)uVar1)) {                    
+               puts("Not allow~!");                                             
+               uVar2 = 1;                                                       
+             }                                                                  
+             else {                                                             
+               printf("Input the note content:");                               
+               sVar3 = read(0,local_118,0xff);                                  
+               local_128 = (uint)sVar3;                                         
+               if (uVar1 < (uint)sVar3) {                                       
+                 local_128 = uVar1;                                             
+               }                                                                
+               __dest = malloc((long)(int)(uVar1 + 8));                         
+               if ((__dest != (void *)0x0) && (local_128 != 0)) {               
+                 memcpy(__dest,local_118,(ulong)(local_128 - 1));               
+               }                                                                
+               while (*(int *)(&DAT_00302048 + (long)(int)local_12c * 0x10) !=  
+         0) {                                                                   
+                 local_12c = local_12c + 1;                                     
+               }                                                                
+               *(void **)(&DAT_00302040 + (long)(int)local_12c * 0x10) = __dest;
+               *(uint *)(&DAT_00302048 + (long)(int)local_12c * 0x10) = uVar1;  
+               DAT_0030203c = DAT_0030203c + 1;                                 
+               printf("Here is your label: %d\n",(ulong)local_12c);             
+               puts("Done~!");                                                  
+               uVar2 = 0;                                                       
+             }                                                                  
+           }                                                                    
+           else {                                                               
+             puts("Not allow~!");                                               
+             uVar2 = 1;                                                         
+           }                                                                    
+           if (local_10 != *(long *)(in_FS_OFFSET + 0x28)) {                    
+                             /* WARNING: Subroutine does not return */          
+             __stack_chk_fail();                                                
+           }                                                                    
+           return uVar2;                                                        
+         }                                                                      
+                                                                                
+                                                                                
+         (Open file: n/a)                                                       
+         (Current directory: /__tmp__enigma-freenote2018-8qjvnjxg__repo)        
+         (Interactive session: n/a)                                             
+         bash-$                                                                 
+DEBUG    input_tokens=4,332, output_tokens=239, instance_cost=0.00, cost=0.00   
+DEBUG    total_tokens_sent=31,186, total_tokens_received=774, total_cost=0.00,  
+         total_api_calls=9                                                      
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏閻ゎ喗銇勯弽銊х焼闁?THOUGHT (primary)
+         DISCUSSION                                                             
+         Now let me decompile the edit note function (case 2).                  
+                                                                                
+                                                                                
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏閻ゎ喗銇勯幇鈺佲偓妤佺▔?ACTION       
+         (primary)                                                              
+         decompile freenote2018 --function_name FUN_00100d43                    
+                                                                                
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏缁愭鎱ㄥ鍡楀姦?MODEL INPUT         
+         Decompilation Found!                                                   
+                                                                                
+         undefined8 FUN_00100d43(void)                                          
+                                                                                
+         {                                                                      
+           int iVar1;                                                           
+           undefined8 uVar2;                                                    
+                                                                                
+           printf("Input the note index:");                                     
+           iVar1 = FUN_00100a80();                                              
+           if ((iVar1 < 0) || (0x10 < iVar1)) {                                 
+             puts("Not allow~!");                                               
+             uVar2 = 1;                                                         
+           }                                                                    
+           else if (*(int *)(&DAT_00302048 + (long)iVar1 * 0x10) == 0) {        
+             puts("Not allow~!");                                               
+             uVar2 = 1;                                                         
+           }                                                                    
+           else {                                                               
+             printf("Input the note content:");                                 
+             read(0,*(void **)(&DAT_00302040 + (long)iVar1 * 0x10),             
+                  (ulong)*(uint *)(&DAT_00302048 + (long)iVar1 * 0x10));        
+             puts("Done~!");                                                    
+             uVar2 = 0;                                                         
+           }                                                                    
+           return uVar2;                                                        
+         }                                                                      
+                                                                                
+                                                                                
+         (Open file: n/a)                                                       
+         (Current directory: /__tmp__enigma-freenote2018-8qjvnjxg__repo)        
+         (Interactive session: n/a)                                             
+         bash-$                                                                 
+DEBUG    input_tokens=4,531, output_tokens=71, instance_cost=0.00, cost=0.00    
+DEBUG    total_tokens_sent=35,717, total_tokens_received=845, total_cost=0.00,  
+         total_api_calls=10                                                     
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏閻ゎ喗銇勯弽銊х焼闁?THOUGHT (primary)
+         DISCUSSION                                                             
+         Let me decompile the free note function (case 3).                      
+                                                                                
+                                                                                
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏閻ゎ喗銇勯幇鈺佲偓妤佺▔?ACTION       
+         (primary)                                                              
+         decompile freenote2018 --function_name FUN_00100e1e                    
+                                                                                
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏缁愭鎱ㄥ鍡楀姦?MODEL INPUT         
+         Decompilation Found!                                                   
+                                                                                
+         undefined8 FUN_00100e1e(void)                                          
+                                                                                
+         {                                                                      
+           int iVar1;                                                           
+           undefined8 uVar2;                                                    
+                                                                                
+           printf("Input the note index:");                                     
+           iVar1 = FUN_00100a80();                                              
+           if ((iVar1 < 0) || (0x10 < iVar1)) {                                 
+             puts("Not allow~!");                                               
+             uVar2 = 1;                                                         
+           }                                                                    
+           else if (*(int *)(&DAT_00302048 + (long)iVar1 * 0x10) == 0) {        
+             puts("Not allow~!");                                               
+             uVar2 = 1;                                                         
+           }                                                                    
+           else {                                                               
+             free(*(void **)(&DAT_00302040 + (long)iVar1 * 0x10));              
+             puts("Done~!");                                                    
+             uVar2 = 0;                                                         
+           }                                                                    
+           return uVar2;                                                        
+         }                                                                      
+                                                                                
+                                                                                
+         (Open file: n/a)                                                       
+         (Current directory: /__tmp__enigma-freenote2018-8qjvnjxg__repo)        
+         (Interactive session: n/a)                                             
+         bash-$                                                                 
+DEBUG    input_tokens=4,556, output_tokens=423, instance_cost=0.00, cost=0.00   
+DEBUG    total_tokens_sent=40,273, total_tokens_received=1,268, total_cost=0.00,
+         total_api_calls=11                                                     
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏閻ゎ喗銇勯弽銊х焼闁?THOUGHT (primary)
+         DISCUSSION                                                             
+         I can see a clear vulnerability: the free function doesn't zero out the
+         pointer or the length in the global array, creating a use-after-free   
+         (UAF) and double-free vulnerability. Let me decompile the show note    
+         function too.                                                          
+                                                                                
+                                                                                
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏閻ゎ喗銇勯幇鈺佲偓妤佺▔?ACTION       
+         (primary)                                                              
+         decompile freenote2018 --function_name FUN_00100ec0                    
+                                                                                
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏缁愭鎱ㄥ鍡楀姦?MODEL INPUT         
+         Error: Function FUN_00100ec0 not found in freenote2018.                
+         These are the available functions found: setvbuf, FUN_00100ed5,        
+         _FINI_0, FUN_00100980, __stack_chk_fail, _DT_INIT, FUN_00100e1e,       
+         printf, _INIT_0, FUN_00100eef, __libc_start_main, FUN_001008d0, alarm, 
+         _ITM_deregisterTMCloneTable, free, _ITM_registerTMCloneTable, atoi,    
+         __cxa_finalize, malloc, read, FUN_00100fe0, _DT_FINI, FUN_00100b4e,    
+         FUN_00100ec2, __gmon_start__, FUN_00100ada, FUN_00100a80, puts, exit,  
+         entry, FUN_001009c0, memcpy, FUN_00100d43, _Jv_RegisterClasses,        
+         FUN_00101050, FUN_00100af1                                             
+         (Open file: n/a)                                                       
+         (Current directory: /__tmp__enigma-freenote2018-8qjvnjxg__repo)        
+         (Interactive session: n/a)                                             
+         bash-$                                                                 
+DEBUG    input_tokens=4,813, output_tokens=39, instance_cost=0.00, cost=0.00    
+DEBUG    total_tokens_sent=45,086, total_tokens_received=1,307, total_cost=0.00,
+         total_api_calls=12                                                     
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏閻ゎ喗銇勯弽銊х焼闁?THOUGHT (primary)
+         DISCUSSION                                                             
+         Let me decompile the show note function with the correct name.         
+                                                                                
+                                                                                
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏閻ゎ喗銇勯幇鈺佲偓妤佺▔?ACTION       
+         (primary)                                                              
+         decompile freenote2018 --function_name FUN_00100ec2                    
+                                                                                
+INFO     濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏缁愭鎱ㄥ鍡楀姦?MODEL INPUT         
+         Decompilation Found!                                                   
+                                                                                
+         void FUN_00100ec2(void)                                                
+                                                                                
+         {                                                                      
+           puts("Not allow~!");                                                 
+           return;                                                              
+         }                                                                      
+                                                                                
+                                                                                
+         (Open file: n/a)                                                       
+         (Current directory: /__tmp__enigma-freenote2018-8qjvnjxg__repo)        
+         (Interactive session: n/a)                                             
+         bash-$                                                                 
+WARNING  Messages API empty response: keys=['content', 'id', 'model', 'role',   
+         'stop_reason', 'type', 'usage'] block_types=['thinking']               
+         stop_reason=max_tokens usage={'input_tokens': 4812, 'output_tokens':   
+         8192}                                                                  
+WARNING  Model generation timed out after 300.0 seconds                         
 WARNING  Traceback (most recent call last):                                     
-           File                                                                 
-         "/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/docke
-         r/api/client.py", line 275, in _raise_for_status                       
-             response.raise_for_status()                                        
-           File                                                                 
-         "/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/reque
-         sts/models.py", line 1167, in raise_for_status                         
-             raise HTTPError(http_error_msg, response=self)                     
-         requests.exceptions.HTTPError: 404 Client Error: Not Found for url:    
-         http+docker://localhost/v1.52/networks/ctfnet-latest-ba1a22be26-847b359
-         afa0bdb6f52d5                                                          
-                                                                                
-         The above exception was the direct cause of the following exception:   
-                                                                                
-         Traceback (most recent call last):                                     
-           File                                                                 
-         "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/environment/swe_
-         env.py", line 1424, in _init_docker_compose                            
-             existing_network = client.networks.get(network_to_create)          
-           File                                                                 
-         "/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/docke
-         r/models/networks.py", line 182, in get                                
-             self.client.api.inspect_network(network_id, *args, **kwargs)       
-           File                                                                 
-         "/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/docke
-         r/utils/decorators.py", line 19, in wrapped                            
-             return f(self, resource_id, *args, **kwargs)                       
-           File                                                                 
-         "/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/docke
-         r/api/network.py", line 212, in inspect_network                        
-             return self._result(res, json=True)                                
-           File                                                                 
-         "/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/docke
-         r/api/client.py", line 281, in _result                                 
-             self._raise_for_status(response)                                   
-           File                                                                 
-         "/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/docke
-         r/api/client.py", line 277, in _raise_for_status                       
-             raise create_api_error_from_http_exception(e) from e               
-           File                                                                 
-         "/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/docke
-         r/errors.py", line 39, in create_api_error_from_http_exception         
-             raise cls(e, response=response, explanation=explanation) from e    
-         docker.errors.NotFound: 404 Client Error for                           
-         http+docker://localhost/v1.52/networks/ctfnet-latest-ba1a22be26-847b359
-         afa0bdb6f52d5: Not Found ("network                                     
-         ctfnet-latest-ba1a22be26-847b359afa0bdb6f52d5 not found")              
-                                                                                
-         During handling of the above exception, another exception occurred:    
-                                                                                
-         Traceback (most recent call last):                                     
-           File                                                                 
-         "/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/docke
-         r/api/client.py", line 275, in _raise_for_status                       
-             response.raise_for_status()                                        
-           File                                                                 
-         "/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/reque
-         sts/models.py", line 1167, in raise_for_status                         
-             raise HTTPError(http_error_msg, response=self)                     
-         requests.exceptions.HTTPError: 400 Client Error: Bad Request for url:  
-         http+docker://localhost/v1.52/networks/create                          
-                                                                                
-         The above exception was the direct cause of the following exception:   
-                                                                                
-         Traceback (most recent call last):                                     
-           File                                                                 
-         "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/environment/swe_
-         env.py", line 1429, in _init_docker_compose                            
-             client.networks.create(                                            
-           File                                                                 
-         "/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/docke
-         r/models/networks.py", line 156, in create                             
-             resp = self.client.api.create_network(name, *args, **kwargs)       
-           File                                                                 
-         "/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/docke
-         r/api/network.py", line 152, in create_network                         
-             return self._result(res, json=True)                                
-           File                                                                 
-         "/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/docke
-         r/api/client.py", line 281, in _result                                 
-             self._raise_for_status(response)                                   
-           File                                                                 
-         "/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/docke
-         r/api/client.py", line 277, in _raise_for_status                       
-             raise create_api_error_from_http_exception(e) from e               
-           File                                                                 
-         "/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/docke
-         r/errors.py", line 39, in create_api_error_from_http_exception         
-             raise cls(e, response=response, explanation=explanation) from e    
-         docker.errors.APIError: 400 Client Error for                           
-         http+docker://localhost/v1.52/networks/create: Bad Request ("all       
-         predefined address pools have been fully subnetted")                   
-                                                                                
-         During handling of the above exception, another exception occurred:    
-                                                                                
-         Traceback (most recent call last):                                     
            File "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/run.py", line 590,
          in main                                                                
              if self.run(index) is False:                                       
-           File "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/run.py", line 370,
+           File "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/run.py", line 480,
          in run                                                                 
-             observation, info = self.env.reset(index)                          
+             info, trajectory = self.agent.run(                                 
+           File "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/run.py", line 469,
+         in limited_run                                                         
+             result = original_run(*args, **kwargs)                             
            File                                                                 
-         "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/environment/swe_
-         env.py", line 667, in reset                                            
-             self._init_docker_compose()                                        
+         "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/agent/agents.py"
+         , line 1346, in run                                                    
+             observation, done = self._run_step(observation)                    
+           File "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/run.py", line 452,
+         in step_limited_run_step                                               
+             observation, done = original_run_step(observation)                 
            File                                                                 
-         "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/environment/swe_
-         env.py", line 1443, in _init_docker_compose                            
-             raise RuntimeError(f"Failed to create CTF network: {e}")           
-         RuntimeError: Failed to create CTF network: 400 Client Error for       
-         http+docker://localhost/v1.52/networks/create: Bad Request ("all       
-         predefined address pools have been fully subnetted")                   
+         "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/agent/agents.py"
+         , line 1259, in _run_step                                              
+             thought, action, output = self.forward(observation,                
+         self._env.get_available_actions(), state)                              
+           File                                                                 
+         "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/agent/agents.py"
+         , line 804, in forward                                                 
+             thought, action, output =                                          
+         self.forward_with_error_check(observation, state)                      
+           File                                                                 
+         "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/agent/agents.py"
+         , line 1027, in forward_with_error_check                               
+             return                                                             
+         self.check_format_and_requery(self.forward_model(observation, state))  
+           File                                                                 
+         "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/agent/agents.py"
+         , line 926, in forward_model                                           
+             return self._query_model_with_timeout(self.local_history)          
+           File                                                                 
+         "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/agent/agents.py"
+         , line 462, in _query_model_with_timeout                               
+             raise TimeoutError(f"Model generation exceeded {timeout} second    
+         timeout")                                                              
+         TimeoutError: Model generation exceeded 300.0 second timeout           
                                                                                 
-WARNING  闂傦拷?Failed on pwn_freenote2018: Failed to create CTF network: 400   
-         Client Error for http+docker://localhost/v1.52/networks/create: Bad    
-         Request ("all predefined address pools have been fully subnetted")     
+WARNING  闂傦拷?Failed on pwn_freenote2018: Model generation exceeded 300.0     
+         second timeout                                                         
 INFO     Beginning environment shutdown...                                      
-DEBUG    🐳 Stopping and removing container: sweagent-enigma-latest-ba1a22be26  
-WARNING  Failed to remove container sweagent-enigma-latest-ba1a22be26: 409      
-         Client Error for                                                       
-         http+docker://localhost/v1.52/containers/c0790af8eda0eb477ae7210cbfa04d
-         d3fabc1177e90c8b1f48f80749e69dac15?v=False&link=False&force=True:      
+DEBUG    🐳 Stopping and removing container:                                    
+         batch-a7050f758c-sweagent-enigma-latest-07dc10eaa6                     
+WARNING  Failed to remove container                                             
+         batch-a7050f758c-sweagent-enigma-latest-07dc10eaa6: 409 Client Error   
+         for                                                                    
+         http+docker://localhost/v1.52/containers/1e46a0d557335fefacdab86192fda5
+         7bda82239a2200f7a30bba6e47a84d9342?v=False&link=False&force=True:      
          Conflict ("removal of container                                        
-         c0790af8eda0eb477ae7210cbfa04dd3fabc1177e90c8b1f48f80749e69dac15 is    
+         1e46a0d557335fefacdab86192fda57bda82239a2200f7a30bba6e47a84d9342 is    
          already in progress")                                                  
-DEBUG    Network ctfnet-latest-ba1a22be26-847b359afa0bdb6f52d5 already removed  
-DEBUG    Network ctfnet-latest-ba1a22be26-847b359afa0bdb6f52d5 already removed  
+DEBUG    🏗️ Cleaning up docker-compose project:                                 
+         repo_batch_a7050f758c_8cd537df53f175fbb317                             
+DEBUG    ✅ Successfully cleaned up docker-compose project:                     
+         repo_batch_a7050f758c_8cd537df53f175fbb317                             
+DEBUG    🌐 Removing network: ctfnet-batch-a7050f758c-8cd537df53f175fbb317      
+DEBUG    ✅ Successfully removed network:                                       
+         ctfnet-batch-a7050f758c-8cd537df53f175fbb317                           
+DEBUG    🗑️ Cleaned up temporary docker-compose file:                           
+         /tmp/enigma-freenote2018-8qjvnjxg/repo/docker-compose-633507dc.yml     
+DEBUG    🏗️ Cleaning up docker-compose project:                                 
+         repo_batch_a7050f758c_8cd537df53f175fbb317                             
+WARNING  Docker-compose down failed: open                                       
+         /tmp/enigma-freenote2018-8qjvnjxg/repo/docker-compose-633507dc.yml: no 
+         such file or directory                                                 
+                                                                                
+DEBUG    Network ctfnet-batch-a7050f758c-8cd537df53f175fbb317 already removed   
 INFO     Found image sweagent/enigma:latest with tags:                          
          ['sweagent/enigma:latest'], created: 2024-08-29T19:52:43.576514108Z for
          linux amd64.                                                           
 DEBUG    Starting container with image: sweagent/enigma:latest, name:           
-         sweagent-enigma-latest-ef6948d5c5                                      
+         batch-a7050f758c-sweagent-enigma-latest-ee8efda03f                     
 DEBUG    Resource limits: mem=2g, cpu_quota=150000, pids=1000                   
 DEBUG    Starting container with command: docker exec -i                        
-         sweagent-enigma-latest-ef6948d5c5 /bin/bash -l                         
-DEBUG    Container sweagent-enigma-latest-ef6948d5c5 passed health check        
+         batch-a7050f758c-sweagent-enigma-latest-ee8efda03f /bin/bash -l        
+DEBUG    Container batch-a7050f758c-sweagent-enigma-latest-ee8efda03f passed    
+         health check                                                           
 DEBUG    ✅ Successfully retrieved container object for                         
-         sweagent-enigma-latest-ef6948d5c5                                      
+         batch-a7050f758c-sweagent-enigma-latest-ee8efda03f                     
 INFO     🌱 Environment Initialized                                             
 
 

@@ -21,6 +21,7 @@ import subprocess
 import sys
 import tempfile
 import traceback
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -58,6 +59,7 @@ class WorkerRequest:
     config_file: str
     step_limit: int
     python_executable: str
+    task_timeout: int = 2400
 
 
 def utc_now() -> str:
@@ -196,9 +198,9 @@ def stage_challenge(source_dir: Path, workspace: Path) -> Path:
     return repo_path
 
 
-def find_latest_trajectory(run_root: Path, started_at: float) -> Path | None:
+def find_latest_trajectory(run_root: Path, started_at: float | None = None) -> Path | None:
     candidates = [
-        path for path in run_root.rglob("*.traj") if path.is_file() and path.stat().st_mtime >= started_at
+        path for path in run_root.rglob("*.traj") if path.is_file() and (started_at is None or path.stat().st_mtime >= started_at)
     ]
     if not candidates:
         return None
@@ -208,11 +210,75 @@ def find_latest_trajectory(run_root: Path, started_at: float) -> Path | None:
 def normalize_trajectory(source: Path, destination: Path) -> dict[str, Any]:
     """Write EnIGMA+'s JSON trajectory as a one-record JSONL artifact."""
     payload = read_json(source)
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    with destination.open("w", encoding="utf-8") as handle:
-        json.dump(payload, handle, ensure_ascii=False)
-        handle.write("\n")
+    atomic_write_trajectory(destination, payload)
     return payload
+
+
+def atomic_write_trajectory(path: Path, payload: dict[str, Any]) -> None:
+    """Persist a trajectory as one JSONL record without exposing partial files."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.{uuid.uuid4().hex}.tmp")
+    try:
+        with temporary.open("w", encoding="utf-8") as handle:
+            json.dump(payload, handle, ensure_ascii=False)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def persist_failure_trajectory(output_dir: Path, challenge: Challenge, *, reason: str, failure_category: str, source: Path | None = None) -> Path:
+    """Always leave a terminal artifact, including when the runner never starts."""
+    payload: dict[str, Any] = {}
+    if source is not None:
+        try:
+            payload = read_json(source)
+        except (OSError, ValueError, json.JSONDecodeError):
+            payload = {}
+    trajectory = payload.get("trajectory")
+    if not isinstance(trajectory, list):
+        trajectory = []
+    info = payload.get("info") if isinstance(payload.get("info"), dict) else {}
+    info = dict(info)
+    exit_status = "environment_error" if failure_category.startswith("environment") or failure_category.startswith("docker") else "runner_exception"
+    original_exit_status = info.get("exit_status")
+    original_reason = info.get("terminal_reason") or info.get("error_message")
+    original_error_type = info.get("error_type")
+    effective_exit_status = original_exit_status or exit_status
+    if exit_status == "environment_error" and original_exit_status == "runner_exception":
+        effective_exit_status = exit_status
+    if original_exit_status and original_exit_status != exit_status:
+        info["wrapped_exit_status"] = exit_status
+    if original_reason and original_reason != reason:
+        info["wrapped_terminal_reason"] = reason
+    if original_error_type and original_error_type != failure_category:
+        info["wrapped_error_type"] = failure_category
+    info.update({"exit_status": effective_exit_status, "terminal_reason": original_reason or reason, "error_type": original_error_type or failure_category, "failure_category": failure_category, "episode_end_time": utc_now(), "total_steps": len(trajectory)})
+    if not trajectory or not isinstance(trajectory[-1], dict) or not trajectory[-1].get("terminal"):
+        trajectory.append({"step_id": len(trajectory) + 1, "thought": "", "action": exit_status, "tool_name": "unknown", "tool_args": "", "observation": reason, "return_code": None, "execution_time": 0.0, "error": failure_category, "terminal": True, "response": ""})
+        info["total_steps"] = len(trajectory)
+    payload.update({"trajectory_schema_version": 2, "artifact_type": "synthetic_error" if source is None else "partial_trace", "environment": payload.get("environment", "batch_runner"), "trajectory": trajectory, "history": payload.get("history", []), "info": info})
+    destination = trajectory_path_for(output_dir, challenge.task_id)
+    atomic_write_trajectory(destination, payload)
+    return destination
+
+
+def classify_runner_failure(completed: subprocess.CompletedProcess[str] | None, *, missing_trajectory: bool = False) -> str:
+    """Classify observable runner failures for state/reporting."""
+    if missing_trajectory:
+        return "trajectory_save_failure"
+    if completed is None:
+        return "task_not_executed"
+    detail = f"{completed.stdout}\n{completed.stderr}".lower()
+    if "no space left on device" in detail and any(token in detail for token in ("docker", "buildx", "compose", ".docker")):
+        return "environment_storage_failure"
+    if any(token in detail for token in ("timeout", "timed out", "rate limit", "429", "api error", "openai")):
+        return "api_call_failure"
+    if any(token in detail for token in ("docker", "container", "network", "compose", "port", "address pools", "fully subnetted")):
+        return "environment_start_failure"
+    return "agent_run_failure"
 
 
 def model_stats(payload: dict[str, Any]) -> tuple[int, int, int]:
@@ -246,9 +312,9 @@ def run_one_task(request: WorkerRequest) -> dict[str, Any]:
     challenge = request.challenge
     output_dir = Path(request.output_dir)
     task_dir = output_dir / challenge.task_id
-    runner_output_dir = task_dir / "enigma_output"
+    attempt_id = f"attempt-{dt.datetime.now().strftime('%Y%m%dT%H%M%S%f')}-{uuid.uuid4().hex[:8]}"
+    runner_output_dir = task_dir / "enigma_output" / attempt_id
     log_path = output_dir / LOGS_DIR_NAME / f"{challenge.task_id}.error.log"
-    started_at = dt.datetime.now().timestamp()
 
     try:
         with tempfile.TemporaryDirectory(prefix=f"enigma-{sanitize_component(challenge.name)}-") as temporary_dir:
@@ -272,15 +338,20 @@ def run_one_task(request: WorkerRequest) -> dict[str, Any]:
                 "--trajectory_path",
                 str(runner_output_dir),
             ]
+            run_env = os.environ.copy()
+            run_env.setdefault("SWE_AGENT_TASK_TIMEOUT", "1800")
+            run_env.setdefault("SWE_AGENT_FLAG_VERIFIER_IMAGE", request.image_name)
             completed = subprocess.run(
                 command,
                 cwd=ENIGMA_ROOT,
                 capture_output=True,
                 text=True,
                 check=False,
+                timeout=request.task_timeout or None,
+                env=run_env,
             )
 
-        trajectory_source = find_latest_trajectory(runner_output_dir, started_at)
+        trajectory_source = find_latest_trajectory(runner_output_dir)
         if completed.returncode != 0 or trajectory_source is None:
             log_path.parent.mkdir(parents=True, exist_ok=True)
             log_path.write_text(
@@ -294,14 +365,29 @@ def run_one_task(request: WorkerRequest) -> dict[str, Any]:
                 encoding="utf-8",
             )
             reason = f"run.py exited with code {completed.returncode}"
-            if trajectory_source is None:
+            missing_trajectory = trajectory_source is None
+            if missing_trajectory:
                 reason += "; no trajectory file was produced"
+            failure_category = classify_runner_failure(
+                completed,
+                missing_trajectory=missing_trajectory and completed.returncode == 0,
+            )
+            destination = persist_failure_trajectory(
+                output_dir,
+                challenge,
+                reason=reason,
+                failure_category=failure_category,
+                source=trajectory_source,
+            )
             return task_record(
                 challenge,
                 status="failed",
-                trajectory_path="",
+                trajectory_path=str(destination),
+                source_trajectory_path=str(trajectory_source) if trajectory_source else "",
                 time=utc_now(),
                 error=reason,
+                error_code=failure_category,
+                failure_category=failure_category,
                 error_log=str(log_path),
             )
 
@@ -317,7 +403,9 @@ def run_one_task(request: WorkerRequest) -> dict[str, Any]:
             time=utc_now(),
             error="",
             exit_status=info.get("exit_status"),
-            solved=info.get("exit_status") == "submitted",
+            # A submitted flag is not proof of correctness; only the
+            # verifier-owned boolean may mark a trajectory solved.
+            solved=info.get("flag_verified") is True,
             steps=steps,
             input_tokens=input_tokens,
             output_tokens=output_tokens,
@@ -325,12 +413,22 @@ def run_one_task(request: WorkerRequest) -> dict[str, Any]:
     except Exception as error:
         log_path.parent.mkdir(parents=True, exist_ok=True)
         log_path.write_text(traceback.format_exc(), encoding="utf-8")
+        failure_category = "task_timeout" if isinstance(error, subprocess.TimeoutExpired) else classify_runner_failure(None)
+        destination = persist_failure_trajectory(
+            output_dir,
+            challenge,
+            reason=str(error),
+            failure_category=failure_category,
+            source=None,
+        )
         return task_record(
             challenge,
             status="failed",
-            trajectory_path="",
+            trajectory_path=str(destination),
             time=utc_now(),
             error=str(error),
+            error_code=failure_category,
+            failure_category=failure_category,
             error_log=str(log_path),
         )
 
@@ -420,6 +518,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--category", help="Only run challenges whose category matches this value")
     parser.add_argument("--workers", type=int, default=1, help="Concurrent run.py processes (default: 1)")
     parser.add_argument("--python_executable", default=sys.executable, help="Python executable used to invoke run.py")
+    parser.add_argument("--task_timeout", type=int, default=2400, help="Maximum seconds per task; 0 disables the outer timeout")
     parser.add_argument("--dry_run", action="store_true", help="Validate and list selected tasks without invoking run.py")
     return parser.parse_args()
 
@@ -429,7 +528,7 @@ def main() -> int:
     if args.workers < 1:
         print("ERROR: --workers must be at least 1", file=sys.stderr)
         return 2
-    if args.step_limit < 1:
+    if args.step_limit < 1 or args.task_timeout < 0:
         print("ERROR: --step_limit must be at least 1", file=sys.stderr)
         return 2
     if args.max_tasks is not None and args.max_tasks < 1:
@@ -471,6 +570,7 @@ def main() -> int:
             config_file=args.config_file,
             step_limit=args.step_limit,
             python_executable=args.python_executable,
+            task_timeout=args.task_timeout,
         )
         for task in selected
     ]
@@ -484,12 +584,20 @@ def main() -> int:
                 log_path = args.output_dir / LOGS_DIR_NAME / f"{task.task_id}.error.log"
                 log_path.parent.mkdir(parents=True, exist_ok=True)
                 log_path.write_text(traceback.format_exc(), encoding="utf-8")
+                destination = persist_failure_trajectory(
+                    args.output_dir,
+                    task,
+                    reason=str(error),
+                    failure_category="worker_exception",
+                )
                 record = task_record(
                     task,
                     status="failed",
-                    trajectory_path="",
+                    trajectory_path=str(destination),
                     time=utc_now(),
                     error=str(error),
+                    error_code="worker_exception",
+                    failure_category="task_not_executed",
                     error_log=str(log_path),
                 )
             status["tasks"][task.relative_path] = record

@@ -8,6 +8,7 @@ from sweagent.agent.models import (
     MessagesAPIModel,
     ModelArguments,
     extract_messages_api_response,
+    extract_messages_api_response_details,
 )
 
 
@@ -27,6 +28,21 @@ def fenced(command: str) -> str:
 
 
 class MessagesAPIResponseTests(unittest.TestCase):
+    def test_structured_blocks_are_preserved_with_text_projection(self):
+        details = extract_messages_api_response_details(
+            {
+                "content": [
+                    {"type": "thinking", "thinking": "inspect"},
+                    {"type": "text", "text": "DISCUSSION\n" + fenced("ls")},
+                    {"type": "tool_use", "id": "call-1", "name": "Bash", "input": {"command": "ls"}},
+                ],
+                "stop_reason": "tool_use",
+            }
+        )
+        self.assertEqual([block["type"] for block in details["content_blocks"]], ["thinking", "text", "tool_use"])
+        self.assertIn("DISCUSSION", details["text_content"])
+        self.assertEqual(details["tool_calls"][0]["id"], "call-1")
+
     def test_anthropic_text_content(self):
         result, reasoning = extract_messages_api_response(
             {"content": [{"type": "text", "text": "DISCUSSION" + chr(10) + fenced("ls")}]}

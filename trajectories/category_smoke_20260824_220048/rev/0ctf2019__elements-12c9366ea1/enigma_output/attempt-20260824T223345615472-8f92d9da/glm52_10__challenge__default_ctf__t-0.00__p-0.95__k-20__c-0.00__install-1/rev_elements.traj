@@ -1,0 +1,32 @@
+{
+  "trajectory_schema_version": 2,
+  "environment": "swe_main",
+  "trajectory": [
+    {
+      "step_id": 1,
+      "thought": "",
+      "action": "runner_exception",
+      "tool_name": "unknown",
+      "tool_args": "",
+      "observation": "Dynamic network ctfnet-batch-81f75adc5c-550485ae83c17fcf0644 not ready after 60s",
+      "return_code": null,
+      "execution_time": 0.0,
+      "error": "RuntimeError",
+      "terminal": true,
+      "response": ""
+    }
+  ],
+  "history": [],
+  "info": {
+    "artifact_type": "synthetic_error",
+    "trajectory_schema_version": 2,
+    "exit_status": "runner_exception",
+    "terminal_reason": "Dynamic network ctfnet-batch-81f75adc5c-550485ae83c17fcf0644 not ready after 60s",
+    "error_type": "RuntimeError",
+    "traceback": "Traceback (most recent call last):\n  File \"/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/run.py\", line 590, in main\n    if self.run(index) is False:\n  File \"/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/run.py\", line 370, in run\n    observation, info = self.env.reset(index)\n  File \"/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/environment/swe_env.py\", line 677, in reset\n    self._init_docker_network()\n  File \"/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/environment/swe_env.py\", line 1250, in _init_docker_network\n    raise RuntimeError(f\"Dynamic network {network_name} not ready after {max_wait}s\")\nRuntimeError: Dynamic network ctfnet-batch-81f75adc5c-550485ae83c17fcf0644 not ready after 60s\n",
+    "flag_submitted": false,
+    "flag_verified": "unknown",
+    "episode_end_time": "2026-08-24T14:34:52.900793+00:00",
+    "total_steps": 1
+  }
+}

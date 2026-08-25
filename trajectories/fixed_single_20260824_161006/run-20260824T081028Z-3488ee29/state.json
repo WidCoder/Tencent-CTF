@@ -1,0 +1,50 @@
+{
+  "created_at": "2026-08-24T08:10:28+00:00",
+  "docker_bridge_containers_at_end": 5,
+  "docker_bridge_containers_at_start": 4,
+  "tasks": {
+    ".": {
+      "attempt_resource_cleanup": {
+        "failed_containers": [],
+        "failed_networks": [],
+        "removed_containers": [],
+        "removed_networks": [],
+        "resource_token": "batch-dd06c5a0ae69"
+      },
+      "category": "pwn",
+      "challenge_json": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2018/heapstorm/challenge.json",
+      "compose_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2018/heapstorm/docker-compose.yml",
+      "container_cleanup": {
+        "attempted": true,
+        "failed_container_ids": [],
+        "removed_container_ids": []
+      },
+      "dockerfile_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2018/heapstorm/Dockerfile",
+      "episode_complete": true,
+      "episode_status": "early_exit",
+      "error": "Model generation exceeded 300.0 second timeout",
+      "error_code": "TimeoutError",
+      "error_log": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/fixed_single_20260824_161006/run-20260824T081028Z-3488ee29/logs/unnamed-3a52ce7809.error.log",
+      "event": "unknown",
+      "exit_status": "runner_exception",
+      "failure_category": "runner_error",
+      "flag_submitted": false,
+      "flag_verification_evidence": "not_attempted",
+      "flag_verified": "unknown",
+      "outcome_status": "unsolved",
+      "relative_path": ".",
+      "repo_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2018/heapstorm",
+      "run_status": "error",
+      "solved": false,
+      "source_trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/fixed_single_20260824_161006/run-20260824T081028Z-3488ee29/unnamed-3a52ce7809/enigma_output/attempt-20260824T161028678770-411f884c/glm52_10__challenge__default_ctf__t-0.00__p-0.95__k-20__c-0.00__install-1/pwn_heapstorm.traj",
+      "steps": 14,
+      "task": "heapstorm",
+      "task_id": "unnamed-3a52ce7809",
+      "time": "2026-08-24T08:29:57+00:00",
+      "trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/fixed_single_20260824_161006/run-20260824T081028Z-3488ee29/unnamed-3a52ce7809/trajectory.jsonl",
+      "trajectory_generated": true,
+      "updated_at": "2026-08-24T08:29:57+00:00"
+    }
+  },
+  "version": 2
+}

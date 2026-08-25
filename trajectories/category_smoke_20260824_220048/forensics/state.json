@@ -1,0 +1,52 @@
+{
+  "created_at": "2026-08-24T14:06:07+00:00",
+  "docker_bridge_containers_at_end": 12,
+  "docker_bridge_containers_at_start": 11,
+  "docker_dynamic_networks_at_end": 1,
+  "docker_dynamic_networks_at_start": 1,
+  "tasks": {
+    "angstromctf2016/fender": {
+      "attempt_resource_cleanup": {
+        "failed_containers": [],
+        "failed_networks": [],
+        "removed_containers": [],
+        "removed_networks": [],
+        "resource_token": "batch-a8a3a830717b"
+      },
+      "category": "forensics",
+      "challenge_json": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/angstromctf2016/fender/challenge.json",
+      "compose_path": "",
+      "container_cleanup": {
+        "attempted": true,
+        "failed_container_ids": [],
+        "removed_container_ids": []
+      },
+      "dockerfile_path": "",
+      "episode_complete": true,
+      "episode_status": "early_exit",
+      "error": "local variable 'docker' referenced before assignment",
+      "error_code": "UnboundLocalError",
+      "error_log": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/category_smoke_20260824_220048/forensics/logs/angstromctf2016__fender-dd139e2be2.error.log",
+      "event": "angstromctf2016",
+      "exit_status": "runner_exception",
+      "failure_category": "runner_error",
+      "flag_submitted": false,
+      "flag_verification_evidence": "not_attempted",
+      "flag_verified": null,
+      "outcome_status": "unsolved",
+      "relative_path": "angstromctf2016/fender",
+      "repo_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/angstromctf2016/fender",
+      "run_status": "error",
+      "solved": false,
+      "source_trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/category_smoke_20260824_220048/forensics/angstromctf2016__fender-dd139e2be2/enigma_output/attempt-20260824T220607276042-ec846c38/glm52_10__challenge__default_ctf__t-0.00__p-0.95__k-20__c-0.00__install-1/forensics_fender.traj",
+      "steps": 1,
+      "task": "fender",
+      "task_id": "angstromctf2016__fender-dd139e2be2",
+      "time": "2026-08-24T14:06:23+00:00",
+      "trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/category_smoke_20260824_220048/forensics/angstromctf2016__fender-dd139e2be2/trajectory.jsonl",
+      "trajectory_generated": true,
+      "updated_at": "2026-08-24T14:06:23+00:00"
+    }
+  },
+  "version": 2
+}

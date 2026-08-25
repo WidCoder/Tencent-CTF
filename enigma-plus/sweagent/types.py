@@ -38,7 +38,7 @@ class _HistoryItem(TypedDict):
 
 
 class HistoryItem(_HistoryItem, total=False):
-    content: str | None
+    content: str | list[dict[str, Any]] | dict[str, Any] | None
     agent: str
     is_demo: bool
     thought: str
@@ -60,6 +60,9 @@ class AgentInfo(TypedDict, total=False):
     model_stats: dict[str, float]
     exit_status: str
     submission: str | None
+    flag_submitted: bool
+    flag_verified: bool | None
+    flag_verification_evidence: str
     # same as `ReviewerResult`
     review: dict[str, Any]
     edited_files30: str

@@ -1,5 +1,14 @@
-[2026-08-24 09:31:42+0800] test_root=/data1/nfs/wangyingqi/Cyber-Zero
-[2026-08-24 09:31:42+0800] dataset=/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive
-[2026-08-24 09:31:42+0800] base=/data1/nfs/wangyingqi/Cyber-Zero/trajectories/full_w8_step200_3traj_fix_20260823
-[2026-08-24 09:31:42+0800] workers=8 max_bridge_containers=8
-[2026-08-24 09:31:42+0800] Starting trajectory 001
+Started batch at 2026-08-24T13:35:29+08:00
+Starting trajectory 001
+Output: /data1/nfs/wangyingqi/Cyber-Zero/trajectories/full_w8_step200_3traj_fix_20260823/traj_001/run-20260824T053529Z-74ab
+Log: /data1/nfs/wangyingqi/Cyber-Zero/trajectories/full_w8_step200_3traj_fix_20260823/logs/traj_001_run-20260824T053529Z-74ab.log
+Finished trajectory 001 with exit code 1
+Starting trajectory 002
+Output: /data1/nfs/wangyingqi/Cyber-Zero/trajectories/full_w8_step200_3traj_fix_20260823/traj_002/run-20260824T053538Z-5d41
+Log: /data1/nfs/wangyingqi/Cyber-Zero/trajectories/full_w8_step200_3traj_fix_20260823/logs/traj_002_run-20260824T053538Z-5d41.log
+Finished trajectory 002 with exit code 1
+Starting trajectory 003
+Output: /data1/nfs/wangyingqi/Cyber-Zero/trajectories/full_w8_step200_3traj_fix_20260823/traj_003/run-20260824T053541Z-7ced
+Log: /data1/nfs/wangyingqi/Cyber-Zero/trajectories/full_w8_step200_3traj_fix_20260823/logs/traj_003_run-20260824T053541Z-7ced.log
+Finished trajectory 003 with exit code 1
+Finished batch at 2026-08-24T13:35:44+08:00

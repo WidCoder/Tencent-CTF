@@ -1,0 +1,24 @@
+timestamp: 2026-08-24T10:02:23+00:00
+challenge_json: /data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2017/easiestprintf/challenge.json
+repo_path: /data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2017/easiestprintf
+dockerfile_path: /data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2017/easiestprintf/Dockerfile
+command: /home/ubuntu/miniconda_base/bin/python /data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/run.py --model_name glm52_4 --image_name sweagent/enigma:latest --data_path /tmp/enigma-easiestprintf-g4ywlbsl/repo/challenge.json --repo_path /tmp/enigma-easiestprintf-g4ywlbsl/repo --config_file config/default_ctf.yaml --per_instance_step_limit 200 --trajectory_path /data1/nfs/wangyingqi/Cyber-Zero/trajectories/easiestprintf_20260824_180223/unnamed-3a52ce7809/enigma_output/attempt-20260824T180223501946-4fce497e --messages_api_url http://127.0.0.1:23106/v1/messages --messages_api_key EMPTY
+
+error:
+run.py exited with code 1
+
+stdout:
+
+
+stderr:
+Traceback (most recent call last):
+  File "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/run.py", line 34, in <module>
+    from rich_argparse import RichHelpFormatter
+ModuleNotFoundError: No module named 'rich_argparse'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/run.py", line 37, in <module>
+    raise ImportError(msg)
+ImportError: Please install the rich_argparse package with `pip install rich_argparse`.

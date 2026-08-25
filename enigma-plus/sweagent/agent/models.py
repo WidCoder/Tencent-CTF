@@ -9,6 +9,7 @@ from __future__ import annotations
 import copy
 import json
 import logging
+import time
 import yaml
 from collections import defaultdict
 from dataclasses import dataclass, fields
@@ -38,7 +39,27 @@ import re
 
 logger = get_logger("api_models")
 
-_MAX_RETRIES = int(keys_config.get("SWE_AGENT_MODEL_MAX_RETRIES", 10))
+# Messages requests run inside Agent._query_model_with_timeout and cannot be
+# force-killed when the helper thread expires. Keep transport retries bounded
+# so their total budget remains below the agent-side timeout.
+_MAX_RETRIES = max(1, int(keys_config.get("SWE_AGENT_MODEL_MAX_RETRIES", 10)))
+_MESSAGES_API_MAX_RETRIES = max(1, min(_MAX_RETRIES, 2))
+_MODEL_TIMEOUT = float(keys_config.get("SWE_AGENT_MODEL_TIMEOUT", 300))
+_CONFIGURED_MESSAGES_API_TIMEOUT = float(
+    keys_config.get("SWE_AGENT_MESSAGES_API_TIMEOUT", max(30.0, _MODEL_TIMEOUT - 15.0))
+)
+_MODEL_TIMEOUT_MARGIN = min(30.0, max(5.0, _MODEL_TIMEOUT * 0.1))
+_MESSAGES_API_TIMEOUT = max(
+    5.0,
+    min(
+        _CONFIGURED_MESSAGES_API_TIMEOUT,
+        # Transport timeouts are not retried (see the retry predicate below),
+        # so reserve only the model timeout margin rather than splitting the
+        # budget in half. This avoids the historical 277.5s cap when the
+        # model-level timeout is 600s.
+        max(5.0, _MODEL_TIMEOUT - _MODEL_TIMEOUT_MARGIN),
+    ),
+)
 
 # Load model configurations from YAML
 def load_model_configs():
@@ -143,6 +164,54 @@ def _tool_call_to_shell_action(tool_call: dict[str, Any]) -> str:
     return command
 
 
+def _request_assistant_blocks(blocks: Any, fallback: Any = "") -> Any:
+    """Project a provider response to blocks safe to replay on the next turn.
+
+    GLM-compatible Messages gateways commonly return hidden ``thinking``
+    blocks.  Those blocks are response metadata, not a portable assistant
+    message: replaying them together with ``tool_use`` can make the gateway
+    wait indefinitely on the next request.  Keep them in the trajectory, but
+    omit them from the request history.  If no executable/text block remains,
+    use the compatibility text projection instead.
+    """
+    if not isinstance(blocks, list):
+        return fallback
+    kept: list[Any] = []
+    for block in blocks:
+        if not isinstance(block, dict):
+            kept.append(copy.deepcopy(block))
+            continue
+        block_type = str(block.get("type", "")).lower()
+        if block_type in {"thinking", "reasoning"}:
+            continue
+        kept.append(copy.deepcopy(block))
+    return kept if kept else fallback
+
+
+def _messages_payload_shape(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Return non-sensitive diagnostics for a Messages payload."""
+    shape: list[dict[str, Any]] = []
+    for message in messages:
+        content = message.get("content", "")
+        if isinstance(content, list):
+            block_types = [
+                str(block.get("type", "unknown"))
+                for block in content
+                if isinstance(block, dict)
+            ]
+            chars = sum(
+                len(str(block.get(key, "")))
+                for block in content
+                if isinstance(block, dict)
+                for key in ("text", "thinking", "content")
+                if block.get(key) is not None
+            )
+            shape.append({"role": message.get("role"), "blocks": block_types, "chars": chars})
+        else:
+            shape.append({"role": message.get("role"), "type": type(content).__name__, "chars": len(str(content))})
+    return shape
+
+
 def extract_messages_api_response_details(data: dict[str, Any]) -> dict[str, Any]:
     """Extract a Messages response without discarding its structured blocks.
 
@@ -189,6 +258,9 @@ def extract_messages_api_response_details(data: dict[str, Any]) -> dict[str, Any
     choices = data.get("choices")
     if isinstance(choices, list) and choices and isinstance(choices[0], dict):
         choice = choices[0]
+        if data.get("stop_reason") is None and choice.get("stop_reason") is not None:
+            data = dict(data)
+            data["stop_reason"] = choice.get("stop_reason")
         message = choice.get("message") or choice.get("delta") or {}
         if isinstance(message, dict):
             consume_content(message.get("content"))
@@ -255,6 +327,50 @@ def extract_messages_api_response_details(data: dict[str, Any]) -> dict[str, Any
         "usage": copy.deepcopy(data.get("usage")) if isinstance(data.get("usage"), dict) else {},
         "raw_response": copy.deepcopy(data),
     }
+
+
+def _is_thinking_only_truncated_response(data: Any) -> bool:
+    """Identify a response exhausted by hidden reasoning without an action."""
+    if not isinstance(data, dict):
+        return False
+    stop_reason = data.get("stop_reason")
+    if stop_reason is None and isinstance(data.get("choices"), list) and data["choices"]:
+        choice = data["choices"][0]
+        if isinstance(choice, dict):
+            stop_reason = choice.get("stop_reason")
+    if stop_reason != "max_tokens":
+        return False
+    has_thinking = False
+    has_action = False
+
+    def inspect(content: Any) -> None:
+        nonlocal has_thinking, has_action
+        if isinstance(content, list):
+            for block in content:
+                inspect(block)
+        elif isinstance(content, dict):
+            block_type = str(content.get("type", "")).lower()
+            if block_type in {"thinking", "reasoning"} or any(
+                content.get(key) for key in ("thinking", "reasoning", "reasoning_content")
+            ):
+                has_thinking = True
+            if block_type in {"text", "tool_use", "tool_call", "function"}:
+                value = content.get("text") or content.get("input") or content.get("arguments")
+                has_action = bool(value)
+        elif isinstance(content, str) and content.strip():
+            has_action = True
+
+    inspect(data.get("content"))
+    for choice in data.get("choices", []) if isinstance(data.get("choices"), list) else []:
+        if isinstance(choice, dict):
+            message = choice.get("message") or choice.get("delta") or {}
+            if isinstance(message, dict):
+                inspect(message.get("content"))
+                has_action = has_action or bool(message.get("tool_calls"))
+                has_thinking = has_thinking or bool(
+                    message.get("thinking") or message.get("reasoning") or message.get("reasoning_content")
+                )
+    return has_thinking and not has_action
 
 
 def extract_messages_api_response(data: dict[str, Any]) -> tuple[str, str]:
@@ -603,77 +719,169 @@ class MessagesAPIModel(BaseModel):
         if not self.api_url:
             raise ValueError("--messages_api_url is required for glm52_* models")
         self.api_key = args.messages_api_key or "EMPTY"
+        self.request_timeout = _MESSAGES_API_TIMEOUT
+        self.max_output_tokens = max(256, int(keys_config.get("SWE_AGENT_MESSAGES_MAX_TOKENS", 8192)))
+        # The upstream Cyber-Zero request path uses plain role/content
+        # messages. Native tool blocks are opt-in because some gateways accept
+        # the request but stall while reasoning over them.
+        self.native_tools = str(
+            keys_config.get("SWE_AGENT_MESSAGES_NATIVE_TOOLS", "1")
+        ).strip().lower() in {"1", "true", "yes", "on"}
+        self.thinking_mode = str(
+            keys_config.get("SWE_AGENT_MESSAGES_THINKING", "auto")
+        ).strip().lower()
 
     @retry(
         wait=wait_random_exponential(min=1, max=15),
         reraise=True,
-        stop=stop_after_attempt(_MAX_RETRIES),
+        stop=stop_after_attempt(_MESSAGES_API_MAX_RETRIES),
         retry=retry_any(
             retry_if_exception_type(EmptyModelResponseError),
-            retry_if_not_exception_type((CostLimitExceededError, RuntimeError)),
+        # A transport timeout means the gateway did not finish the request;
+        # retrying immediately can duplicate an expensive GLM generation and
+        # make the next request time out as well. Surface it as a terminal
+        # model_timeout instead.
+        retry_if_not_exception_type((CostLimitExceededError, RuntimeError, TimeoutError)),
         ),
     )
     def query(self, history: list[dict[str, str]]) -> str:
         system = chr(10).join(entry["content"] for entry in history if entry["role"] == "system")
-        # Preserve native assistant blocks and tool_result blocks when they
-        # are present; converting everything to strings defeats tool use.
-        messages = []
-        for entry in history:
-            role = entry.get("role")
-            if role == "system":
-                continue
-            blocks = entry.get("content_blocks")
-            if role == "assistant" and isinstance(blocks, list) and blocks:
-                messages.append({"role": "assistant", "content": copy.deepcopy(blocks)})
-            else:
-                messages.append({"role": role, "content": entry.get("content", "")})
-        # Anthropic requires alternating roles. Combine adjacent messages.
-        compiled = []
-        for message in messages:
-            if compiled and compiled[-1]["role"] == message["role"]:
-                left, right = compiled[-1]["content"], message["content"]
-                if isinstance(left, list):
-                    left.extend(right if isinstance(right, list) else [{"type": "text", "text": str(right)}])
+        if self.native_tools:
+            # Preserve provider-native blocks only when explicitly requested.
+            messages = []
+            for entry in history:
+                role = entry.get("role")
+                if role == "system":
+                    continue
+                blocks = entry.get("content_blocks")
+                if role == "assistant" and isinstance(blocks, list) and blocks:
+                    content = _request_assistant_blocks(blocks, entry.get("content", ""))
                 else:
-                    compiled[-1]["content"] = str(left) + "\n" + str(right)
-            else:
-                compiled.append(message)
-        messages = compiled
+                    content = entry.get("content", "")
+                messages.append({"role": role, "content": content})
+        else:
+            # Match the upstream request shape.  Structured blocks are still
+            # persisted in trajectories, but are projected to text for the
+            # model gateway so old GLM deployments see the same protocol.
+            flattened: list[dict[str, str]] = []
+            for entry in history:
+                role = entry.get("role")
+                if role == "system":
+                    continue
+                content = entry.get("content", "")
+                if isinstance(content, list):
+                    parts: list[str] = []
+                    for block in content:
+                        if not isinstance(block, dict):
+                            parts.append(str(block))
+                            continue
+                        block_type = str(block.get("type", "")).lower()
+                        if block_type == "tool_result":
+                            parts.append(str(block.get("content", "")))
+                        elif block_type == "text":
+                            parts.append(str(block.get("text", "")))
+                        elif block_type in {"thinking", "reasoning"}:
+                            parts.append(str(block.get("thinking") or block.get("reasoning_content") or ""))
+                        else:
+                            parts.append(str(block.get("text") or block.get("content") or ""))
+                    content = "\n".join(part for part in parts if part)
+                flattened.append({"role": str(role), "content": str(content)})
+            messages = anthropic_history_to_messages(self, [
+                {"role": "system", "content": system}, *flattened
+            ]) if system else anthropic_history_to_messages(self, flattened)
         payload = {
             "model": self.api_model,
             "messages": messages,
-            "max_tokens": self.model_metadata.get("max_tokens", 8192),
+            "max_tokens": min(self.model_metadata.get("max_tokens", 8192), self.max_output_tokens),
             "temperature": self.args.temperature,
             "top_p": self.args.top_p,
         }
-        # Ask the Messages-compatible gateway for a native Anthropic tool_use.
-        # The agent still retains a text-parser fallback for gateways/models
-        # that ignore this field.
-        payload["tools"] = [{
-            "name": "Bash",
-            "description": "Execute a shell command in the task container.",
-            "input_schema": {
-                "type": "object",
-                "properties": {"command": {"type": "string"}},
-                "required": ["command"],
-            },
-        }]
+        if self.native_tools:
+            payload["tools"] = [{
+                "name": "Bash",
+                "description": "Execute a shell command in the task container.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {"command": {"type": "string"}},
+                    "required": ["command"],
+                },
+            }]
+        # Some gateways emit hidden reasoning by default and then reject or
+        # stall when that response metadata is replayed.  Keep the default
+        # provider behavior (``auto``), but allow a deployment-specific,
+        # explicit switch for A/B tests and production runs.
+        if self.thinking_mode in {"disabled", "disable", "off", "false", "0"}:
+            payload["thinking"] = {"type": "disabled"}
+        elif self.thinking_mode.startswith("budget:"):
+            try:
+                budget = max(16, int(self.thinking_mode.split(":", 1)[1]))
+            except (TypeError, ValueError):
+                budget = 256
+            payload["thinking"] = {"type": "enabled", "budget_tokens": budget}
         if system:
             payload["system"] = system
-        response = requests.post(
-            self.api_url,
-            headers={
-                "x-api-key": self.api_key,
-                "Authorization": f"Bearer {self.api_key}",
-                "anthropic-version": "2023-06-01",
-                "content-type": "application/json",
-            },
-            json=payload,
-            timeout=3600,
+        request_started = time.monotonic()
+        logger.info(
+            "Messages API request start: model=%s messages=%d timeout=%.1fs max_tokens=%s native_tools=%s thinking=%s shape=%s",
+            self.api_model, len(messages), self.request_timeout, payload["max_tokens"],
+            self.native_tools, self.thinking_mode, _messages_payload_shape(messages),
         )
+        try:
+            response = requests.post(
+                self.api_url,
+                headers={
+                    "x-api-key": self.api_key,
+                    "Authorization": f"Bearer {self.api_key}",
+                    "anthropic-version": "2023-06-01",
+                    "content-type": "application/json",
+                },
+                json=payload,
+                timeout=self.request_timeout,
+            )
+        except requests.exceptions.Timeout as error:
+            # Normalize urllib3/requests read and connect timeouts so the
+            # Agent can persist a model_timeout terminal state instead of
+            # misclassifying the task as runner_exception.
+            raise TimeoutError(
+                f"Messages API request timed out after {self.request_timeout:.1f}s"
+            ) from error
         response.raise_for_status()
+        logger.info(
+            "Messages API response received: status=%s elapsed=%.1fs",
+            getattr(response, "status_code", "unknown"), time.monotonic() - request_started,
+        )
         data = response.json()
-        details = extract_messages_api_response_details(data)
+        self.last_raw_response = copy.deepcopy(data) if isinstance(data, dict) else {}
+        self.last_stop_reason = data.get("stop_reason") if isinstance(data, dict) else None
+        try:
+            details = extract_messages_api_response_details(data)
+        except EmptyModelResponseError:
+            # Some gateways spend the entire budget in hidden reasoning and
+            # return ``max_tokens`` without an executable block. Retry once
+            # with reasoning disabled so the step cannot get stuck in a
+            # thinking-only loop.
+            if _is_thinking_only_truncated_response(data) and payload.get("thinking", {}).get("type") != "disabled":
+                retry_payload = dict(payload)
+                retry_payload["thinking"] = {"type": "disabled"}
+                logger.warning("Messages API returned thinking-only max_tokens; retrying with thinking disabled")
+                retry_response = requests.post(
+                    self.api_url,
+                    headers={
+                        "x-api-key": self.api_key,
+                        "Authorization": f"Bearer {self.api_key}",
+                        "anthropic-version": "2023-06-01",
+                        "content-type": "application/json",
+                    },
+                    json=retry_payload,
+                    timeout=self.request_timeout,
+                )
+                retry_response.raise_for_status()
+                data = retry_response.json()
+                self.last_raw_response = copy.deepcopy(data) if isinstance(data, dict) else {}
+                self.last_stop_reason = data.get("stop_reason") if isinstance(data, dict) else None
+                details = extract_messages_api_response_details(data)
+            else:
+                raise
         usage = details["usage"]
         self.update_stats(
             int(usage.get("input_tokens", usage.get("prompt_tokens", 0))),

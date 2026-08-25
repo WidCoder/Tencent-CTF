@@ -31,6 +31,7 @@ LOGS_DIR_NAME = "logs"
 TRAJECTORY_FILE_NAME = "trajectory.jsonl"
 LOCK_FILE_NAME = ".ctfdojo_batch.lock"
 AGENT_IMAGE = "sweagent/enigma:latest"
+PROTECTED_CONTAINER_PREFIXES = ("cybergym", "proxy")
 
 
 @dataclasses.dataclass(frozen=True)
@@ -96,42 +97,6 @@ def _messages_tool_call(step: dict[str, Any]) -> dict[str, Any]:
     return {"name": "Bash", "arguments": {"command": _text(step.get("action")).strip()}}
 
 
-def _messages_tool_calls_from_blocks(blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Project structured Anthropic tool blocks to the public tool_calls field."""
-    calls: list[dict[str, Any]] = []
-    for block in blocks:
-        block_type = str(block.get("type", "")).lower()
-        if block_type == "tool_use":
-            calls.append({"name": _text(block.get("name")) or "tool", "arguments": block.get("input", {})})
-        elif block_type in {"tool_call", "function"}:
-            function = block.get("function") if isinstance(block.get("function"), dict) else block
-            arguments = function.get("arguments", function.get("input", {}))
-            if isinstance(arguments, str):
-                try:
-                    arguments = json.loads(arguments)
-                except json.JSONDecodeError:
-                    arguments = {"command": arguments}
-            calls.append({"name": _text(function.get("name")) or "tool", "arguments": arguments})
-    return calls
-
-
-def _content_blocks_for_step(step: dict[str, Any]) -> list[dict[str, Any]]:
-    """Return structured blocks, with a lossless-enough fallback for old traces."""
-    blocks = step.get("content_blocks")
-    if isinstance(blocks, list) and all(isinstance(block, dict) for block in blocks):
-        return json.loads(json.dumps(blocks, ensure_ascii=False))
-    fallback: list[dict[str, Any]] = []
-    thought = _text(step.get("thought"))
-    response = _text(step.get("response") if step.get("response") is not None else step.get("content_text"))
-    if thought:
-        fallback.append({"type": "thinking", "thinking": thought})
-    if response:
-        fallback.append({"type": "text", "text": response})
-    if not response and _text(step.get("action")).strip():
-        fallback.append({"type": "tool_use", "name": "Bash", "input": {"command": _text(step.get("action")).strip()}})
-    return fallback
-
-
 def _is_terminal_step(step: dict[str, Any]) -> bool:
     if step.get("terminal") is True:
         return True
@@ -140,7 +105,7 @@ def _is_terminal_step(step: dict[str, Any]) -> bool:
 
 
 def trajectory_to_messages(payload: dict[str, Any], task: Challenge) -> dict[str, Any]:
-    """Convert an internal EnIGMA trajectory to a dual-track messages JSONL record."""
+    """Convert an internal EnIGMA trajectory into the public messages JSONL schema."""
     history = payload.get("history")
     history = history if isinstance(history, list) else []
     system = next((entry for entry in history if isinstance(entry, dict) and entry.get("role") == "system"), None)
@@ -148,47 +113,29 @@ def trajectory_to_messages(payload: dict[str, Any], task: Challenge) -> dict[str
     messages: list[dict[str, Any]] = []
 
     if system is not None:
-        system_text = _text(system.get("content"))
-        messages.append({
-            "role": "system",
-            "content": system_text,
-            "content_blocks": system.get("content_blocks") if isinstance(system.get("content_blocks"), list) else [{"type": "text", "text": system_text}],
-        })
+        messages.append({"role": "system", "content": _text(system.get("content"))})
     user_text = _text(initial_user.get("content")) if initial_user is not None else task.name
-    messages.append({
-        "role": "user",
-        "content": user_text,
-        "content_blocks": initial_user.get("content_blocks") if isinstance(initial_user, dict) and isinstance(initial_user.get("content_blocks"), list) else [{"type": "text", "text": user_text}],
-    })
+    messages.append({"role": "user", "content": user_text})
 
     trajectory = payload.get("trajectory")
     trajectory = trajectory if isinstance(trajectory, list) else []
     for raw_step in trajectory:
         if not isinstance(raw_step, dict):
             continue
-        blocks = _content_blocks_for_step(raw_step)
         if _is_terminal_step(raw_step):
-            terminal_text = _text(raw_step.get("terminal_reason") or raw_step.get("action"))
             messages.append({
                 "role": "assistant",
-                "content": terminal_text,
-                "content_blocks": blocks or [{"type": "text", "text": terminal_text}],
+                "content": _text(raw_step.get("terminal_reason") or raw_step.get("action")),
                 "reasoning_content": _text(raw_step.get("thought")),
             })
             messages.append({"role": "tool", "content": _text(raw_step.get("observation"))})
             continue
-        assistant = {
+        messages.append({
             "role": "assistant",
-            "content": _text(raw_step.get("response") if raw_step.get("response") is not None else raw_step.get("content_text")),
-            "content_blocks": blocks,
+            "content": "",
             "reasoning_content": _text(raw_step.get("thought")),
-        }
-        tool_calls = _messages_tool_calls_from_blocks(blocks)
-        if tool_calls:
-            assistant["tool_calls"] = tool_calls
-        elif _text(raw_step.get("action")).strip():
-            assistant["tool_calls"] = [_messages_tool_call(raw_step)]
-        messages.append(assistant)
+            "tool_calls": [_messages_tool_call(raw_step)],
+        })
         messages.append({"role": "tool", "content": _text(raw_step.get("observation"))})
     return {"id": task.task_id, "sample_type": "main", "messages": messages}
 
@@ -202,7 +149,8 @@ def status_payload(payload: dict[str, Any], exit_status: str) -> dict[str, Any]:
         return payload
     return {
         "info": {"exit_status": exit_status},
-        "trajectory": [message for message in payload.get("messages", []) if isinstance(message, dict) and message.get("role") == "tool"],
+        "trajectory": [message for message in payload.get("messages", [])
+                        if isinstance(message, dict) and message.get("role") == "tool"],
     }
 
 def atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -226,18 +174,46 @@ def category_from(metadata: dict[str, Any]) -> str:
 
 
 def has_verification_evidence(repo_path: Path, metadata: dict[str, Any]) -> bool:
+    # A plaintext flag is accepted only as host-side verification evidence.
+    # ``stage_challenge`` removes it from the agent repository before launch.
+    plaintext_flag = metadata.get("flag")
     verification = metadata.get("verification")
-    if isinstance(verification, dict) and verification.get("status") == "eligible":
-        files = verification.get("files")
-        if isinstance(files, list) and files:
-            return all(isinstance(value, str) and (repo_path / value).is_file() for value in files)
+    if isinstance(plaintext_flag, str) and plaintext_flag.strip():
         return True
-    if metadata.get("verification_method") in {"sha256", "flagcheck"}:
+    if isinstance(verification, dict) and verification.get("method") == "plaintext":
         return True
-    return any(
-        path.is_file() and (path.name.lower() in {"flag.sha256", ".flag.sha256", "flag.sha256.txt"} or "flagcheck" in path.name.lower())
-        for path in repo_path.rglob("*")
-    )
+    candidates: list[Path] = []
+    if isinstance(verification, dict):
+        for key in ("host_files", "files"):
+            values = verification.get(key)
+            if isinstance(values, list):
+                for value in values:
+                    if isinstance(value, str) and value:
+                        path = Path(value)
+                        candidates.append(path if path.is_absolute() else repo_path / path)
+    for key in ("sha256_file", "sha256_flag_file", "flag_sha256_file", "hash_file", "flag_check", "flagCheck", "verifier"):
+        value = metadata.get(key)
+        if isinstance(value, str) and value:
+            path = Path(value)
+            candidates.append(path if path.is_absolute() else repo_path / path)
+    if not candidates:
+        candidates = [
+            path for path in repo_path.rglob("*")
+            if path.is_file() and (path.name.lower() in PRIVATE_VERIFIER_NAMES or "flagcheck" in path.name.lower())
+        ]
+    valid: list[Path] = []
+    for path in candidates:
+        if not path.is_file():
+            continue
+        if path.name.lower() in PRIVATE_VERIFIER_NAMES:
+            try:
+                if re.search(r"\b[0-9a-fA-F]{64}\b", path.read_text(encoding="utf-8", errors="replace")):
+                    valid.append(path)
+            except OSError:
+                continue
+        elif "flagcheck" in path.name.lower() or metadata.get("verification_method") == "flagcheck":
+            valid.append(path)
+    return bool(valid)
 
 def discover_challenges(dataset_root: Path, category: str | None, require_dockerfile: bool, require_verification: bool = False) -> tuple[list[Challenge], list[str]]:
     selected_category = category.lower() if category else None
@@ -329,8 +305,8 @@ def flag_status_from_trajectory(payload: dict[str, Any]) -> dict[str, Any]:
             ),
         }
     if info.get("submission") is not None or str(info.get("exit_status", "")).startswith("submitted"):
-        return {"flag_submitted": True, "flag_verified": "unknown", "flag_verification_evidence": "missing structured verifier result"}
-    return {"flag_submitted": False, "flag_verified": "unknown", "flag_verification_evidence": "not_attempted"}
+        return {"flag_submitted": True, "flag_verified": None, "flag_verification_evidence": "missing structured verifier result"}
+    return {"flag_submitted": False, "flag_verified": None, "flag_verification_evidence": "not_attempted"}
 
 
 def episode_status_from_trajectory(payload: dict[str, Any]) -> dict[str, Any]:
@@ -343,7 +319,7 @@ def episode_status_from_trajectory(payload: dict[str, Any]) -> dict[str, Any]:
         return {"episode_status": "running", "episode_complete": False}
     if isinstance(exit_status, str) and exit_status.startswith("submitted"):
         status = "completed"
-    elif exit_status in {"task_timeout", "timeout"}:
+    elif exit_status in {"task_timeout", "timeout", "model_timeout"}:
         status = "timeout"
     elif re.fullmatch(r"step_\d+_hit", exit_status):
         status = "step_limit"
@@ -379,9 +355,9 @@ def enrich_completed_records(state: dict[str, Any], output_dir: Path, tasks: lis
             episode = episode_status_from_trajectory(payload)
             values = {"run_status": "generated", "trajectory_generated": True, **episode, **flags, "outcome_status": outcome_status_from(flags, episode, True)}
         except (OSError, ValueError, json.JSONDecodeError):
-            values = {"run_status": "failed", "trajectory_generated": True, "episode_status": "running", "episode_complete": False, "flag_submitted": False, "flag_verified": "unknown", "flag_verification_evidence": "not_attempted", "outcome_status": "unknown"}
+            values = {"run_status": "failed", "trajectory_generated": True, "episode_status": "running", "episode_complete": False, "flag_submitted": False, "flag_verified": None, "flag_verification_evidence": "not_attempted", "outcome_status": "unknown"}
         for key, value in values.items():
-            if record.get(key) != value:
+            if key not in record or record.get(key) != value:
                 record[key] = value
                 changed = True
     return changed
@@ -410,12 +386,106 @@ def run_checked(command: list[str], cwd: Path) -> None:
     subprocess.run(command, cwd=cwd, capture_output=True, text=True, check=True)
 
 
+PRIVATE_VERIFIER_NAMES = {"flag.sha256", ".flag.sha256", "flag.sha256.txt"}
+
+
+def _is_private_verifier(path: Path) -> bool:
+    return path.name.lower() in PRIVATE_VERIFIER_NAMES or "flagcheck" in path.name.lower()
+
+
 def stage_challenge(source_dir: Path, workspace: Path) -> Path:
     staged_repo = workspace / "repo"
     def ignore_private(_directory: str, names: list[str]) -> set[str]:
         excluded = {"solution", "writeup", "writeups", "flag", "flag.txt", "flag.json"}
-        return {name for name in names if name.lower() in excluded}
+        return {
+            name for name in names
+            if name.lower() in excluded
+            or name.lower() in {"readme", "readme.md", "readme.txt", "description.md", "description.txt"}
+            or name.lower() in PRIVATE_VERIFIER_NAMES
+            or "flagcheck" in name.lower()
+        }
     shutil.copytree(source_dir, staged_repo, ignore=ignore_private)
+    challenge_path = staged_repo / "challenge.json"
+    if challenge_path.is_file():
+        try:
+            metadata = read_json(challenge_path)
+            description = metadata.get("description")
+            detected_description_flags: set[str] = set()
+            if isinstance(description, str):
+                detected_description_flags.update(re.findall(
+                    r"(?i)\b(?:ctf|flag|pwn\.college|gc)\{[^\r\n}]{2,256}\}",
+                    description,
+                ))
+                # Existing converted datasets may predate the README sanitizer.
+                # Remove explicit answer lines and flag-shaped literals before
+                # the challenge JSON is committed into the agent repository.
+                description = re.sub(
+                    r"(?im)^\s*(?:[#;>*-]\s*)?(?:the\s+)?flag\s*(?:is|=|:)\s*.+$\n?",
+                    "",
+                    description,
+                )
+                description = re.sub(
+                    r"(?i)\b(?:ctf|flag|pwn\.college|gc)\{[^\r\n}]{2,256}\}",
+                    "[REDACTED_FLAG]",
+                    description,
+                )
+                metadata["description"] = description.strip()
+            verification = metadata.get("verification") if isinstance(metadata.get("verification"), dict) else {}
+            if (
+                "flag" not in metadata
+                and len(detected_description_flags) == 1
+                and verification.get("method", "unknown") == "unknown"
+            ):
+                metadata["flag"] = next(iter(detected_description_flags))
+                verification = dict(verification)
+                verification.update({"status": "eligible", "method": "plaintext", "files": []})
+            private_files = [
+                path for path in source_dir.rglob("*")
+                if path.is_file() and _is_private_verifier(path)
+            ]
+            # Keep verifier artifacts on the host only.  The temporary root is
+            # removed after this task, and is never copied into the agent repo.
+            verifier_root = workspace / "verifier"
+            host_files: list[str] = []
+            plaintext_flag = metadata.get("flag")
+            if isinstance(plaintext_flag, str) and plaintext_flag and plaintext_flag != "pwn.college{...}":
+                secret_path = verifier_root / "flag.value"
+                secret_path.parent.mkdir(parents=True, exist_ok=True)
+                secret_path.write_text(plaintext_flag.rstrip("\r\n") + "\n", encoding="utf-8")
+                host_files.append(str(secret_path.resolve()))
+                verification = dict(verification)
+                verification["plaintext_file"] = str(secret_path.resolve())
+                flag_match = re.fullmatch(r"([A-Za-z0-9_.-]+)\{.*\}", plaintext_flag.strip())
+                if flag_match:
+                    metadata["flag_format"] = f"{flag_match.group(1)}{{...}}"
+                metadata.pop("flag", None)
+            for path in private_files:
+                relative = path.relative_to(source_dir)
+                destination = verifier_root / relative
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(path, destination)
+                host_files.append(str(destination.resolve()))
+            if private_files:
+                verification = dict(verification)
+                verification["files"] = []
+                verification["host_files"] = host_files
+                verification["host_root"] = str(verifier_root.resolve())
+                metadata["verification"] = verification
+                for key in ("sha256_file", "sha256_flag_file", "flag_sha256_file", "hash_file", "flag_check", "flagCheck"):
+                    metadata.pop(key, None)
+                files = metadata.get("files")
+                if isinstance(files, list):
+                    metadata["files"] = [value for value in files if isinstance(value, str) and not _is_private_verifier(Path(value))]
+                challenge_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            elif plaintext_flag:
+                metadata["verification"] = verification
+                metadata.pop("flag", None)
+                files = metadata.get("files")
+                if isinstance(files, list):
+                    metadata["files"] = [value for value in files if isinstance(value, str) and value.lower() not in {"flag", "flag.txt", "flag.json"}]
+                challenge_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        except (OSError, ValueError, json.JSONDecodeError) as error:
+            raise RuntimeError(f"failed to stage verifier metadata for {source_dir}: {error}") from error
     run_checked(["git", "init"], staged_repo)
     run_checked(["git", "add", "."], staged_repo)
     run_checked(["git", "-c", "user.name=EnIGMA Batch", "-c", "user.email=enigma-batch@example.invalid", "commit", "-m", "Stage CTF-Dojo challenge for EnIGMA+"], staged_repo)
@@ -453,6 +523,22 @@ def docker_bridge_container_count() -> int:
     return len(containers)
 
 
+def docker_dynamic_network_count() -> int:
+    """Count per-attempt CTF networks before Docker address pools are exhausted."""
+    result = subprocess.run(
+        ["docker", "network", "ls", "-q", "--filter", "name=ctfnet-"],
+        capture_output=True, text=True, check=False,
+    )
+    if result.returncode:
+        raise RuntimeError(result.stderr.strip() or result.stdout.strip() or "docker network ls failed")
+    return len({line.strip() for line in result.stdout.splitlines() if line.strip()})
+
+
+def _protected_resource_name(value: str) -> bool:
+    normalized = value.strip().lstrip("/").lower()
+    return any(normalized == prefix or normalized.startswith(prefix + "-") for prefix in PROTECTED_CONTAINER_PREFIXES)
+
+
 def cleanup_agent_containers(
     baseline: set[str] | None,
     image_name: str = AGENT_IMAGE,
@@ -467,6 +553,10 @@ def cleanup_agent_containers(
     compatibility for callers outside the batch runner.
     """
     cleanup: dict[str, Any] = {"attempted": baseline is not None, "removed_container_ids": [], "failed_container_ids": []}
+    if _protected_resource_name(image_name) or _protected_resource_name(resource_token or ""):
+        cleanup["attempted"] = False
+        cleanup["error"] = "refusing to clean protected infrastructure resource"
+        return cleanup
     if baseline is None:
         cleanup["error"] = "agent container baseline unavailable"
         return cleanup
@@ -514,6 +604,9 @@ def cleanup_attempt_resources(resource_token: str) -> dict[str, Any]:
     if not resource_token:
         result["error"] = "empty resource token"
         return result
+    if _protected_resource_name(resource_token):
+        result["error"] = "refusing to clean protected infrastructure resource"
+        return result
 
     def list_ids(command: list[str]) -> list[str]:
         completed = subprocess.run(command, capture_output=True, text=True, check=False)
@@ -548,7 +641,35 @@ def cleanup_attempt_resources(resource_token: str) -> dict[str, Any]:
 
 def docker_network_exhausted(*output: str) -> bool:
     detail = "\n".join(output).lower()
-    return "no available ipv4 addresses" in detail and "address pools" in detail
+    return "address pools" in detail and (
+        "no available ipv4 addresses" in detail
+        or "fully subnetted" in detail
+        or "subnet" in detail
+    )
+
+
+def model_generation_timed_out(*output: str) -> bool:
+    detail = "\n".join(output).lower()
+    return any(
+        marker in detail
+        for marker in (
+            "model generation exceeded",
+            "model generation timed out",
+            "timeouterror: model generation",
+            "messages api request timed out",
+            "read timed out",
+            "error_type=model_timeout",
+            '"error_type": "model_timeout"',
+        )
+    )
+
+
+def docker_storage_exhausted(*output: str) -> bool:
+    """Detect Docker/Buildx failures caused by a full disk or inode store."""
+    detail = "\n".join(output).lower()
+    return "no space left on device" in detail and any(
+        token in detail for token in ("docker", "buildx", "compose", "/var/lib/docker", ".docker")
+    )
 
 
 def persist_terminal_trajectory(
@@ -568,11 +689,29 @@ def persist_terminal_trajectory(
         payload["trajectory"] = trajectory
     info = payload.get("info")
     info = dict(info) if isinstance(info, dict) else {}
+    # A runner-level wrapper must not erase a more specific error already
+    # persisted by run.py (for example AttributeError or an environment
+    # startup traceback). Keep wrapper details under separate keys.
+    original_exit_status = info.get("exit_status")
+    original_reason = info.get("terminal_reason") or info.get("error_message")
+    original_error_type = info.get("error_type")
+    effective_exit_status = original_exit_status or exit_status
+    # Promote a generic run.py exception when the outer evidence proves this
+    # was an environment-start failure; retain the original status below.
+    if exit_status == "environment_error" and original_exit_status == "runner_exception":
+        effective_exit_status = exit_status
+    if original_exit_status and original_exit_status != exit_status:
+        info["wrapped_exit_status"] = exit_status
+    if original_reason and original_reason != terminal_reason:
+        info["wrapped_terminal_reason"] = terminal_reason
+    if original_error_type and error_type and original_error_type != error_type:
+        info["wrapped_error_type"] = error_type
     info.update({
-        "exit_status": exit_status,
-        "terminal_reason": terminal_reason,
-        "error_type": error_type or "",
-        "flag_verified": info.get("flag_verified") if isinstance(info.get("flag_verified"), bool) else "unknown",
+        "exit_status": effective_exit_status,
+        "terminal_reason": original_reason or terminal_reason,
+        "error_type": original_error_type or error_type or "",
+        "failure_category": error_type or info.get("failure_category", ""),
+        "flag_verified": info.get("flag_verified") if isinstance(info.get("flag_verified"), bool) else None,
         "flag_submitted": bool(info.get("flag_submitted")),
         "episode_end_time": utc_now(),
         "total_steps": len(trajectory),
@@ -618,6 +757,27 @@ def run_one_task(request: WorkerRequest) -> dict[str, Any]:
             baseline = docker_agent_container_ids(request.image_name)
             try:
                 run_env = os.environ.copy()
+                # Keep the inner EnIGMA deadline below the outer subprocess
+                # deadline. Callers can override this explicitly.
+                # Keep the inner EnIGMA deadline below the outer subprocess
+                # deadline.  The previous fixed 1800s default ignored a
+                # larger --task_timeout value and could terminate long tasks
+                # prematurely.
+                if request.task_timeout:
+                    inner_timeout = max(60, request.task_timeout - 60)
+                    run_env.setdefault("SWE_AGENT_TASK_TIMEOUT", str(inner_timeout))
+                else:
+                    run_env.setdefault("SWE_AGENT_TASK_TIMEOUT", "1800")
+                # GLM reasoning can legitimately take several minutes on a
+                # long CTF context. Keep a larger model-level budget than the
+                # historical 300s default, while still allowing callers to
+                # override it explicitly through the environment.
+                run_env.setdefault("SWE_AGENT_MODEL_TIMEOUT", "600")
+                # Keep the default gateway protocol compatible with the
+                # official Cyber-Zero GLM path; native tool blocks are an
+                # explicit experiment via SWE_AGENT_MESSAGES_NATIVE_TOOLS=1.
+                run_env.setdefault("SWE_AGENT_MESSAGES_NATIVE_TOOLS", "1")
+                run_env.setdefault("SWE_AGENT_FLAG_VERIFIER_IMAGE", request.image_name)
                 run_env["ENIGMA_BATCH_ATTEMPT_ID"] = resource_token
                 result = subprocess.run(command, cwd=ENIGMA_ROOT, capture_output=True, text=True,
                                         check=False, timeout=request.task_timeout or None, env=run_env)
@@ -631,20 +791,42 @@ def run_one_task(request: WorkerRequest) -> dict[str, Any]:
             save_failure_log(error_log, task, command, reason, timeout_error.stdout or "", timeout_error.stderr or "", traceback.format_exc())
             payload = status_payload(read_trajectory(destination), "task_timeout")
             flags, episode = flag_status_from_trajectory(payload), episode_status_from_trajectory(payload)
+            effective_info = payload.get("info") if isinstance(payload.get("info"), dict) else {}
             record = task_record(task, run_status="error", trajectory_generated=True, time=utc_now(), trajectory=str(destination),
-                source_trajectory=str(source) if source else "", exit_status="task_timeout", error=reason, error_code="task_timeout",
-                error_log=str(error_log), solved=False, steps=len(payload.get("trajectory", [])), **episode, **flags)
+                source_trajectory=str(source) if source else "", exit_status=effective_info.get("exit_status", "task_timeout"),
+                error=effective_info.get("terminal_reason", reason), error_code=effective_info.get("error_type", "task_timeout"),
+                 error_log=str(error_log), solved=False, steps=len(payload.get("trajectory", [])), **episode, **flags)
         elif result is None or result.returncode != 0:
             reason = f"run.py exited with code {result.returncode}" if result is not None else "run.py did not complete"
-            error_type = "docker_network_address_exhausted" if result and docker_network_exhausted(result.stdout, result.stderr) else "runner_error"
-            exit_status = "environment_error" if error_type.startswith("docker_") else "runner_exception"
+            source_detail = ""
+            if source is not None:
+                try:
+                    source_payload = read_trajectory(source)
+                    source_info = source_payload.get("info") if isinstance(source_payload.get("info"), dict) else {}
+                    source_detail = "\n".join(
+                        str(source_info.get(key, "")) for key in ("terminal_reason", "error_type", "traceback")
+                    )
+                except (OSError, ValueError, json.JSONDecodeError):
+                    source_detail = ""
+            if result and model_generation_timed_out(result.stdout, result.stderr, source_detail):
+                error_type = "model_timeout"
+            elif result and docker_storage_exhausted(result.stdout, result.stderr, source_detail):
+                error_type = "docker_storage_exhausted"
+            elif result and docker_network_exhausted(result.stdout, result.stderr, source_detail):
+                error_type = "docker_network_address_exhausted"
+            else:
+                error_type = "runner_error"
+            exit_status = "environment_error" if error_type.startswith("docker_") else ("model_timeout" if error_type == "model_timeout" else "runner_exception")
             destination = persist_terminal_trajectory(output_dir, task, exit_status=exit_status,
                 terminal_reason=reason, error_type=error_type, source=source)
             save_failure_log(error_log, task, command, reason, result.stdout if result else "", result.stderr if result else "")
-            payload = status_payload(read_trajectory(destination), "runner_exception")
+            payload = status_payload(read_trajectory(destination), exit_status)
             flags, episode = flag_status_from_trajectory(payload), episode_status_from_trajectory(payload)
+            effective_info = payload.get("info") if isinstance(payload.get("info"), dict) else {}
             record = task_record(task, run_status="error", trajectory_generated=True, time=utc_now(), trajectory=str(destination),
-                source_trajectory=str(source) if source else "", exit_status=exit_status, error=reason, error_code=error_type,
+                source_trajectory=str(source) if source else "", exit_status=effective_info.get("exit_status", exit_status),
+                error=effective_info.get("terminal_reason", reason), error_code=effective_info.get("error_type", error_type),
+                failure_category=effective_info.get("failure_category", error_type),
                 error_log=str(error_log), solved=False, steps=len(payload.get("trajectory", [])), **episode, **flags)
         elif source is None:
             reason = "run.py exited successfully but no trajectory file was produced"
@@ -701,7 +883,8 @@ def trajectory_quality(records: list[dict[str, Any]]) -> dict[str, int]:
         if outcome == "solved": counts["solved_trajectories"] += 1
         if outcome == "unsolved": counts["unsolved_trajectories"] += 1
         if status == "timeout": counts["timeout"] += 1
-        if status == "environment_error": counts["environment_error"] += 1
+        if status in {"environment_error", "ctf_server_unavailable", "ctf_server_crashed"}:
+            counts["environment_error"] += 1
         path = record.get("trajectory")
         if not isinstance(path, str) or not valid_trajectory(Path(path)):
             continue
@@ -738,7 +921,7 @@ def reporting_counts(records: list[dict[str, Any]]) -> dict[str, int]:
     generated = [record for record in records if record.get("trajectory_generated")]
     flag_submitted = sum(bool(record.get("flag_submitted")) for record in records)
     flag_verified = sum(record.get("flag_verified") is True for record in records)
-    flag_unknown = sum(record.get("flag_verified") == "unknown" and bool(record.get("flag_submitted")) for record in records)
+    flag_unknown = sum(record.get("flag_verified") is None and bool(record.get("flag_submitted")) for record in records)
     flag_not_attempted = sum(not bool(record.get("flag_submitted")) and record.get("flag_verified") is not True for record in records)
     return {
         "generated_trajectories": len(generated),
@@ -746,7 +929,10 @@ def reporting_counts(records: list[dict[str, Any]]) -> dict[str, int]:
         "verified_solved": sum(record.get("outcome_status") == "solved" for record in generated),
         "unsolved": sum(record.get("outcome_status") == "unsolved" for record in generated),
         "generation_failed": sum(record.get("run_status") in {"failed", "error"} for record in records),
-        "environment_error": sum(record.get("episode_status") == "environment_error" for record in records),
+        "environment_error": sum(
+            record.get("episode_status") in {"environment_error", "ctf_server_unavailable", "ctf_server_crashed"}
+            for record in records
+        ),
         "flag_submitted": flag_submitted,
         "flag_verified": flag_verified,
         "flag_status_unknown": flag_unknown,
@@ -800,7 +986,9 @@ def build_summary(tasks: list[Challenge], state: dict[str, Any], skipped: int) -
             "run_status": {key: sum(record.get("run_status") == key for record in records) for key in ("generated", "failed", "error")},
             "batch_errors": state.get("batch_errors", []),
             "docker_bridge_containers_at_start": state.get("docker_bridge_containers_at_start"),
-            "docker_bridge_containers_at_end": state.get("docker_bridge_containers_at_end")}
+            "docker_bridge_containers_at_end": state.get("docker_bridge_containers_at_end"),
+            "docker_dynamic_networks_at_start": state.get("docker_dynamic_networks_at_start"),
+            "docker_dynamic_networks_at_end": state.get("docker_dynamic_networks_at_end")}
 
 def check_command(command: list[str], label: str) -> str | None:
     try:
@@ -896,9 +1084,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--image_name", default=AGENT_IMAGE)
     parser.add_argument("--config_file", default="config/default_ctf.yaml")
     parser.add_argument("--step_limit", type=int, default=40)
-    parser.add_argument("--task_timeout", type=int, default=3600, help="Seconds per task; 0 disables the outer timeout")
+    parser.add_argument("--task_timeout", type=int, default=2400, help="Seconds per task; 0 disables the outer timeout")
     parser.add_argument("--workers", type=int, default=1)
+    parser.add_argument(
+        "--warmup_single_task",
+        action="store_true",
+        help="Run one task with one worker first; increase to --workers only after it reaches model interaction",
+    )
     parser.add_argument("--max_bridge_containers", type=int, default=180, help="Stop scheduling at this bridge container count; 0 disables the threshold")
+    parser.add_argument("--max_dynamic_networks", type=int, default=24, help="Stop before ctfnet-* address pools are exhausted; 0 disables the threshold")
     parser.add_argument("--category")
     parser.add_argument("--max_tasks", type=int)
     parser.add_argument("--require_dockerfile", action="store_true")
@@ -908,13 +1102,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--messages_api_key", default="EMPTY", help="API key for --messages_api_url")
     parser.add_argument("--dry_run", action="store_true")
     parser.add_argument("--force_unlock", action="store_true")
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Reuse the exact --output_dir state; otherwise an existing run gets a new timestamped child directory",
+    )
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
-    if args.workers < 1 or args.step_limit < 1 or args.task_timeout < 0 or args.max_bridge_containers < 0:
-        print("ERROR: workers and step_limit must be positive; task_timeout and max_bridge_containers cannot be negative", file=sys.stderr)
+    if args.workers < 1 or args.step_limit < 1 or args.task_timeout < 0 or args.max_bridge_containers < 0 or args.max_dynamic_networks < 0:
+        print("ERROR: workers and step_limit must be positive; timeouts and resource limits cannot be negative", file=sys.stderr)
         return 2
     if args.max_tasks is not None and args.max_tasks < 1:
         print("ERROR: max_tasks must be positive", file=sys.stderr)
@@ -937,7 +1136,14 @@ def main() -> int:
         for error in errors:
             print(f"ERROR: {error}", file=sys.stderr)
         return 2
-    output_dir = args.output_dir.resolve()
+    output_root = args.output_dir.resolve()
+    existing_markers = (STATE_FILE_NAME, SUMMARY_FILE_NAME, LOGS_DIR_NAME)
+    if not args.resume and any((output_root / marker).exists() for marker in existing_markers):
+        run_id = f"run-{dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-{uuid.uuid4().hex[:8]}"
+        output_dir = output_root / run_id
+        print(f"Existing output detected; using fresh run directory: {output_dir}", flush=True)
+    else:
+        output_dir = output_root
     output_dir.mkdir(parents=True, exist_ok=True)
     state_path, summary_path = output_dir / STATE_FILE_NAME, output_dir / SUMMARY_FILE_NAME
     exit_code = 0
@@ -951,6 +1157,19 @@ def main() -> int:
         except Exception as error:
             record_batch_error(state, output_dir, "docker_bridge_capacity_guard", f"unable to inspect bridge: {error}")
             persist_progress(state_path, summary_path, state, tasks, skipped)
+            return 1
+        try:
+            state["docker_dynamic_networks_at_start"] = docker_dynamic_network_count()
+        except Exception as error:
+            record_batch_error(state, output_dir, "docker_network_capacity_guard", f"unable to inspect ctfnet networks: {error}")
+            persist_progress(state_path, summary_path, state, tasks, skipped)
+            return 1
+        if args.max_dynamic_networks and state["docker_dynamic_networks_at_start"] >= args.max_dynamic_networks:
+            message = f"found {state['docker_dynamic_networks_at_start']} ctfnet-* networks, at or above configured limit {args.max_dynamic_networks}"
+            record_batch_error(state, output_dir, "docker_network_capacity_guard", message)
+            state["docker_dynamic_networks_at_end"] = state["docker_dynamic_networks_at_start"]
+            persist_progress(state_path, summary_path, state, tasks, skipped)
+            print(f"ERROR: docker_network_capacity_guard: {message}", file=sys.stderr)
             return 1
         if args.max_bridge_containers and state["docker_bridge_containers_at_start"] >= args.max_bridge_containers:
             message = f"bridge has {state['docker_bridge_containers_at_start']} containers, at or above configured limit {args.max_bridge_containers}"
@@ -966,9 +1185,11 @@ def main() -> int:
         futures: dict[concurrent.futures.Future[dict[str, Any]], Challenge] = {}
         guard_triggered = False
         interrupted = False
+        warmup_active = bool(args.warmup_single_task and selected)
+        target_workers = 1 if warmup_active else args.workers
         with concurrent.futures.ProcessPoolExecutor(max_workers=args.workers) as executor:
             while True:
-                while not guard_triggered and len(futures) < args.workers and pending_index < len(requests):
+                while not guard_triggered and len(futures) < target_workers and pending_index < len(requests):
                     request = requests[pending_index]
                     try:
                         bridge_count = docker_bridge_container_count()
@@ -991,6 +1212,20 @@ def main() -> int:
                         message = f"bridge has {bridge_count} containers, at or above configured limit {args.max_bridge_containers}; stopped before {request.challenge.task_id}"
                         record_batch_error(state, output_dir, "docker_bridge_capacity_guard", message)
                         print(f"ERROR: docker_bridge_capacity_guard: {message}", file=sys.stderr)
+                        guard_triggered = True
+                        exit_code = 1
+                        break
+                    try:
+                        dynamic_network_count = docker_dynamic_network_count()
+                    except Exception as error:
+                        record_batch_error(state, output_dir, "docker_network_capacity_guard", f"unable to inspect ctfnet networks before {request.challenge.task_id}: {error}")
+                        guard_triggered = True
+                        exit_code = 1
+                        break
+                    if args.max_dynamic_networks and dynamic_network_count >= args.max_dynamic_networks:
+                        message = f"found {dynamic_network_count} ctfnet-* networks; stopped before {request.challenge.task_id}"
+                        record_batch_error(state, output_dir, "docker_network_capacity_guard", message)
+                        print(f"ERROR: docker_network_capacity_guard: {message}", file=sys.stderr)
                         guard_triggered = True
                         exit_code = 1
                         break
@@ -1018,10 +1253,28 @@ def main() -> int:
                     state["tasks"][task.relative_path] = record
                     persist_progress(state_path, summary_path, state, tasks, skipped)
                     print(f"[{record.get('run_status', 'error')}] {task.task_id}", flush=True)
+                    if warmup_active:
+                        reached_model = (
+                            int(record.get("steps", 0) or 0) > 1
+                            and record.get("episode_status") not in {"ctf_server_unavailable", "environment_error"}
+                        )
+                        if reached_model:
+                            warmup_active = False
+                            target_workers = args.workers
+                            print(f"Warm-up task reached model interaction; increasing workers to {target_workers}.", flush=True)
+                        else:
+                            guard_triggered = True
+                            exit_code = 1
+                            print("Warm-up task did not reach model interaction; stopping before concurrent scheduling.", file=sys.stderr, flush=True)
         try:
             state["docker_bridge_containers_at_end"] = docker_bridge_container_count()
         except Exception as error:
             record_batch_error(state, output_dir, "docker_bridge_capacity_guard", f"unable to inspect bridge at batch end: {error}")
+            exit_code = 1
+        try:
+            state["docker_dynamic_networks_at_end"] = docker_dynamic_network_count()
+        except Exception as error:
+            record_batch_error(state, output_dir, "docker_network_capacity_guard", f"unable to inspect ctfnet networks at batch end: {error}")
             exit_code = 1
         persist_progress(state_path, summary_path, state, tasks, skipped)
     summary = build_summary(tasks, state, skipped)

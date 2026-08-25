@@ -1,0 +1,37 @@
+{
+  "attempt_resource_cleanup_failed": 0,
+  "attempt_resource_cleanup_removed": 0,
+  "batch_errors": [],
+  "categories": {
+    "pwn": {
+      "flag_submitted": 0,
+      "flag_verified": 0,
+      "trajectory_generated": 1
+    }
+  },
+  "container_cleanup_failed": 0,
+  "container_cleanup_removed": 0,
+  "docker_bridge_containers_at_end": 11,
+  "docker_bridge_containers_at_start": 11,
+  "docker_dynamic_networks_at_end": 1,
+  "docker_dynamic_networks_at_start": 1,
+  "environment_error": 0,
+  "flag_not_attempted": 1,
+  "flag_status_unknown": 0,
+  "flag_submitted": 0,
+  "flag_verified": 0,
+  "generated_at": "2026-08-24T13:36:57+00:00",
+  "generated_trajectories": 1,
+  "generation_failed": 1,
+  "pending": 0,
+  "run_status": {
+    "error": 1,
+    "failed": 0,
+    "generated": 0
+  },
+  "skipped": 0,
+  "total_tasks": 1,
+  "trajectory_generated": 1,
+  "unsolved": 1,
+  "verified_solved": 0
+}

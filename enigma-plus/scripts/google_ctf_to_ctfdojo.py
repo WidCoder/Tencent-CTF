@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 import shutil
 from pathlib import Path
 
@@ -10,15 +11,15 @@ try:
     from .google_ctf_common import (
         canonical_category, copy_tree_contents, copy_verification_files,
         find_named, infer_category, infer_event, is_challenge_dir,
-        iter_year_dirs, read_description, safe_name, setup_logging,
-        should_skip_path, stable_task_id, verification_metadata, write_json,
+        iter_year_dirs, read_description, extract_plaintext_flag, runtime_metadata, safe_name, setup_logging,
+        should_skip_path, stable_task_id, verification_metadata, write_json, is_private_verifier_name,
     )
 except ImportError:
     from google_ctf_common import (
         canonical_category, copy_tree_contents, copy_verification_files,
         find_named, infer_category, infer_event, is_challenge_dir,
-        iter_year_dirs, read_description, safe_name, setup_logging,
-        should_skip_path, stable_task_id, verification_metadata, write_json,
+        iter_year_dirs, read_description, extract_plaintext_flag, runtime_metadata, safe_name, setup_logging,
+        should_skip_path, stable_task_id, verification_metadata, write_json, is_private_verifier_name,
     )
 
 
@@ -56,11 +57,34 @@ def convert_one(source: Path, root: Path, output: Path, year: str, category: str
             continue
         if child.is_dir() or child.is_symlink():
             copy_tree_contents(child, task / child.name, root.resolve())
-        elif child.is_file() and lowered not in {"flag", "flag.txt", "flag.json", "flag.sha256", ".flag.sha256", "flag.sha256.txt"}:
+        elif child.is_file() and lowered not in {
+            "flag", "flag.txt", "flag.json", "flag.sha256", ".flag.sha256", "flag.sha256.txt",
+            "readme", "readme.md", "readme.txt", "description.md", "description.txt",
+        } and "flagcheck" not in lowered:
             shutil.copy2(child, task / child.name)
     copied = copy_verification_files(source, task)
     verification = verification_metadata(copied)
     description, sanitized = read_description(source)
+    plaintext_flag = extract_plaintext_flag(source)
+    if plaintext_flag and verification["method"] == "unknown":
+        # The batch runner moves this value to a temporary host-side verifier
+        # before creating the agent repository; it is never exposed to the
+        # model.  Keeping it here preserves later verification for README-only
+        # Google challenges.
+        verification = dict(verification)
+        verification["status"] = "eligible"
+        verification["method"] = "plaintext"
+        verification["files"] = []
+    runtime = runtime_metadata(source)
+    has_compose = (task / "docker-compose.yml").is_file()
+    if has_compose and "box" not in runtime and "internal_port" not in runtime:
+        match = re.match(r"^(?:https?://)?([^/:]+):(\d+)(?:/.*)?$", runtime.get("target_host", ""))
+        if match:
+            runtime["box"], runtime["internal_port"] = match.group(1), int(match.group(2))
+    # Recreate a public, sanitized README before computing ``files`` instead
+    # of copying the original answer-bearing README into the task repository.
+    if description:
+        (task / "README.md").write_text(description + "\n", encoding="utf-8")
     metadata = {
         "task_id": task_id,
         "name": source.name,
@@ -74,13 +98,22 @@ def convert_one(source: Path, root: Path, output: Path, year: str, category: str
         "source_relative_path": relative,
         "dockerfile": "Dockerfile" if (task / "Dockerfile").is_file() else "",
         "dockerfile_path": "Dockerfile" if (task / "Dockerfile").is_file() else "",
-        "docker_compose": "docker-compose.yml" if (task / "docker-compose.yml").is_file() else "",
-        "files": sorted(path.relative_to(task).as_posix() for path in task.rglob("*") if path.is_file()),
+        "runtime": "compose" if has_compose else "static",
+        "files": sorted(
+            path.relative_to(task).as_posix()
+            for path in task.rglob("*")
+            if path.is_file() and not is_private_verifier_name(path.name)
+        ),
         "solution": "",
         "has_plaintext_solution": False,
         "verification": verification,
         "verification_method": verification["method"],
     }
+    if plaintext_flag and verification["method"] == "plaintext":
+        metadata["flag"] = plaintext_flag
+    if has_compose:
+        metadata["docker_compose"] = "docker-compose.yml"
+    metadata.update(runtime)
     if verification["method"] == "sha256":
         metadata["sha256_file"] = verification["files"][0]
         metadata["sha256_flag_file"] = verification["files"][0]

@@ -1,0 +1,1 @@
+{"model_name_or_path": "glm52_10__challenge__default_ctf__t-0.00__p-0.95__k-20__c-0.00__install-1", "instance_id": "pwn_flropyd", "model_patch": null, "challenge_name": "flropyd", "challenge_category": "pwn", "challenge_path": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/parallel16_pilot_20260824_152232/tmp/enigma-flropyd-2m66wxez/repo/challenge.json"}

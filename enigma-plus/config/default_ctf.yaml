@@ -72,7 +72,18 @@ instance_template: |-
 
   8. Do not use any interactive commands AT ALL! Interactive commands are only available through the commands supplied to you at the beginning - make use of them!
 
-  9. YOU CAN SOLVE THE CHALLENGES BY YOURSELF COMPLETELY - I TRUST IN YOU!
+  9. Never run unbounded exploit I/O such as `p.interactive()`, `python -i`,
+      `input()`, or a socket read without a timeout. Use bounded calls such as
+      `remote(host, port, timeout=15)`, `recvuntil(..., timeout=15)`, and run
+      exploit programs with `timeout --foreground -k 5 60s python3 exploit.py`.
+      If the exploit is incomplete, stop and analyze the output instead of
+      entering an interactive session.
+
+  10. A single fenced command block may contain a multiline heredoc or
+      multiline `python3 -c` command. Keep exactly one command block and do
+      not repeat the DISCUSSION/command labels.
+
+  11. YOU CAN SOLVE THE CHALLENGES BY YOURSELF COMPLETELY - I TRUST IN YOU!
 
   (Open file: {open_file})
   (Current directory: {working_dir})

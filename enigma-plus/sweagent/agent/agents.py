@@ -40,11 +40,34 @@ from sweagent.agent.context_compressor import ContextCompressionManager
 from sweagent.agent.trajectory_recorder import TrajectoryRecorder
 from sweagent.environment.swe_env import SWEEnv
 from sweagent.types import AgentInfo, History, HistoryItem, Trajectory, TrajectoryStep
-from sweagent.utils.config import convert_paths_to_abspath
+from sweagent.utils.config import convert_paths_to_abspath, keys_config
 from sweagent.utils.log import get_logger
 
 # Import the task timeout constant
 from sweagent.environment.swe_env import TASK_EXECUTION_TIMEOUT, MODEL_GENERATION_TIMEOUT
+
+# A malformed response should not trigger an unbounded series of expensive
+# gateway calls.  Two corrective requests are enough to recover ordinary
+# formatting mistakes; repeated identical output is stopped immediately.
+FORMAT_RETRY_LIMIT = max(0, int(keys_config.get("SWE_AGENT_FORMAT_RETRY_LIMIT", 2)))
+
+
+def native_tool_result_blocks(tool_use_id: str, observation: str, status_text: str) -> list[dict[str, Any]]:
+    """Build the user content after a native tool call without duplicating output.
+
+    The complete command output belongs in ``tool_result``.  The companion
+    text block is reserved for prompt state (working directory, open file,
+    interactive session, and the shell marker); callers must pass a
+    status-only rendering there.
+    """
+    return [
+        {
+            "type": "tool_result",
+            "tool_use_id": tool_use_id,
+            "content": observation,
+        },
+        {"type": "text", "text": status_text},
+    ]
 
 
 @dataclass(frozen=True)
@@ -457,9 +480,16 @@ class Agent:
         
         if query_thread.is_alive():
             # Thread is still running - model query timed out
-            self.logger.warning(f"Model generation timed out after {timeout} seconds")
+            transport_timeout = getattr(self.model, "request_timeout", None)
+            self.logger.error(
+                "Model generation timed out: limit=%.1fs history_entries=%d transport_timeout=%s model=%s; provider request is still running",
+                timeout, len(history), transport_timeout, type(self.model).__name__,
+            )
             # Note: We can't actually kill the thread, but we can stop waiting for it
-            raise TimeoutError(f"Model generation exceeded {timeout} second timeout")
+            raise TimeoutError(
+                f"Model generation exceeded {timeout} second timeout "
+                f"(history_entries={len(history)}, transport_timeout={transport_timeout})"
+            )
         
         # Check if an exception occurred
         if not exception_queue.empty():
@@ -626,7 +656,7 @@ class Agent:
         self.info["terminal_reason"] = terminal_reason
         self.info["error_type"] = error_type or ""
         self.info.setdefault("flag_submitted", False)
-        self.info.setdefault("flag_verified", "unknown")
+        self.info.setdefault("flag_verified", None)
         self.info["episode_end_time"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
         self.trajectory.append(TrajectoryStep({
             "step_id": len(self.trajectory) + 1, "thought": "", "action": exit_status,
@@ -648,11 +678,17 @@ class Agent:
 
     @staticmethod
     def _strict_action_is_valid(action: str) -> bool:
-        """Reject prose/Markdown before it can be passed to the shell."""
+        """Reject prose/Markdown while allowing one parsed multiline command.
+
+        ``ThoughtActionParser`` removes the outer fenced block before this
+        check.  A heredoc or a multiline ``python3 -c`` is therefore a valid
+        single action and must not be rejected merely because it contains
+        newlines.
+        """
         stripped = action.strip()
         if not stripped or "```" in stripped or re.search(r"(?im)^\s*(discussion|analysis|explanation)\s*:", stripped):
             return False
-        return "\n" not in stripped and "\r" not in stripped
+        return True
     def _get_first_match(self, action: str, pattern_type: str) -> re.Match | None:
         """Return the first match of a command pattern in the action string."""
         assert self.config is not None  # mypy
@@ -885,37 +921,44 @@ class Agent:
             # Show standard output template if there is observation content
             templates = [self.config.next_step_template]
 
-        # Populate selected template(s) with information (e.g., issue, arguments, state)
-        messages = []
-        for template in templates:
-            messages.append(
+        # Populate selected template(s) with information (e.g., issue,
+        # arguments, state).  Native tool_result messages carry the complete
+        # observation separately, so callers can render the same template
+        # with an empty observation for the status-only text block.
+        def render_messages(observation_text: str) -> str:
+            return "\n".join(
                 template.format(
                     **self.instance_args,
                     **self.system_args,
                     **state_vars,
-                    observation=(observation if observation is not None else ""),
+                    observation=observation_text,
                     **self._forwarded_vars,
-                ),
+                )
+                for template in templates
             )
 
-        message = "\n".join(messages)
+        message = render_messages(observation if observation is not None else "")
 
         self.logger.info(f"濠电姷顣藉Σ鍛村磻閹捐泛绶ゅù鐘差儏缁愭鎱ㄥ鍡楀姦?MODEL INPUT\n{message}")
         # For a native Anthropic tool call, return the real environment
-        # observation as a tool_result block. Keep the rendered prompt text as
-        # an additional text block so existing state/observation context is not
-        # lost. Other model providers continue using a plain string message.
+        # observation as a tool_result block. The accompanying text block is
+        # deliberately status-only: putting ``{observation}`` in both blocks
+        # duplicates large outputs (notably decompiler output) in the next
+        # model request and can push GLM into a long-thinking timeout.
         previous = self.history[-1] if self.history else {}
         previous_blocks = previous.get("content_blocks", []) if isinstance(previous, dict) else []
         native_block = next((b for b in previous_blocks
                              if isinstance(b, dict) and b.get("type") == "tool_use"), None)
-        if native_block and observation is not None and self.model.args.model_name.startswith("glm52"):
-            tool_result = {
-                "type": "tool_result",
-                "tool_use_id": native_block.get("id", ""),
-                "content": observation,
-            }
-            history_content: Any = [tool_result, {"type": "text", "text": message}]
+        if (
+            native_block
+            and observation is not None
+            and self.model.args.model_name.startswith("glm52")
+            and getattr(self.model, "native_tools", False)
+        ):
+            status_message = render_messages("")
+            history_content: Any = native_tool_result_blocks(
+                native_block.get("id", ""), observation, status_message,
+            )
             self._append_history({"role": "user", "content": history_content,
                                   "agent": self.name})
         else:
@@ -991,6 +1034,7 @@ class Agent:
             self.info["last_parse_error"] = "invalid_native_tool_call"
             return "Exit due to invalid native tool call", "exit_format", output
         format_fails = blocklist_fails = 0
+        previous_format_output: str | None = None
         while format_fails + blocklist_fails <= 10:
             try:
                 thought, action = self.config.parse_function(output, self.config._commands + self.config.subroutine_types, strict=True)
@@ -1002,6 +1046,13 @@ class Agent:
                 format_fails += 1
                 self.info["parser_retry_count"] = format_fails
                 self.info["last_parse_error"] = "parse_error"
+                if output == previous_format_output:
+                    self.info["parser_stuck"] = True
+                    self.info["last_parse_error"] = "repeated_parse_error"
+                    break
+                previous_format_output = output
+                if format_fails > FORMAT_RETRY_LIMIT:
+                    break
                 output = self.retry_after_format_fail(output)
                 continue
             if self.should_block_action(action):
@@ -1361,7 +1412,10 @@ class Agent:
         except BaseException as error:
             if hasattr(self, "info") and hasattr(self, "trajectory"):
                 self.info["traceback"] = traceback.format_exc()
-                self.finalize_episode("runner_exception", str(error), type(error).__name__)
+                if isinstance(error, TimeoutError):
+                    self.finalize_episode("model_timeout", str(error), "model_timeout")
+                else:
+                    self.finalize_episode("runner_exception", str(error), type(error).__name__)
             raise
         self.logger.info("Trajectory saved to %s", self.traj_path)
         if return_type == "info":

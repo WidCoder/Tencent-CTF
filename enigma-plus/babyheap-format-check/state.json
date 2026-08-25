@@ -1,0 +1,48 @@
+{
+  "created_at": "2026-08-25T07:59:18+00:00",
+  "docker_bridge_containers_at_end": 4,
+  "docker_bridge_containers_at_start": 3,
+  "docker_dynamic_networks_at_end": 2,
+  "docker_dynamic_networks_at_start": 2,
+  "tasks": {
+    ".": {
+      "attempt_resource_cleanup": {
+        "failed_containers": [],
+        "failed_networks": [],
+        "removed_containers": [],
+        "removed_networks": [],
+        "resource_token": "batch-95934bd39770"
+      },
+      "category": "pwn",
+      "challenge_json": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2019/babyheap/challenge.json",
+      "compose_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2019/babyheap/docker-compose.yml",
+      "container_cleanup": {
+        "attempted": true,
+        "failed_container_ids": [],
+        "removed_container_ids": []
+      },
+      "dockerfile_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2019/babyheap/Dockerfile",
+      "episode_complete": true,
+      "episode_status": "early_exit",
+      "event": "unknown",
+      "exit_status": "early_exit",
+      "flag_submitted": false,
+      "flag_verification_evidence": "not_attempted",
+      "flag_verified": null,
+      "outcome_status": "unsolved",
+      "relative_path": ".",
+      "repo_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2019/babyheap",
+      "run_status": "generated",
+      "solved": false,
+      "source_trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/babyheap-format-check/unnamed-3a52ce7809/enigma_output/attempt-20260825T155918099311-63f26c25/glm52_10__challenge__default_ctf__t-0.00__p-0.95__k-20__c-0.00__install-1/pwn_babyheap.traj",
+      "steps": 5,
+      "task": "babyheap",
+      "task_id": "unnamed-3a52ce7809",
+      "time": "2026-08-25T08:05:05+00:00",
+      "trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/babyheap-format-check/unnamed-3a52ce7809/trajectory.jsonl",
+      "trajectory_generated": true,
+      "updated_at": "2026-08-25T08:05:05+00:00"
+    }
+  },
+  "version": 2
+}

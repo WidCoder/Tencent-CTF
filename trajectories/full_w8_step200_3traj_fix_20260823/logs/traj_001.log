@@ -836,3 +836,7 @@ Discovered 831 task(s); running 808; skipping 23 completed task(s).
 [error] 0ctf2018__blackhole-a700794e47
 [error] 0ctf2018__babyheap2018-dd1280c09c
 [error] 0ctf2017__easiestprintf-4f87eb0f0f
+[error] 0ctf2018__freenote2018-14294ef976
+[error] 0ctf2017__babyheap-ef570c4099
+ERROR: docker_bridge_capacity_guard: bridge has 8 containers, at or above configured limit 8; stopped before 0ctf2018__heapstorm-0159a07ea6
+Completed batch: total_tasks=831 generated_trajectories=831 verified_solved=0 unsolved=831 generation_failed=808 environment_error=0

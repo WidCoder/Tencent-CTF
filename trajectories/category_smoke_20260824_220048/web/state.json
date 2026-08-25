@@ -1,0 +1,52 @@
+{
+  "created_at": "2026-08-24T14:35:09+00:00",
+  "docker_bridge_containers_at_end": 15,
+  "docker_bridge_containers_at_start": 15,
+  "docker_dynamic_networks_at_end": 1,
+  "docker_dynamic_networks_at_start": 1,
+  "tasks": {
+    "0xl4ugh/4lld4y": {
+      "attempt_resource_cleanup": {
+        "failed_containers": [],
+        "failed_networks": [],
+        "removed_containers": [],
+        "removed_networks": [],
+        "resource_token": "batch-9c8085c6d97a"
+      },
+      "category": "web",
+      "challenge_json": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0xl4ugh/4lld4y/challenge.json",
+      "compose_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0xl4ugh/4lld4y/docker-compose.yml",
+      "container_cleanup": {
+        "attempted": true,
+        "failed_container_ids": [],
+        "removed_container_ids": []
+      },
+      "dockerfile_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0xl4ugh/4lld4y/Dockerfile",
+      "episode_complete": false,
+      "episode_status": "ctf_server_unavailable",
+      "error": "CTF server is not accessible even after restart attempts. Task terminated.",
+      "error_code": "environment_error",
+      "error_log": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/category_smoke_20260824_220048/web/logs/0xl4ugh__4lld4y-b74781c06f.error.log",
+      "event": "0xl4ugh",
+      "exit_status": "ctf_server_unavailable",
+      "failure_category": "runner_error",
+      "flag_submitted": false,
+      "flag_verification_evidence": "not_attempted",
+      "flag_verified": null,
+      "outcome_status": "unsolved",
+      "relative_path": "0xl4ugh/4lld4y",
+      "repo_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0xl4ugh/4lld4y",
+      "run_status": "error",
+      "solved": false,
+      "source_trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/category_smoke_20260824_220048/web/0xl4ugh__4lld4y-b74781c06f/enigma_output/attempt-20260824T223509653525-7f720456/glm52_10__challenge__default_ctf__t-0.00__p-0.95__k-20__c-0.00__install-1/web_4lld4y.traj",
+      "steps": 1,
+      "task": "4lld4y",
+      "task_id": "0xl4ugh__4lld4y-b74781c06f",
+      "time": "2026-08-24T14:40:17+00:00",
+      "trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/category_smoke_20260824_220048/web/0xl4ugh__4lld4y-b74781c06f/trajectory.jsonl",
+      "trajectory_generated": true,
+      "updated_at": "2026-08-24T14:40:17+00:00"
+    }
+  },
+  "version": 2
+}

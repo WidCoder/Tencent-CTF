@@ -2394,3 +2394,64 @@ void FUN_00101051(long param_1)
 (Current directory: /__tmp__enigma-babyheap-b0qnlob0__repo)
 (Interactive session: n/a)
 bash-$
+2026-08-24 09:38:27,363 WARNING Messages API empty response: keys=['content', 'id', 'model', 'role', 'stop_reason', 'type', 'usage'] block_types=['thinking'] stop_reason=max_tokens usage={'input_tokens': 4900, 'output_tokens': 8192}
+2026-08-24 09:39:24,881 WARNING Model generation timed out after 300.0 seconds
+2026-08-24 09:39:24,902 WARNING Traceback (most recent call last):
+  File "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/run.py", line 590, in main
+    if self.run(index) is False:
+  File "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/run.py", line 480, in run
+    info, trajectory = self.agent.run(
+  File "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/run.py", line 469, in limited_run
+    result = original_run(*args, **kwargs)
+  File "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/agent/agents.py", line 1346, in run
+    observation, done = self._run_step(observation)
+  File "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/run.py", line 452, in step_limited_run_step
+    observation, done = original_run_step(observation)
+  File "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/agent/agents.py", line 1259, in _run_step
+    thought, action, output = self.forward(observation, self._env.get_available_actions(), state)
+  File "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/agent/agents.py", line 804, in forward
+    thought, action, output = self.forward_with_error_check(observation, state)
+  File "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/agent/agents.py", line 1027, in forward_with_error_check
+    return self.check_format_and_requery(self.forward_model(observation, state))
+  File "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/agent/agents.py", line 926, in forward_model
+    return self._query_model_with_timeout(self.local_history)
+  File "/data1/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/agent/agents.py", line 462, in _query_model_with_timeout
+    raise TimeoutError(f"Model generation exceeded {timeout} second timeout")
+TimeoutError: Model generation exceeded 300.0 second timeout
+
+2026-08-24 09:39:24,905 WARNING 闂傦拷?Failed on pwn_babyheap: Model generation exceeded 300.0 second timeout
+2026-08-24 09:39:24,906 INFO Beginning environment shutdown...
+2026-08-24 09:39:24,913 DEBUG 🐳 Stopping and removing container: batch-a619f2c0e6-sweagent-enigma-latest-5bb993089c
+2026-08-24 09:39:30,151 WARNING Failed to remove container batch-a619f2c0e6-sweagent-enigma-latest-5bb993089c: 409 Client Error for http+docker://localhost/v1.52/containers/1d8f712bfd3c35dffc52cc7e3d7d19c40889940fca642ca1dfd4977508061716?v=False&link=False&force=True: Conflict ("removal of container 1d8f712bfd3c35dffc52cc7e3d7d19c40889940fca642ca1dfd4977508061716 is already in progress")
+2026-08-24 09:39:30,152 DEBUG 🏗️ Cleaning up docker-compose project: repo_batch_a619f2c0e6_8d55298b73b8d3ef91e7
+2026-08-24 09:39:30,504 DEBUG ✅ Successfully cleaned up docker-compose project: repo_batch_a619f2c0e6_8d55298b73b8d3ef91e7
+2026-08-24 09:39:30,512 DEBUG 🌐 Removing network: ctfnet-batch-a619f2c0e6-8d55298b73b8d3ef91e7
+2026-08-24 09:39:30,631 DEBUG ✅ Successfully removed network: ctfnet-batch-a619f2c0e6-8d55298b73b8d3ef91e7
+2026-08-24 09:39:30,632 DEBUG 🗑️ Cleaned up temporary docker-compose file: /tmp/enigma-babyheap-b0qnlob0/repo/docker-compose-d4232736.yml
+2026-08-24 09:39:30,640 DEBUG 🏗️ Cleaning up docker-compose project: repo_batch_a619f2c0e6_8d55298b73b8d3ef91e7
+2026-08-24 09:39:30,695 WARNING Docker-compose down failed: open /tmp/enigma-babyheap-b0qnlob0/repo/docker-compose-d4232736.yml: no such file or directory
+
+2026-08-24 09:39:30,809 DEBUG Network ctfnet-batch-a619f2c0e6-8d55298b73b8d3ef91e7 already removed
+2026-08-24 09:39:30,896 INFO Found image sweagent/enigma:latest with tags: ['sweagent/enigma:latest'], created: 2024-08-29T19:52:43.576514108Z for linux amd64.
+2026-08-24 09:39:30,902 DEBUG Starting container with image: sweagent/enigma:latest, name: batch-a619f2c0e6-sweagent-enigma-latest-1e8bbb6928
+2026-08-24 09:39:30,903 DEBUG Resource limits: mem=2g, cpu_quota=150000, pids=1000
+2026-08-24 09:39:33,056 DEBUG Starting container with command: docker exec -i batch-a619f2c0e6-sweagent-enigma-latest-1e8bbb6928 /bin/bash -l
+2026-08-24 09:39:34,124 DEBUG Container batch-a619f2c0e6-sweagent-enigma-latest-1e8bbb6928 passed health check
+2026-08-24 09:39:34,131 DEBUG ✅ Successfully retrieved container object for batch-a619f2c0e6-sweagent-enigma-latest-1e8bbb6928
+2026-08-24 09:39:34,132 INFO 🌱 Environment Initialized
+2026-08-24 09:39:34,133 TRACE Input:
+source /root/.bashrc
+2026-08-24 09:39:34,193 TRACE Output:
+
+2026-08-24 09:39:34,193 TRACE Input:
+mkdir -p /root/commands
+2026-08-24 09:39:34,254 TRACE Output:
+
+2026-08-24 09:39:34,254 TRACE Input:
+touch /root/commands/__init__.py
+2026-08-24 09:39:34,314 TRACE Output:
+
+2026-08-24 09:39:34,314 TRACE Input:
+export PATH=$PATH:/root/commands
+2026-08-24 09:39:34,374 TRACE Output:
+

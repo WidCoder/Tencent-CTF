@@ -1,1 +1,0 @@
-{"id":"0ctf2019__babyaegis-1960f06dcf","sample_type":"main","messages":[{"role":"user","content":"babyaegis"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

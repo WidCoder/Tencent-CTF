@@ -1,0 +1,66 @@
+{
+  "attempt_resource_cleanup_failed": 0,
+  "attempt_resource_cleanup_removed": 0,
+  "batch_errors": [
+    {
+      "code": "docker_bridge_capacity_guard",
+      "message": "bridge has 8 containers, at or above configured limit 8",
+      "time": "2026-08-24T01:39:43+00:00"
+    }
+  ],
+  "categories": {
+    "crypto": {
+      "flag_submitted": 0,
+      "flag_verified": 0,
+      "trajectory_generated": 0
+    },
+    "forensics": {
+      "flag_submitted": 0,
+      "flag_verified": 0,
+      "trajectory_generated": 0
+    },
+    "misc": {
+      "flag_submitted": 0,
+      "flag_verified": 0,
+      "trajectory_generated": 0
+    },
+    "pwn": {
+      "flag_submitted": 0,
+      "flag_verified": 0,
+      "trajectory_generated": 0
+    },
+    "rev": {
+      "flag_submitted": 0,
+      "flag_verified": 0,
+      "trajectory_generated": 0
+    },
+    "web": {
+      "flag_submitted": 0,
+      "flag_verified": 0,
+      "trajectory_generated": 0
+    }
+  },
+  "container_cleanup_failed": 0,
+  "container_cleanup_removed": 0,
+  "docker_bridge_containers_at_end": 8,
+  "docker_bridge_containers_at_start": 8,
+  "environment_error": 0,
+  "flag_not_attempted": 831,
+  "flag_status_unknown": 0,
+  "flag_submitted": 0,
+  "flag_verified": 0,
+  "generated_at": "2026-08-24T01:39:43+00:00",
+  "generated_trajectories": 0,
+  "generation_failed": 0,
+  "pending": 831,
+  "run_status": {
+    "error": 0,
+    "failed": 0,
+    "generated": 0
+  },
+  "skipped": 0,
+  "total_tasks": 831,
+  "trajectory_generated": 0,
+  "unsolved": 0,
+  "verified_solved": 0
+}

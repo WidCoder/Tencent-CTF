@@ -1,0 +1,19 @@
+Existing output detected; using fresh run directory: /data1/nfs/wangyingqi/Cyber-Zero/trajectories/parallel16_pilot_20260824_152232/run-20260824T072246Z-641e7499
+Discovered 16 task(s); running 16; skipping 0 completed task(s).
+[error] 0ctf2018__babyheap2018-dd1280c09c
+[error] 0ctf2019__babyheap-914f2b64c7
+[error] 0ctf2018__subtraction-a0a3add0f4
+[error] 0ctf2019__babyrsa-ce712ac949
+[error] 0ctf2017__babyheap-ef570c4099
+[error] 0ctf2018__heapstorm-0159a07ea6
+[generated] 0ctf2017__diethard-42aa242adb
+[generated] 0ctf2019__babyaegis-1960f06dcf
+[generated] 0ctf2019__elements-12c9366ea1
+[error] 0ctf2017__easiestprintf-4f87eb0f0f
+[generated] 0ctf2018__zerofs-a2e28d4faf
+[generated] 0ctf2019__plang-5fefdae8a9
+[generated] 0ctf2019__flropyd-09e7147194
+[generated] 0ctf2019__babysandbox-7a2ec9c71b
+[generated] 0ctf2018__freenote2018-14294ef976
+[error] 0ctf2018__blackhole-a700794e47
+Completed batch: total_tasks=16 generated_trajectories=16 verified_solved=0 unsolved=16 generation_failed=8 environment_error=0

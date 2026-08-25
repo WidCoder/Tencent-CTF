@@ -28,7 +28,7 @@ The SWE-agent environment includes comprehensive timeout handling to prevent hun
    - SWE_AGENT_MAX_EXECUTION_RETRIES: Maximum retry attempts for failed commands (default: 2)
 
 4. **Task-Level Timeout**:
-   - SWE_AGENT_TASK_TIMEOUT: Maximum time for entire task execution (default: 900s / 15 minutes)
+   - SWE_AGENT_TASK_TIMEOUT: Maximum time for entire task execution (default: 1800s / 30 minutes)
 
 5. **Model Generation Timeout**:
    - SWE_AGENT_MODEL_TIMEOUT: Maximum time for individual model queries (default: 300s / 5 minutes)
@@ -138,6 +138,8 @@ PATH_TO_ENV_YML = "/root/environment.yml"
 
 # CTF server validation timeout
 CTF_SERVER_VALIDATION_TIMEOUT = float(keys_config.get("SWE_AGENT_CTF_SERVER_VALIDATION_TIMEOUT", 10))
+FLAG_VERIFIER_TIMEOUT = float(keys_config.get("SWE_AGENT_FLAG_VERIFIER_TIMEOUT", 30))
+FLAG_VERIFIER_IMAGE = str(keys_config.get("SWE_AGENT_FLAG_VERIFIER_IMAGE", "sweagent/enigma:latest"))
 
 # Additional timeout configurations for stuck execution handling
 DOCKER_EXEC_TIMEOUT = float(keys_config.get("SWE_AGENT_DOCKER_EXEC_TIMEOUT", 30))
@@ -145,12 +147,47 @@ CONTAINER_HEALTH_CHECK_TIMEOUT = float(keys_config.get("SWE_AGENT_CONTAINER_HEAL
 INTERRUPT_TIMEOUT = float(keys_config.get("SWE_AGENT_INTERRUPT_TIMEOUT", 20))
 MAX_EXECUTION_RETRIES = int(keys_config.get("SWE_AGENT_MAX_EXECUTION_RETRIES", 2))
 
-# Task-level timeout configuration (15 minutes = 900 seconds by default)
-TASK_EXECUTION_TIMEOUT = float(keys_config.get("SWE_AGENT_TASK_TIMEOUT", 900))
+# Task-level timeout configuration (30 minutes = 1800 seconds by default)
+TASK_EXECUTION_TIMEOUT = float(keys_config.get("SWE_AGENT_TASK_TIMEOUT", 1800))
 
 # Model generation timeout configuration (5 minutes = 300 seconds by default)
 # This prevents individual model queries from blocking task timeout
 MODEL_GENERATION_TIMEOUT = float(keys_config.get("SWE_AGENT_MODEL_TIMEOUT", 300))
+
+# Keep unbounded interactive exploit sessions disabled for batch generation.
+# A manually reviewed task can opt in explicitly, but the default must remain
+# safe because p.interactive() can prevent the shell completion marker from
+# being emitted indefinitely.
+ALLOW_UNSAFE_INTERACTIVE = str(
+    keys_config.get("SWE_AGENT_ALLOW_UNSAFE_INTERACTIVE", "0")
+).strip().lower() in {"1", "true", "yes", "on"}
+
+# Model-generated exploit programs occasionally contain an unbounded
+# ``p.interactive()`` (or a bare Python ``input()``).  Executing such an
+# action inside the persistent docker shell prevents the command-completion
+# marker from ever being emitted, which in turn makes the normal interrupt
+# path hang and forces a container restart.  Reject these constructs before
+# writing the action to the shell; the model receives a normal observation and
+# can retry with bounded I/O instead.
+UNSAFE_INTERACTIVE_ACTION_PATTERNS = (
+    # Do not require a line boundary: a model commonly embeds the call in a
+    # heredoc (``cat > exploit.py <<'PY'``), where the call is preceded by a
+    # newline that is not necessarily preserved by the parser.
+    re.compile(r"(?is)\bp(?:wnlib\.)?\s*\.\s*interactive\s*\("),
+    re.compile(r"(?im)(?:^|[;&|\n]\s*)(?:python|python3)\s+-i(?:\s|$)"),
+)
+
+
+def unsafe_interactive_action(action: str) -> str | None:
+    """Return a short reason when an action would start unbounded I/O."""
+    if ALLOW_UNSAFE_INTERACTIVE:
+        return None
+    if not isinstance(action, str):
+        return None
+    for pattern in UNSAFE_INTERACTIVE_ACTION_PATTERNS:
+        if pattern.search(action):
+            return "unbounded interactive operation"
+    return None
 
 
 @dataclass(frozen=True)
@@ -670,18 +707,19 @@ class SWEEnv(gym.Env):
         # Init docker network/compose based on challenge type
         # For CTF challenges, initialize docker-compose which handles network creation and service startup
         # For non-CTF challenges, just initialize the basic docker network
-        if self.challenge is None:
+        has_challenge_compose = bool(self.challenge and self.challenge.get("docker_compose"))
+        if self.challenge is None or not has_challenge_compose:
             self._init_docker_network()
         else:
             self._init_docker_compose()
 
         # For CTF challenges, give additional time for network services to fully register their aliases
-        if self.challenge is not None:
+        if has_challenge_compose:
             self.logger.debug("Allowing extra time for CTF services to register network aliases...")
             time.sleep(15)  # Additional wait after network connection
 
         # Validate CTF server connectivity before proceeding
-        if not self._validate_ctf_server_connectivity():
+        if has_challenge_compose and not self._validate_ctf_server_connectivity():
             # CRITICAL FIX: Don't give up immediately - try restarting Docker services first
             self.logger.warning("⚠️  Initial CTF server validation failed. Attempting to restart services...")
             
@@ -965,6 +1003,20 @@ class SWEEnv(gym.Env):
             info["exit_status"] = action
             return observation, 0, True, info
         if action in {"exit_context", "exit_cost", "exit_error", "exit_format", "exit_api"}:
+            # CTF episodes have no patch to autosubmit.  In particular,
+            # sending a bare ``submit`` after ``exit_format`` only produces
+            # ``Usage: submit <flag>`` and adds a spurious shell action to the
+            # trajectory.  Preserve autosubmit for non-CTF/SWE-bench tasks,
+            # but terminate CTF episodes directly with an unverified result.
+            if self.challenge is not None:
+                info["exit_status"] = action
+                info.update({
+                    "flag_submitted": False,
+                    "flag_verified": None,
+                    "flag_verification_evidence": "not_attempted",
+                })
+                observation = "Exited without a flag submission."
+                return observation, 0, True, info
             try:
                 observation = self.communicate(input="submit")
                 submission = self.get_submission(observation)
@@ -977,12 +1029,16 @@ class SWEEnv(gym.Env):
                 info.update(self._get_edited_files_with_context(
                     patch=submission if self.challenge is None else ""
                 ))  # type: ignore
-                observation = (
-                    "Exited (autosubmitted)"
-                    if self.challenge is None
-                    else ("Flag submission accepted." if verified else "Wrong flag!")
-                )
-                if not verified and self.challenge is not None:
+                if self.challenge is None:
+                    observation = "Exited (autosubmitted)"
+                elif verified is True:
+                    observation = "Flag submission accepted."
+                elif verified is False:
+                    observation = "Wrong flag!"
+                else:
+                    observation = "Flag submitted, but no verifier could determine whether it is correct."
+                    info["exit_status"] = "submitted_unverified"
+                if verified is False and self.challenge is not None:
                     info["exit_status"] = action
                     return observation, 0, False, info
                 return observation, 0, True, info
@@ -1053,7 +1109,7 @@ class SWEEnv(gym.Env):
         submission = self.get_submission(observation)
         if submission is not None:
             verified = self.validate_submission(submission)
-            if verified:
+            if verified is True:
                 if self.challenge is None:
                     self.logger.info(f"Found submission: {submission}")
                 info["exit_status"] = "submitted"
@@ -1069,11 +1125,16 @@ class SWEEnv(gym.Env):
                     else "Flag submission accepted."
                 )
                 return observation, 0, True, info
-            else:
+            elif verified is False:
                 self.logger.warning("Wrong flag submission found.")
                 info.update(self._last_flag_verification)
                 observation = "Wrong flag!"
                 return observation, 0, False, info
+            else:
+                info.update(self._last_flag_verification)
+                info["exit_status"] = "submitted_unverified"
+                observation = "Flag submitted, but no verifier could determine whether it is correct."
+                return observation, 0, True, info
         observation = self._handle_interactive_commands(observation)
 
         # CRITICAL: Detect and handle CTF server crashes during model interaction
@@ -1210,37 +1271,27 @@ class SWEEnv(gym.Env):
             
             network_name = self.dynamic_network_name if self.dynamic_network_name else "ctfnet"
             
-            # CRITICAL FIX: Wait for docker-compose to create the network FIRST
-            if self.args.enable_dynamic_ports and self.dynamic_network_name:
-                self.logger.debug(f"Waiting for dynamic network {network_name} to be ready before attachment...")
-                
-                max_wait = 60
-                network_exists = False
-                
-                for i in range(max_wait):
-                    try:
-                        client = docker.from_env()
-                        network = client.networks.get(network_name)
-                        # Ensure network is properly configured
-                        if network.attrs.get('Name') == network_name:
-                            network_exists = True
-                            self.logger.debug(f"Dynamic network {network_name} is ready for attachment")
-                            break
-                    except docker.errors.NotFound:
-                        if i % 10 == 0:  # Log every 10 seconds
-                            self.logger.debug(f"Waiting for dynamic network {network_name}... ({i+1}/{max_wait}s)")
-                        time.sleep(1)
-                    except Exception as e:
-                        self.logger.debug(f"Error checking network readiness: {e}")
-                        time.sleep(1)
-                
-                if not network_exists:
-                    raise RuntimeError(f"Dynamic network {network_name} not ready after {max_wait}s")
+            # Static/non-Compose tasks still need a network for the agent.
+            # Compose is not present to create the dynamic network, so create
+            # it here instead of waiting for a network that can never appear.
+            try:
+                client = docker.from_env()
+                try:
+                    client.networks.get(network_name)
+                    self.logger.debug(f"Network {network_name} already exists")
+                except docker.errors.NotFound:
+                    client.networks.create(
+                        name=network_name,
+                        driver="bridge",
+                        check_duplicate=True,
+                    )
+                    self.logger.info(f"Created agent network {network_name}")
+            except Exception as e:
+                raise RuntimeError(f"Failed to create agent network {network_name}: {e}") from e
             
             try:
                 # Ensure container is not already attached to avoid conflicts
                 try:
-                    import docker
                     client = docker.from_env()
                     if self.container_obj:
                         self.container_obj.reload()
@@ -1364,7 +1415,7 @@ class SWEEnv(gym.Env):
         """
         Handles docker compose initialization for challenge with docker compose file.
         """
-        if self.challenge is not None and self.challenge.get("docker_compose") is not None:
+        if self.challenge is not None and self.challenge.get("docker_compose"):
             # Check Docker subnet availability before creating new networks
             if self.args.enable_dynamic_ports:
                 from sweagent.environment.utils import check_docker_subnet_availability
@@ -1578,6 +1629,20 @@ class SWEEnv(gym.Env):
         if not server_name or not internal_port:
             self.logger.warning("CTF challenge missing server_name or port, skipping validation")
             return True
+
+        # Archives may keep a public hostname in ``box`` (for example
+        # babyheap.0ctf.io), while the local Compose service is reachable by
+        # its short alias (babyheap). Try the local alias first.
+        server_candidates = [str(server_name)]
+        if (
+            self.docker_compose
+            and isinstance(server_name, str)
+            and "." in server_name
+            and not re.fullmatch(r"\d+(?:\.\d+){3}", server_name)
+        ):
+            short_name = server_name.split(".", 1)[0].strip()
+            if short_name and short_name not in server_candidates:
+                server_candidates.insert(0, short_name)
         
         # CRITICAL: Check for parallel execution load to prevent server overload
         if self.args.enable_dynamic_ports:
@@ -1601,7 +1666,7 @@ class SWEEnv(gym.Env):
                 # If too many parallel containers, use lighter validation
                 if parallel_count >= 10:
                     self.logger.warning(f"High parallel load detected ({parallel_count} containers). Using lightweight validation.")
-                    return self._lightweight_server_validation(server_name, internal_port)
+                    return self._lightweight_server_validation(server_candidates[0], internal_port)
                     
             except Exception as e:
                 self.logger.debug(f"Could not check parallel load: {e}")
@@ -1625,24 +1690,18 @@ class SWEEnv(gym.Env):
         self.logger.debug("Running network diagnostics...")
         resolved_ip = None  # Track resolved IP address for direct connectivity tests
         try:
-            # Check if the server name can be resolved at all
-            # First install dnsutils if needed - with better error handling
-            dns_install_result = self._safe_communicate_with_retry(
-                "which nslookup > /dev/null 2>&1 || (apt-get update > /dev/null 2>&1 && apt-get install -y dnsutils > /dev/null 2>&1)", 
-                timeout_duration=30,
-                max_retries=2
-            )
-            if dns_install_result is None:
-                self.logger.warning("Failed to install DNS utilities, container may have crashed")
-                return False
-            
+            # Never run apt-get from validation. Network-restricted images can
+            # block package repositories, leaving the interactive shell stuck.
             dns_check = self._safe_communicate_with_retry(
-                f"nslookup {shlex.quote(server_name)} 2>&1 || echo 'DNS_RESOLUTION_FAILED'", 
-                timeout_duration=10
+                f"(getent hosts {shlex.quote(server_candidates[0])} || "
+                f"(command -v nslookup >/dev/null 2>&1 && nslookup {shlex.quote(server_candidates[0])})) "
+                f"2>&1 || echo 'DNS_RESOLUTION_FAILED'",
+                timeout_duration=10,
+                max_retries=1,
             )
             if dns_check is None:
-                self.logger.warning("DNS check failed, container may have crashed")
-                return False
+                self.logger.warning("DNS check did not complete; continuing with direct alias checks")
+                dns_check = "DNS_RESOLUTION_FAILED"
                 
             if "DNS_RESOLUTION_FAILED" in dns_check:
                 self.logger.warning(f"DNS resolution failed for {server_name}")
@@ -1659,6 +1718,10 @@ class SWEEnv(gym.Env):
                 
                 # Try to find the service IP address (usually comes after "Non-authoritative answer" or as the last Address)
                 addresses = re.findall(r'Address:\s*(\d+\.\d+\.\d+\.\d+)', dns_check)
+                # ``getent hosts`` returns ``<ip> <hostname>`` instead of an
+                # ``Address:`` line; accept that format too.
+                if not addresses:
+                    addresses = re.findall(r'^\s*(\d+\.\d+\.\d+\.\d+)\s+', dns_check, re.MULTILINE)
                 if addresses:
                     # Filter out DNS server addresses (127.x.x.x) and take the first service address
                     service_addresses = [addr for addr in addresses if not addr.startswith('127.')]
@@ -1700,9 +1763,14 @@ class SWEEnv(gym.Env):
             network_ranges = []
             if network_info:
                 # Parse network routes to find the network ranges
+                default_gateway_match = re.search(r'default via (\d+\.\d+\.\d+)\.\d+', network_info)
+                default_gateway_prefix = default_gateway_match.group(1) if default_gateway_match else None
                 route_matches = re.findall(r'(\d+\.\d+\.\d+)\.\d+/\d+', network_info)
                 for match in route_matches:
-                    if not match.startswith('127.'):  # Skip loopback
+                    if (
+                        not match.startswith('127.')
+                        and (default_gateway_prefix is None or match != default_gateway_prefix)
+                    ):
                         network_ranges.append(match)
                 
                 # Store detected network ranges for potential fallback use
@@ -1740,12 +1808,13 @@ class SWEEnv(gym.Env):
                 self.logger.error("❌ Container died during network diagnostics")
                 return False
         
-        # Install necessary tools if not available - with better error handling
+        # Do not install packages during validation; network-restricted images
+        # can leave apt processes blocking the interactive shell.
         try:
             netcat_install_result = self._safe_communicate_with_retry(
-                "which nc > /dev/null 2>&1 || (apt-get update > /dev/null 2>&1 && apt-get install -y netcat-openbsd > /dev/null 2>&1)",
-                timeout_duration=60,
-                max_retries=2
+                "command -v nc >/dev/null 2>&1 || true",
+                timeout_duration=5,
+                max_retries=1
             )
             if netcat_install_result is None:
                 self.logger.warning("Failed to install netcat, container may have crashed")
@@ -1761,9 +1830,9 @@ class SWEEnv(gym.Env):
         if self.challenge.get("category", "") in {"web", "misc"} and self.challenge.get("proto") != "nc":
             try:
                 curl_install_result = self._safe_communicate_with_retry(
-                    "which curl > /dev/null 2>&1 || (apt-get update > /dev/null 2>&1 && apt-get install -y curl > /dev/null 2>&1)",
-                    timeout_duration=60,
-                    max_retries=2
+                    "command -v curl >/dev/null 2>&1 || true",
+                    timeout_duration=5,
+                    max_retries=1
                 )
                 if curl_install_result is None:
                     self.logger.warning("Failed to install curl, container may have crashed")
@@ -1773,7 +1842,7 @@ class SWEEnv(gym.Env):
         
         # CRITICAL FIX: Use resolved IP address for connectivity tests when available
         # This prevents DNS resolution inconsistencies between different tools
-        target_host = resolved_ip if resolved_ip else server_name
+        target_host = resolved_ip if resolved_ip else server_candidates[0]
         if resolved_ip:
             self.logger.info(f"🎯 Using resolved IP address {resolved_ip} for connectivity tests")
         else:
@@ -1781,7 +1850,9 @@ class SWEEnv(gym.Env):
             
             # ADDITIONAL FALLBACK: If DNS resolution failed, try to scan all detected network ranges
             # to find potential service IPs for connectivity testing
-            if hasattr(self, '_detected_network_ranges') and self._detected_network_ranges:
+            # Deliberately disabled: pinging arbitrary hosts can select the
+            # default bridge gateway instead of the Compose service.
+            if False:
                 self.logger.info(f"🔍 DNS resolution failed, attempting service discovery on networks: {self._detected_network_ranges}")
                 potential_targets = []
                 
@@ -1814,6 +1885,7 @@ class SWEEnv(gym.Env):
             test_commands = [
                 f"curl -f --connect-timeout 5 --max-time 10 http://{shlex.quote(target_host)}:{shlex.quote(str(internal_port))}/ > /dev/null 2>&1 && echo 'SUCCESS' || echo 'FAILED'",
                 f"nc -z -v -w5 {shlex.quote(target_host)} {shlex.quote(str(internal_port))} 2>&1 && echo 'SUCCESS' || echo 'FAILED'",
+                f"timeout 5 bash -c 'echo > /dev/tcp/{shlex.quote(target_host)}/{shlex.quote(str(internal_port))}' 2>/dev/null && echo 'SUCCESS' || echo 'FAILED'",
             ]
         else:
             # For other challenges (pwn, crypto, etc.), try TCP connection
@@ -2299,6 +2371,19 @@ class SWEEnv(gym.Env):
             output: output from container
         """
         assert self.container is not None
+        unsafe_reason = unsafe_interactive_action(input)
+        if unsafe_reason:
+            message = (
+                "BLOCKED: unbounded interactive operation detected in the command "
+                f"({unsafe_reason}). Use bounded I/O instead: set socket/read "
+                "timeouts, avoid p.interactive()/python -i, and terminate the "
+                "program explicitly."
+            )
+            self.returncode = 2
+            self.communicate_output = message
+            self.logger.warning("Blocked unsafe interactive action before Docker execution")
+            self.logger.log(logging.TRACE, "Input blocked by safety guard:\n%s", input)
+            return message
         if no_output_timeout_duration is None:
             no_output_timeout_duration = timeout_duration
         if input.strip() != "exit":
@@ -2393,181 +2478,213 @@ class SWEEnv(gym.Env):
         return pids
 
     # ctf
-    def validate_submission(self, submission: str) -> bool:
-        """Validate a CTF submission without exposing plaintext flag material."""
+    def validate_submission(self, submission: str) -> bool | None:
+        """Validate a CTF submission.
+
+        The return value is deliberately tri-state: ``True`` means accepted,
+        ``False`` means a verifier explicitly rejected the flag, and ``None``
+        means that no usable verifier was available.  Keeping ``None`` distinct
+        prevents an unavailable verifier from being reported as ``Wrong flag!``.
+        """
         submission = submission.strip()
         self._last_flag_verification = {
             "flag_submitted": True,
-            "flag_verified": "unknown",
+            "flag_verified": None,
             "flag_verification_evidence": "no verifier evidence",
         }
 
-        def wrap(value: str) -> str:
-            return f"flag{{{value}}}"
-
         if self.challenge is None:
+            self._last_flag_verification.update({"flag_verified": True, "flag_verification_evidence": "patch submission"})
             return True
 
         challenge = self.challenge
-        match = re.search(r".+?{(.+?)}", submission)
-        extracted_flag = match.group(1) if match else submission
+        verification = challenge.get("verification") if isinstance(challenge.get("verification"), dict) else {}
 
-        # Compare plaintext only inside this process; never log or return it.
+        # A flag is either a complete wrapper (prefix{body}) or an unwrapped
+        # string.  Parsing is anchored so prose surrounding a flag is rejected.
+        match = re.fullmatch(r"(?P<prefix>[A-Za-z0-9_.-]+)\{(?P<body>[^\r\n]*)\}", submission)
+        extracted_flag = match.group("body") if match else submission
+
+        # Plaintext comparison is supported only for trusted, host-side test
+        # fixtures.  No wrapping or alternate prefix is guessed here.
         solution = challenge.get("flag")
+        if not isinstance(solution, str) or not solution:
+            plaintext_file = verification.get("plaintext_file")
+            if isinstance(plaintext_file, str) and plaintext_file:
+                try:
+                    solution = Path(plaintext_file).read_text(encoding="utf-8").rstrip("\r\n")
+                except (OSError, UnicodeError):
+                    solution = None
         if isinstance(solution, str) and solution and solution != "pwn.college{...}":
-            verified = any((
-                submission == solution,
-                wrap(submission) == solution,
-                submission == wrap(solution),
-            ))
+            verified = submission == solution.strip()
             self._last_flag_verification.update({
                 "flag_verified": verified,
                 "flag_verification_evidence": "plaintext flag comparison",
             })
             return verified
 
+        def verification_input() -> str | None:
+            value = verification.get(
+                "hash_input",
+                verification.get("input", challenge.get("verification_input", "full")),
+            )
+            if value not in {"full", "body"}:
+                self._last_flag_verification["flag_verification_evidence"] = "invalid verifier input mode"
+                return None
+            return submission if value == "full" else extracted_flag
+
+        candidate = verification_input()
+        if candidate is None:
+            return None
+
         expected_hashes: list[str] = []
         for key in ("sha256_flag", "flag_sha256", "flag_hash"):
             value = challenge.get(key)
             if isinstance(value, str):
                 expected_hashes.append(value)
-        verification = challenge.get("verification")
-        if isinstance(verification, dict):
-            for key in ("sha256", "sha256_flag", "flag_sha256", "hash"):
-                value = verification.get(key)
-                if isinstance(value, str):
-                    expected_hashes.append(value)
+        for key in ("sha256", "sha256_flag", "flag_sha256", "hash"):
+            value = verification.get(key)
+            if isinstance(value, str):
+                expected_hashes.append(value)
 
-        hash_files: list[Path] = []
-        verifier_files: list[Path] = []
         source_roots: list[Path] = []
-        for value in (
-            challenge.get("file_path"),
-            self.record.get("repo") if self.record else None,
-        ):
+        for value in (challenge.get("file_path"), self.record.get("repo") if self.record else None):
             if isinstance(value, str) and value:
                 root = Path(value.removeprefix("local://"))
                 source_roots.append(root if root.is_dir() else root.parent)
 
-        for key in ("sha256_file", "sha256_flag_file", "flag_sha256_file", "hash_file"):
-            value = challenge.get(key)
-            if isinstance(value, str) and value:
-                candidate = Path(value)
-                hash_files.extend(
-                    candidate if candidate.is_absolute() else (root / candidate for root in source_roots)
-                )
+        def resolve_paths(values: Any) -> list[Path]:
+            resolved: list[Path] = []
+            if not isinstance(values, list):
+                values = [values]
+            for value in values:
+                if not isinstance(value, str) or not value:
+                    continue
+                path = Path(value)
+                if path.is_absolute():
+                    resolved.append(path)
+                else:
+                    resolved.extend(root / path for root in source_roots)
+            return resolved
 
-        verification = challenge.get("verification")
-        if isinstance(verification, dict):
-            verification_files = verification.get("files", [])
-            if isinstance(verification_files, list):
-                for value in verification_files:
-                    if not isinstance(value, str) or not value:
-                        continue
-                    candidate = Path(value)
-                    candidates = [candidate] if candidate.is_absolute() else [root / candidate for root in source_roots]
-                    if candidate.name.lower() in {"flag.sha256", ".flag.sha256", "flag.sha256.txt"}:
-                        hash_files.extend(candidates)
-                    else:
-                        verifier_files.extend(candidates)
-
-        for root in source_roots:
-            for name in (".flag.sha256", "flag.sha256", "flag.sha256.txt"):
-                hash_files.append(root / name)
-
+        hash_files = resolve_paths(
+            [challenge.get(key) for key in ("sha256_file", "sha256_flag_file", "flag_sha256_file", "hash_file")]
+        )
+        host_verifier_files = resolve_paths(verification.get("host_files"))
+        hash_files.extend(
+            path
+            for path in host_verifier_files
+            if path.name.lower() in {"flag.sha256", ".flag.sha256", "flag.sha256.txt"}
+        )
+        verifier_files = [path for path in host_verifier_files if path.name.lower() not in {"flag.sha256", ".flag.sha256", "flag.sha256.txt", "flag.value"}]
+        declared_files = resolve_paths(verification.get("files"))
+        for path in declared_files:
+            if path.name.lower() in {"flag.sha256", ".flag.sha256", "flag.sha256.txt"}:
+                hash_files.append(path)
+            elif path not in verifier_files:
+                verifier_files.append(path)
+        hash_requested = bool(expected_hashes or hash_files)
         for path in hash_files:
             try:
                 if path.is_file():
-                    expected_hashes.extend(
-                        re.findall(
-                            r"\b[0-9a-fA-F]{64}\b",
-                            path.read_text(encoding="utf-8"),
-                        )
-                    )
+                    expected_hashes.extend(re.findall(r"\b[0-9a-fA-F]{64}\b", path.read_text(encoding="utf-8")))
             except (OSError, UnicodeError):
                 continue
 
         normalized_hashes = {
-            value.strip().split()[0].lower()
+            match.group(0).lower()
             for value in expected_hashes
-            if re.fullmatch(r"\s*[0-9a-fA-F]{64}(?:\s+.*)?", value)
+            if isinstance(value, str)
+            for match in [re.search(r"(?<![0-9a-fA-F])[0-9a-fA-F]{64}(?![0-9a-fA-F])", value)]
+            if match
         }
-        if normalized_hashes:
-            verified = any(
-                hashlib.sha256(candidate.encode()).hexdigest().lower()
-                in normalized_hashes
-                for candidate in (submission, extracted_flag)
-            )
+        if hash_requested:
+            if not normalized_hashes:
+                self._last_flag_verification["flag_verification_evidence"] = "hash verifier unavailable"
+                return None
+            verified = hashlib.sha256(candidate.encode("utf-8")).hexdigest().lower() in normalized_hashes
             self._last_flag_verification.update({
                 "flag_verified": verified,
-                "flag_verification_evidence": "sha256 verifier",
+                "flag_verification_evidence": "sha256 verifier (full flag)" if verification.get("hash_input", "full") == "full" else "sha256 verifier (flag body)",
             })
             return verified
 
-        verifier = (
-            challenge.get("flagCheck")
-            or challenge.get("flag_check")
-            or challenge.get("verifier")
-        )
-        if verifier is None and verifier_files:
-            verifier = str(verifier_files[0])
-
+        verifier = challenge.get("flagCheck") or challenge.get("flag_check") or challenge.get("verifier")
         if isinstance(verifier, dict):
             verifier = verifier.get("path") or verifier.get("command")
-        if verifier:
-            command = verifier if isinstance(verifier, list) else shlex.split(str(verifier))
-            if not command:
-                self._last_flag_verification.update({
-                    "flag_verified": "unknown",
-                    "flag_verification_evidence": "empty verifier command",
-                })
-                return False
+        if verifier is None and verifier_files:
+            verifier = str(verifier_files[0])
+        if not verifier:
+            self._last_flag_verification["flag_verification_evidence"] = "no verifier evidence"
+            return None
 
-            challenge_root = source_roots[0] if source_roots else None
-            # Resolve importer-produced relative checker paths against the staged task.
-            for index, value in enumerate(command):
-                candidate = Path(str(value))
-                if challenge_root and not candidate.is_absolute() and (challenge_root / candidate).is_file():
-                    command[index] = str((challenge_root / candidate).resolve())
-                    break
-            try:
-                for candidate in (submission, extracted_flag):
-                    result = subprocess.run(
-                        command,
-                        input=candidate + "\n",
-                        text=True,
-                        capture_output=True,
-                        timeout=10,
-                        cwd=str(challenge_root) if challenge_root else None,
-                    )
-                    output = (result.stdout + "\n" + result.stderr).lower()
-                    if result.returncode == 0 and not any(
-                        word in output
-                        for word in ("incorrect", "wrong", "invalid", "fail")
-                    ):
-                        self._last_flag_verification.update({
-                            "flag_verified": True,
-                            "flag_verification_evidence": "script verifier accepted submission",
-                        })
-                        return True
-                self._last_flag_verification.update({
-                    "flag_verified": False,
-                    "flag_verification_evidence": "script verifier rejected submission",
-                })
-                return False
-            except (OSError, subprocess.SubprocessError, TypeError, ValueError):
-                self._last_flag_verification.update({
-                    "flag_verified": "unknown",
-                    "flag_verification_evidence": "script verifier unavailable",
-                })
-                return False
+        try:
+            command = list(verifier) if isinstance(verifier, list) else shlex.split(str(verifier))
+        except (TypeError, ValueError):
+            command = []
+        if not command:
+            self._last_flag_verification["flag_verification_evidence"] = "empty verifier command"
+            return None
 
-        # No plaintext flag and no verifier: do not accept an unverifiable submission.
+        host_files = [path.resolve() for path in verifier_files if path.is_file()]
+        if not host_files:
+            self._last_flag_verification["flag_verification_evidence"] = "script verifier unavailable"
+            return None
+        try:
+            host_root = Path(str(verification.get("host_root", host_files[0].parent))).resolve()
+            mapped: list[str] = []
+            for value in command:
+                path = Path(str(value))
+                host_path = path if path.is_absolute() else (host_root / path)
+                if host_path.is_file():
+                    try:
+                        relative = host_path.resolve().relative_to(host_root)
+                        mapped.append(f"/verifier/{relative.as_posix()}")
+                        continue
+                    except ValueError:
+                        pass
+                mapped.append(str(value))
+            if mapped and mapped[0].endswith(".py"):
+                mapped = ["python", *mapped]
+            elif mapped and mapped[0].endswith((".sh", ".bash")):
+                mapped = ["bash", *mapped]
+            docker_command = [
+                "docker", "run", "--rm", "--network", "none", "--read-only",
+                "--cap-drop=ALL", "--security-opt", "no-new-privileges",
+                "--pids-limit", "64", "--memory", "256m",
+                "-v", f"{host_root}:/verifier:ro",
+            ]
+            public_root = source_roots[0].resolve() if source_roots and source_roots[0].is_dir() else None
+            if public_root is not None and public_root != host_root:
+                docker_command.extend(["-v", f"{public_root}:/challenge:ro"])
+            docker_command.extend([
+                "--workdir", "/verifier",
+                "--entrypoint", "/bin/bash", FLAG_VERIFIER_IMAGE,
+                "-lc", f"exec {shlex.join(mapped)}",
+            ])
+            result = subprocess.run(
+                docker_command,
+                input=candidate + "\n",
+                text=True,
+                capture_output=True,
+                timeout=FLAG_VERIFIER_TIMEOUT,
+                check=False,
+            )
+        except (OSError, subprocess.SubprocessError, TypeError, ValueError):
+            self._last_flag_verification["flag_verification_evidence"] = "script verifier unavailable"
+            return None
+
+        # The checker protocol is exit-code-only.  Its stdout/stderr is never
+        # interpreted as a verdict because diagnostic prose is ambiguous.
+        if result.returncode in {125, 126, 127}:
+            self._last_flag_verification["flag_verification_evidence"] = "isolated checker unavailable"
+            return None
+        verified = result.returncode == 0
         self._last_flag_verification.update({
-            "flag_verified": "unknown",
-            "flag_verification_evidence": "no verifier evidence",
+            "flag_verified": verified,
+            "flag_verification_evidence": "isolated checker accepted submission" if verified else "isolated checker rejected submission",
         })
-        return False
+        return verified
 
     def get_submission(self, output: str) -> str | None:
         """
@@ -2579,8 +2696,9 @@ class SWEEnv(gym.Env):
         Returns:
             submission: diff patch submission
         """
-        pattern = r"\<\<SUBMISSION\|\|(.*)\|\|SUBMISSION\>\>"
-        match = re.search(pattern, output, re.DOTALL)
+        pattern = r"\<\<SUBMISSION\|\|(.*?)\|\|SUBMISSION\>\>"
+        matches = list(re.finditer(pattern, output, re.DOTALL))
+        match = matches[-1] if matches else None
         if match is None:
             return None
         return match.group(1)
@@ -2968,15 +3086,11 @@ class SWEEnv(gym.Env):
 
     def _setup_ctf_flag(self) -> None:
         """Set up flag file for CTF challenges"""
+        # Plaintext flags must never be copied into an agent container.  Older
+        # challenge records may still contain a ``flag`` field; verification is
+        # performed by the host-side verifier instead of exposing /flag.
         if self.challenge is not None and "flag" in self.challenge:
-            flag_value = self.challenge["flag"]
-            self.logger.info("Setting up CTF flag file")
-            # Write flag to /flag with proper permissions and create symlink
-            flag_setup_cmd = f"echo {shlex.quote(flag_value)} > /flag && chmod 400 /flag && ln -sf /flag /flag.txt"
-            self.communicate_with_handling(
-                flag_setup_cmd,
-                error_msg="Failed to set up CTF flag file",
-            )
+            self.logger.warning("Ignoring plaintext challenge flag; host-side verification is required")
 
     def _detect_and_handle_server_crash(self, action: str, observation: str) -> tuple[str, bool]:
         """
@@ -3025,11 +3139,24 @@ class SWEEnv(gym.Env):
                 
                 try:
                     # Use docker-compose restart to restart the services
+                    project_name = (
+                        getattr(self, "docker_compose_project_name", None)
+                        or getattr(self, "actual_docker_compose_project_name", None)
+                    )
                     restart_cmd = [
-                        "docker", "compose", "-f", str(self.docker_compose), "restart"
+                        "docker", "compose", "-f", str(self.docker_compose),
                     ]
+                    if project_name:
+                        restart_cmd.extend(["-p", project_name])
+                    restart_cmd.append("restart")
                     self.logger.debug("Restarting CTF services: %s", shlex.join(restart_cmd))
-                    result = subprocess.run(restart_cmd, capture_output=True, text=True, timeout=60)
+                    result = subprocess.run(
+                        restart_cmd,
+                        capture_output=True,
+                        text=True,
+                        timeout=60,
+                        cwd=str(self.docker_compose.parent),
+                    )
                     
                     if result.returncode == 0:
                         self.logger.info("✅ CTF server restart completed successfully")
@@ -3041,6 +3168,14 @@ class SWEEnv(gym.Env):
                         # Quick validation to see if server is back
                         server_name = self.challenge.get("box")
                         internal_port = self.challenge.get("internal_port")
+
+                        if (
+                            self.docker_compose
+                            and isinstance(server_name, str)
+                            and "." in server_name
+                            and not re.fullmatch(r"\d+(?:\.\d+){3}", server_name)
+                        ):
+                            server_name = server_name.split(".", 1)[0].strip()
                         
                         if server_name and internal_port:
                             try:

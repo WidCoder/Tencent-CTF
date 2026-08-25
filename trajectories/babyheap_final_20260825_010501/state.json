@@ -1,0 +1,52 @@
+{
+  "created_at": "2026-08-24T17:05:01+00:00",
+  "docker_bridge_containers_at_end": 16,
+  "docker_bridge_containers_at_start": 15,
+  "docker_dynamic_networks_at_end": 2,
+  "docker_dynamic_networks_at_start": 2,
+  "tasks": {
+    ".": {
+      "attempt_resource_cleanup": {
+        "failed_containers": [],
+        "failed_networks": [],
+        "removed_containers": [],
+        "removed_networks": [],
+        "resource_token": "batch-d98a6f74abaf"
+      },
+      "category": "pwn",
+      "challenge_json": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2017/babyheap/challenge.json",
+      "compose_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2017/babyheap/docker-compose.yml",
+      "container_cleanup": {
+        "attempted": true,
+        "failed_container_ids": [],
+        "removed_container_ids": []
+      },
+      "dockerfile_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2017/babyheap/Dockerfile",
+      "episode_complete": true,
+      "episode_status": "early_exit",
+      "error": "Docker Compose startup failed with return code 1: time=\"2026-08-25T01:05:09+08:00\" level=warning msg=\"/tmp/enigma-babyheap-rrpa7y71/repo/docker-compose-bac971b5.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion\"\ntime=\"2026-08-25T01:05:09+08:00\" level=warning msg=\"Docker Compose is configured to build using Bake, but buildx isn't installed\"\n#0 building with \"default\" instance using docker driver\n\n#1 [babyheap-batch-d98a6f74ab-c4396760bf386bf68cf5 internal] load build definition from Dockerfile\n#1 transferring dockerfile: 537B done\n#1 DONE 0.0s\n\n#2 [babyheap-batch-d98a6f74ab-c4396760bf386bf68cf5 internal] load metadata for docker.io/library/ubuntu:20.04\n#2 ERROR: failed to do request: Head \"https://registry-1.docker.io/v2/library/ubuntu/manifests/20.04\": net/http: TLS handshake timeout\n------\n > [babyheap-batch-d98a6f74ab-c4396760bf386bf68cf5 internal] load metadata for docker.io/library/ubuntu:20.04:\n------\nfailed to solve: ubuntu:20.04: failed to resolve source metadata for docker.io/library/ubuntu:20.04: failed to do request: Head \"https://registry-1.docker.io/v2/library/ubuntu/manifests/20.04\": net/http: TLS handshake timeout\n",
+      "error_code": "RuntimeError",
+      "error_log": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/babyheap_final_20260825_010501/logs/unnamed-3a52ce7809.error.log",
+      "event": "unknown",
+      "exit_status": "runner_exception",
+      "failure_category": "runner_error",
+      "flag_submitted": false,
+      "flag_verification_evidence": "not_attempted",
+      "flag_verified": null,
+      "outcome_status": "unsolved",
+      "relative_path": ".",
+      "repo_path": "/data1/nfs/wangyingqi/CTF-Dojo/ctf-archive/0ctf2017/babyheap",
+      "run_status": "error",
+      "solved": false,
+      "source_trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/babyheap_final_20260825_010501/unnamed-3a52ce7809/enigma_output/attempt-20260825T010501623826-84657cab/glm52_10__challenge__default_ctf__t-0.00__p-0.95__k-20__c-0.00__install-1/pwn_babyheap.traj",
+      "steps": 1,
+      "task": "babyheap",
+      "task_id": "unnamed-3a52ce7809",
+      "time": "2026-08-24T17:05:30+00:00",
+      "trajectory": "/data1/nfs/wangyingqi/Cyber-Zero/trajectories/babyheap_final_20260825_010501/unnamed-3a52ce7809/trajectory.jsonl",
+      "trajectory_generated": true,
+      "updated_at": "2026-08-24T17:05:30+00:00"
+    }
+  },
+  "version": 2
+}
