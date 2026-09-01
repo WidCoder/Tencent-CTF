@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  binary400-batch-4a74329f9896-de8d7ff315b20eb24c0d:
+    build: .
+    container_name: binary400-batch-4a74329f9896-de8d7ff315b20eb24c0d
+    ports:
+    - 12760:1337
+    networks:
+      ctfnet-batch-4a74329f9896-de8d7ff315b20eb24c0d:
+        aliases:
+        - binary400.codegate2011.io
+        - binary400
+    restart: unless-stopped
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-4a74329f9896-de8d7ff315b20eb24c0d:
+    name: ctfnet-batch-4a74329f9896-de8d7ff315b20eb24c0d
+    external: true

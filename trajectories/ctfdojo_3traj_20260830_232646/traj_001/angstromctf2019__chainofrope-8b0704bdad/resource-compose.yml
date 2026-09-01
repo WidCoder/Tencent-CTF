@@ -1,0 +1,19 @@
+version: '3'
+services:
+  chainofrope-batch-c3dc9569d147-305f7150a0bce06ec04f:
+    build: .
+    ports:
+    - 14729:1337
+    networks:
+      ctfnet-batch-c3dc9569d147-305f7150a0bce06ec04f:
+        aliases:
+        - chainofrope.angstromctf.io
+        - chainofrope
+    container_name: chainofrope-batch-c3dc9569d147-305f7150a0bce06ec04f
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-c3dc9569d147-305f7150a0bce06ec04f:
+    name: ctfnet-batch-c3dc9569d147-305f7150a0bce06ec04f
+    external: true

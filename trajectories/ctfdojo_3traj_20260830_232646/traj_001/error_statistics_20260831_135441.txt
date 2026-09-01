@@ -1,0 +1,109 @@
+===== exit_status =====
+     87 task_timeout
+     44 early_exit
+      9 runner_exception
+      4 model_timeout
+      3 submitted
+      2 step_200_hit
+      2 exit_api
+
+===== error_type =====
+     72 outer_timeout
+      8 KeyError
+      4 model_timeout
+      1 task_timeout
+      1 runner_error
+
+===== episode_status =====
+     91 timeout
+     55 early_exit
+      3 completed
+      2 step_limit
+
+===== failed tasks =====
+0ctf2017__babyheap-ef570c4099                       task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/0ctf2017__babyheap-ef570c4099.error.log
+0ctf2017__easiestprintf-4f87eb0f0f                  task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/0ctf2017__easiestprintf-4f87eb0f0f.error.log
+0ctf2018__blackhole-a700794e47                      model_timeout     model_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/0ctf2018__blackhole-a700794e47.error.log
+0ctf2018__freenote2018-14294ef976                   task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/0ctf2018__freenote2018-14294ef976.error.log
+0ctf2018__heapstorm-0159a07ea6                      runner_exception  KeyError       -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/0ctf2018__heapstorm-0159a07ea6.error.log
+0ctf2018__zerofs-a2e28d4faf                         task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/0ctf2018__zerofs-a2e28d4faf.error.log
+0ctf2019__babysandbox-7a2ec9c71b                    task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/0ctf2019__babysandbox-7a2ec9c71b.error.log
+0ctf2019__elements-12c9366ea1                       task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/0ctf2019__elements-12c9366ea1.error.log
+0ctf2019__flropyd-09e7147194                        task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/0ctf2019__flropyd-09e7147194.error.log
+0ctf2019__scanner-0dbd381bf4                        task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/0ctf2019__scanner-0dbd381bf4.error.log
+0ctf2021quals__future-c15da51ded                    model_timeout     model_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/0ctf2021quals__future-c15da51ded.error.log
+0ctf2021quals__listbook-d31dfe2bb9                  task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/0ctf2021quals__listbook-d31dfe2bb9.error.log
+0ctf2021quals__vp-73b9611bad                        runner_exception  KeyError       -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/0ctf2021quals__vp-73b9611bad.error.log
+0ctf2021quals__zer0lfsr-94e599756e                  runner_exception  KeyError       -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/0ctf2021quals__zer0lfsr-94e599756e.error.log
+0x41414141ctf2021__external-746d3f61e6              model_timeout     model_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/0x41414141ctf2021__external-746d3f61e6.error.log
+0x41414141ctf2021__factorize-4ce5db5bbd             model_timeout     model_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/0x41414141ctf2021__factorize-4ce5db5bbd.error.log
+0x41414141ctf2021__hash-b748990301                  task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/0x41414141ctf2021__hash-b748990301.error.log
+0x41414141ctf2021__moving-signals-1dbead341e        runner_exception  runner_error   -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/0x41414141ctf2021__moving-signals-1dbead341e.error.log
+0x41414141ctf2021__pyjail-3fc3bf1e4c                task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/0x41414141ctf2021__pyjail-3fc3bf1e4c.error.log
+0x41414141ctf2021__shjail-d0e3540001                task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/0x41414141ctf2021__shjail-d0e3540001.error.log
+0x41414141ctf2021__soul-8e07deb4ca                  task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/0x41414141ctf2021__soul-8e07deb4ca.error.log
+0x41414141ctf2021__staple-aes-58ef1c4117            task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/0x41414141ctf2021__staple-aes-58ef1c4117.error.log
+0x41414141ctf2021__wallet-905c1e0477                task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/0x41414141ctf2021__wallet-905c1e0477.error.log
+0xl4ugh__spiralfloats-480319c59e                    task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/0xl4ugh__spiralfloats-480319c59e.error.log
+29c3ctf2012__findthekey-5fb9571cbc                  task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/29c3ctf2012__findthekey-5fb9571cbc.error.log
+29c3ctf2012__memcached-f9aad9fca1                   task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/29c3ctf2012__memcached-f9aad9fca1.error.log
+29c3ctf2012__minesweeper-dcf924888f                 runner_exception  KeyError       -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/29c3ctf2012__minesweeper-dcf924888f.error.log
+29c3ctf2012__proxy-3bc02960ae                       task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/29c3ctf2012__proxy-3bc02960ae.error.log
+29c3ctf2012__ru1337-2cd33da820                      task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/29c3ctf2012__ru1337-2cd33da820.error.log
+29c3ctf2012__updateserver-e48874c439                task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/29c3ctf2012__updateserver-e48874c439.error.log
+accessdeniedctf2022__babyc-c2078a26dd               task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/accessdeniedctf2022__babyc-c2078a26dd.error.log
+accessdeniedctf2022__binary-3e6741a647              task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/accessdeniedctf2022__binary-3e6741a647.error.log
+accessdeniedctf2022__enormous-6a940f987e            task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/accessdeniedctf2022__enormous-6a940f987e.error.log
+accessdeniedctf2022__ret2system-7ee678ed27          task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/accessdeniedctf2022__ret2system-7ee678ed27.error.log
+accessdeniedctf2022__rsa1-c8bd10fa8c                task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/accessdeniedctf2022__rsa1-c8bd10fa8c.error.log
+amateursctf__division-fbe1862c45                    runner_exception  KeyError       -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/amateursctf__division-fbe1862c45.error.log
+amateursctf__normal-d7682fea15                      task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/amateursctf__normal-d7682fea15.error.log
+amateursctf__piano-ecf34098a0                       task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/amateursctf__piano-ecf34098a0.error.log
+amateursctf__uncrackable-c1d77ff9b8                 task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/amateursctf__uncrackable-c1d77ff9b8.error.log
+angstromctf2016__amoebananas-096ba93b9b             task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2016__amoebananas-096ba93b9b.error.log
+angstromctf2016__artifact-8f4115f2bd                task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2016__artifact-8f4115f2bd.error.log
+angstromctf2016__asmtracing-66ce8a074b              task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2016__asmtracing-66ce8a074b.error.log
+angstromctf2016__casino-005b859d7b                  task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2016__casino-005b859d7b.error.log
+angstromctf2016__client-fda76b713e                  task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2016__client-fda76b713e.error.log
+angstromctf2016__drag-6b2e194935                    task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2016__drag-6b2e194935.error.log
+angstromctf2016__endian-d1fb7a611d                  task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2016__endian-d1fb7a611d.error.log
+angstromctf2016__hamlet-93c4f5aa7c                  task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2016__hamlet-93c4f5aa7c.error.log
+angstromctf2016__headsup-f6dcaaefbd                 task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2016__headsup-f6dcaaefbd.error.log
+angstromctf2016__helpcenter-40af403593              task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2016__helpcenter-40af403593.error.log
+angstromctf2016__javabest-1cead26f71                task_timeout      task_timeout   -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2016__javabest-1cead26f71.error.log
+angstromctf2016__metasploit-b5a599dd2b              task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2016__metasploit-b5a599dd2b.error.log
+angstromctf2016__music-b0dab2ba47                   task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2016__music-b0dab2ba47.error.log
+angstromctf2016__oops-70e3217050                    task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2016__oops-70e3217050.error.log
+angstromctf2016__yankovic-b42c352709                task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2016__yankovic-b42c352709.error.log
+angstromctf2017__royalcasino-03333d0435             runner_exception  KeyError       -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2017__royalcasino-03333d0435.error.log
+angstromctf2017__substitutioncipher-ca399c5f69      task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2017__substitutioncipher-ca399c5f69.error.log
+angstromctf2018__backtobasics-26f0cc5580            task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2018__backtobasics-26f0cc5580.error.log
+angstromctf2018__introtorsa-add58986dd              task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2018__introtorsa-add58986dd.error.log
+angstromctf2018__rev1-45eef2a6ef                    task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2018__rev1-45eef2a6ef.error.log
+angstromctf2018__rev2-9845185ea0                    task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2018__rev2-9845185ea0.error.log
+angstromctf2018__rev3-1e44c64790                    task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2018__rev3-1e44c64790.error.log
+angstromctf2018__warmup-bc9612f0eb                  task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2018__warmup-bc9612f0eb.error.log
+angstromctf2018__xor-609f529d0c                     task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2018__xor-609f529d0c.error.log
+angstromctf2019__blankpaper-bb8f8e957e              task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2019__blankpaper-bb8f8e957e.error.log
+angstromctf2019__chainofrope-8b0704bdad             task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2019__chainofrope-8b0704bdad.error.log
+angstromctf2019__highqualitychecks-ab61aea249       task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2019__highqualitychecks-ab61aea249.error.log
+angstromctf2019__icthyo-7b55ea7694                  task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2019__icthyo-7b55ea7694.error.log
+angstromctf2019__like-0297a2a569                    task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2019__like-0297a2a569.error.log
+angstromctf2019__lithp-eca00f4b15                   task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2019__lithp-eca00f4b15.error.log
+angstromctf2019__onebite-5d5969b1bc                 task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2019__onebite-5d5969b1bc.error.log
+angstromctf2019__overmybrain-aced06d6d4             task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2019__overmybrain-aced06d6d4.error.log
+angstromctf2019__reallysecurealgorithm-8280fb4b86   task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2019__reallysecurealgorithm-8280fb4b86.error.log
+angstromctf2022__amongus-7f5512976a                 runner_exception  KeyError       -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2022__amongus-7f5512976a.error.log
+angstromctf2022__reallyobnoxiousproblem-3318ac1619  task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2022__reallyobnoxiousproblem-3318ac1619.error.log
+angstromctf2022__shark1-8091d8e05a                  task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2022__shark1-8091d8e05a.error.log
+angstromctf2022__uninspired-e9293d179b              task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2022__uninspired-e9293d179b.error.log
+angstromctf2024__awman-c5e3e16fcf                   task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2024__awman-c5e3e16fcf.error.log
+angstromctf2024__bap-3ddcf49894                     task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2024__bap-3ddcf49894.error.log
+angstromctf2024__heapify-8e4ecdb276                 task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2024__heapify-8e4ecdb276.error.log
+angstromctf2024__leftright-8a0c75647a               task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2024__leftright-8a0c75647a.error.log
+angstromctf2024__philosophy-12b2af64e8              task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2024__philosophy-12b2af64e8.error.log
+angstromctf2024__snowman-23583f447c                 task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2024__snowman-23583f447c.error.log
+angstromctf2024__stacksort-612a330523               task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2024__stacksort-612a330523.error.log
+angstromctf2024__themectl-842437a7ba                task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/angstromctf2024__themectl-842437a7ba.error.log
+asisctf2013__dice-9a740c2fe7                        task_timeout      outer_timeout  -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/asisctf2013__dice-9a740c2fe7.error.log
+asisctf2013__inaccessible-3de9b201ef                runner_exception  KeyError       -  /data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/logs/asisctf2013__inaccessible-3de9b201ef.error.log

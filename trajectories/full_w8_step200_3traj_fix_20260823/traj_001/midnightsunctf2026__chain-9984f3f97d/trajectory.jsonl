@@ -1,1 +1,0 @@
-{"id":"midnightsunctf2026__chain-9984f3f97d","sample_type":"main","messages":[{"role":"user","content":"chain"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

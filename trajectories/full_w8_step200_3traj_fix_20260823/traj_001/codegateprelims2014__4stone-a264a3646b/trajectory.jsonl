@@ -1,1 +1,0 @@
-{"id":"codegateprelims2014__4stone-a264a3646b","sample_type":"main","messages":[{"role":"user","content":"4stone"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

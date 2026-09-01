@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  shjail-batch-917de10ee232-341ef03730e1038bda3f:
+    build: .
+    ports:
+    - 10411:1337
+    networks:
+      ctfnet-batch-917de10ee232-341ef03730e1038bda3f:
+        aliases:
+        - shjail.0x41414141ctf.io
+        - shjail
+    container_name: shjail-batch-917de10ee232-341ef03730e1038bda3f
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-917de10ee232-341ef03730e1038bda3f:
+    name: ctfnet-batch-917de10ee232-341ef03730e1038bda3f
+    external: true

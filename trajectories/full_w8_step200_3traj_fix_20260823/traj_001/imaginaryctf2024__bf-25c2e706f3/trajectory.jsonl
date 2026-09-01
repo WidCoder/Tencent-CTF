@@ -1,1 +1,0 @@
-{"id":"imaginaryctf2024__bf-25c2e706f3","sample_type":"main","messages":[{"role":"user","content":"bf"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to attach container to CTF network: Container disappeared after creation"}]}

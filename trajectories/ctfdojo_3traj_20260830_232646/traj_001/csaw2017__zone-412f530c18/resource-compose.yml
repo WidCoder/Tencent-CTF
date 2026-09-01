@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  zone-batch-b1ad74e433f0-104f187214d208bc14ec:
+    build: .
+    ports:
+    - 17470:1337
+    networks:
+      ctfnet-batch-b1ad74e433f0-104f187214d208bc14ec:
+        aliases:
+        - dangerzone.csaw.io
+        - zone
+    container_name: zone-batch-b1ad74e433f0-104f187214d208bc14ec
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-b1ad74e433f0-104f187214d208bc14ec:
+    name: ctfnet-batch-b1ad74e433f0-104f187214d208bc14ec
+    external: true

@@ -1,0 +1,19 @@
+version: '3'
+services:
+  tinyecc-batch-7158d627abcc-b1fe25cbaf1be73a6763:
+    build: .
+    ports:
+    - 13654:1337
+    networks:
+      ctfnet-batch-7158d627abcc-b1fe25cbaf1be73a6763:
+        aliases:
+        - tinyecc.cryptoctf.io
+        - tinyecc
+    container_name: tinyecc-batch-7158d627abcc-b1fe25cbaf1be73a6763
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-7158d627abcc-b1fe25cbaf1be73a6763:
+    name: ctfnet-batch-7158d627abcc-b1fe25cbaf1be73a6763
+    external: true

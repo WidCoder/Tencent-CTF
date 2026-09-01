@@ -1,1 +1,0 @@
-{"id":"corctf2021__bank-8381fab8c4","sample_type":"main","messages":[{"role":"user","content":"bank"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

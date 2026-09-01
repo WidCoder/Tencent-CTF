@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  forgery-batch-3e76258abc6d-f8eb36a074e1d5b68bea:
+    build: .
+    ports:
+    - 11678:1337
+    networks:
+      ctfnet-batch-3e76258abc6d-f8eb36a074e1d5b68bea:
+        aliases:
+        - forgery.csaw.io
+        - forgery
+    container_name: forgery-batch-3e76258abc6d-f8eb36a074e1d5b68bea
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-3e76258abc6d-f8eb36a074e1d5b68bea:
+    name: ctfnet-batch-3e76258abc6d-f8eb36a074e1d5b68bea
+    external: true

@@ -1,1 +1,0 @@
-{"id":"plaidctf__shop-0da06d53dc","sample_type":"main","messages":[{"role":"user","content":"shop"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

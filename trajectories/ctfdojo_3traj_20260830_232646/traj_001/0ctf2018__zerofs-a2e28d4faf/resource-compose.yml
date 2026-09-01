@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  zerofs-batch-41cbe77bc7d6-8acff3e5ca7188d5db1c:
+    build: .
+    ports:
+    - 11568:1337
+    networks:
+      ctfnet-batch-41cbe77bc7d6-8acff3e5ca7188d5db1c:
+        aliases:
+        - zerofs.0ctf.io
+        - zerofs
+    container_name: zerofs-batch-41cbe77bc7d6-8acff3e5ca7188d5db1c
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-41cbe77bc7d6-8acff3e5ca7188d5db1c:
+    name: ctfnet-batch-41cbe77bc7d6-8acff3e5ca7188d5db1c
+    external: true

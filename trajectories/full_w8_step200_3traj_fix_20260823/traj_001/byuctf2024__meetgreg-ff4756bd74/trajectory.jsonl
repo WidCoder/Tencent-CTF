@@ -1,1 +1,0 @@
-{"id":"byuctf2024__meetgreg-ff4756bd74","sample_type":"main","messages":[{"role":"user","content":"meetgreg"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

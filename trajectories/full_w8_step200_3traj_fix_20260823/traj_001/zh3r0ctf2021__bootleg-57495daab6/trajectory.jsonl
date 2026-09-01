@@ -1,1 +1,0 @@
-{"id":"zh3r0ctf2021__bootleg-57495daab6","sample_type":"main","messages":[{"role":"user","content":"bootleg"},{"role":"assistant","content":"environment_reset","reasoning_content":""},{"role":"tool","content":"CTF server is not accessible even after restart attempts. Task terminated."}]}

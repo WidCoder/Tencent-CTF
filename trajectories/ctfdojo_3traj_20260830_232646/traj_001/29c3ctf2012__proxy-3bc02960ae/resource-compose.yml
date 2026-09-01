@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  proxy-batch-55bcfa9b6d1a-d4c82f137ffd1d28b406:
+    build: .
+    ports:
+    - 18623:1337
+    networks:
+      ctfnet-batch-55bcfa9b6d1a-d4c82f137ffd1d28b406:
+        aliases:
+        - proxy.29c3ctf.io
+        - proxy
+    container_name: proxy-batch-55bcfa9b6d1a-d4c82f137ffd1d28b406
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-55bcfa9b6d1a-d4c82f137ffd1d28b406:
+    name: ctfnet-batch-55bcfa9b6d1a-d4c82f137ffd1d28b406
+    external: true

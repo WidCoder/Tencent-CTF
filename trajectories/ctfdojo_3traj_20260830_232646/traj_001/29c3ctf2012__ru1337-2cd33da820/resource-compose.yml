@@ -1,0 +1,19 @@
+version: '3'
+services:
+  ru1337-batch-4785b1554e35-0b6f54bbd87f508f17a1:
+    build: .
+    ports:
+    - 16012:1337
+    networks:
+      ctfnet-batch-4785b1554e35-0b6f54bbd87f508f17a1:
+        aliases:
+        - ru1337.29c3ctf.io
+        - ru1337
+    container_name: ru1337-batch-4785b1554e35-0b6f54bbd87f508f17a1
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-4785b1554e35-0b6f54bbd87f508f17a1:
+    name: ctfnet-batch-4785b1554e35-0b6f54bbd87f508f17a1
+    external: true

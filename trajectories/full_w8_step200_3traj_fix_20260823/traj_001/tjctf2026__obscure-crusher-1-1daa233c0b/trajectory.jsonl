@@ -1,1 +1,0 @@
-{"id":"tjctf2026__obscure-crusher-1-1daa233c0b","sample_type":"main","messages":[{"role":"user","content":"obscure-crusher-1"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

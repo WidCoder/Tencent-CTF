@@ -1,1 +1,0 @@
-{"id":"hsctf2019__the-real-reversal-559bdba19e","sample_type":"main","messages":[{"role":"user","content":"the-real-reversal"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

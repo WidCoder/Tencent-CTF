@@ -1,1 +1,0 @@
-{"id":"corctf2021__babyrev-9586577efd","sample_type":"main","messages":[{"role":"user","content":"babyrev"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

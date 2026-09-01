@@ -1,1 +1,0 @@
-{"id":"angstromctf2019__blankpaper-bb8f8e957e","sample_type":"main","messages":[{"role":"user","content":"blankpaper"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

@@ -1,0 +1,1 @@
+{"id":"hsctf2021__canis-c02c9ffb06","sample_type":"main","messages":[{"role":"user","content":"canis"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to create CTF network: 400 Client Error for http+docker://localhost/v1.52/networks/create: Bad Request (\"all predefined address pools have been fully subnetted\")"}]}

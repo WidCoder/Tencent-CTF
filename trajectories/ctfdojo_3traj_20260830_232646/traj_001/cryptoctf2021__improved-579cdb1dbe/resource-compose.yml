@@ -1,0 +1,19 @@
+version: '3'
+services:
+  improved-batch-36dcaee891fc-81d2937380adc5bec70f:
+    build: .
+    ports:
+    - 17950:1337
+    networks:
+      ctfnet-batch-36dcaee891fc-81d2937380adc5bec70f:
+        aliases:
+        - improved.cryptoctf.io
+        - improved
+    container_name: improved-batch-36dcaee891fc-81d2937380adc5bec70f
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-36dcaee891fc-81d2937380adc5bec70f:
+    name: ctfnet-batch-36dcaee891fc-81d2937380adc5bec70f
+    external: true

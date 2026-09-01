@@ -60,6 +60,9 @@ _MESSAGES_API_TIMEOUT = max(
         max(5.0, _MODEL_TIMEOUT - _MODEL_TIMEOUT_MARGIN),
     ),
 )
+_MESSAGES_MAX_INPUT_CHARS = max(
+    16000, int(keys_config.get("SWE_AGENT_MESSAGES_MAX_INPUT_CHARS", 200000))
+)
 
 # Load model configurations from YAML
 def load_model_configs():
@@ -210,6 +213,34 @@ def _messages_payload_shape(messages: list[dict[str, Any]]) -> list[dict[str, An
         else:
             shape.append({"role": message.get("role"), "type": type(content).__name__, "chars": len(str(content))})
     return shape
+
+
+def _limit_messages_for_request(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Bound gateway input without changing the persisted trajectory schema."""
+    encoded = json.dumps(messages, ensure_ascii=False, default=str)
+    if len(encoded) <= _MESSAGES_MAX_INPUT_CHARS:
+        return messages
+
+    def clipped(value: Any, limit: int) -> str:
+        text = value if isinstance(value, str) else str(value)
+        if len(text) <= limit:
+            return text
+        head = max(1, limit // 3)
+        return text[:head] + "\n...[request context truncated]...\n" + text[-(limit - head):]
+
+    bounded: list[dict[str, Any]] = []
+    for message in messages:
+        item = dict(message)
+        if "content" in item and not isinstance(item["content"], list):
+            item["content"] = clipped(item["content"], 24000)
+        bounded.append(item)
+    encoded = json.dumps(bounded, ensure_ascii=False, default=str)
+    if len(encoded) <= _MESSAGES_MAX_INPUT_CHARS:
+        return bounded
+
+    head = bounded[:2]
+    tail = bounded[-8:]
+    return head + [{"role": "user", "content": "[older request context omitted; continue from recent evidence]"}] + tail
 
 
 def extract_messages_api_response_details(data: dict[str, Any]) -> dict[str, Any]:
@@ -725,7 +756,7 @@ class MessagesAPIModel(BaseModel):
         # messages. Native tool blocks are opt-in because some gateways accept
         # the request but stall while reasoning over them.
         self.native_tools = str(
-            keys_config.get("SWE_AGENT_MESSAGES_NATIVE_TOOLS", "1")
+            keys_config.get("SWE_AGENT_MESSAGES_NATIVE_TOOLS", "0")
         ).strip().lower() in {"1", "true", "yes", "on"}
         self.thinking_mode = str(
             keys_config.get("SWE_AGENT_MESSAGES_THINKING", "auto")
@@ -789,6 +820,14 @@ class MessagesAPIModel(BaseModel):
             messages = anthropic_history_to_messages(self, [
                 {"role": "system", "content": system}, *flattened
             ]) if system else anthropic_history_to_messages(self, flattened)
+        original_input_chars = len(json.dumps(messages, ensure_ascii=False, default=str))
+        messages = _limit_messages_for_request(messages)
+        input_chars = len(json.dumps(messages, ensure_ascii=False, default=str))
+        if input_chars < original_input_chars:
+            logger.warning(
+                "Messages API request history truncated: chars=%d->%d limit=%d",
+                original_input_chars, input_chars, _MESSAGES_MAX_INPUT_CHARS,
+            )
         payload = {
             "model": self.api_model,
             "messages": messages,

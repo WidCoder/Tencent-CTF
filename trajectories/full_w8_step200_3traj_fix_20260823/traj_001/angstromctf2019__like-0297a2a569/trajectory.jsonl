@@ -1,1 +1,0 @@
-{"id":"angstromctf2019__like-0297a2a569","sample_type":"main","messages":[{"role":"user","content":"like"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

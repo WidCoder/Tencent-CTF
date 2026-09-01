@@ -1,1 +1,0 @@
-{"id":"hsctf2019__virtualjava-dd9a739279","sample_type":"main","messages":[{"role":"user","content":"virtualjava"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

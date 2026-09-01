@@ -1,1 +1,0 @@
-{"id":"amateursctf__normal-d7682fea15","sample_type":"main","messages":[{"role":"user","content":"normal"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

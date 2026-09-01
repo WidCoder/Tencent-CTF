@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  ch01-safeps-batch-661d70d1e3d2-6c779cf03cd31c7dfc64:
+    build: .
+    container_name: ch01-safeps-batch-661d70d1e3d2-6c779cf03cd31c7dfc64
+    ports:
+    - 14029:1337
+    networks:
+      ctfnet-batch-661d70d1e3d2-6c779cf03cd31c7dfc64:
+        aliases:
+        - safeps.cybergame.io
+        - ch01-safeps
+        - safeps
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-661d70d1e3d2-6c779cf03cd31c7dfc64:
+    name: ctfnet-batch-661d70d1e3d2-6c779cf03cd31c7dfc64
+    external: true

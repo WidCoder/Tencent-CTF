@@ -1,1 +1,0 @@
-{"id":"umassctf2026__lost-and-found-5ec70a37a2","sample_type":"main","messages":[{"role":"user","content":"lost-and-found"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

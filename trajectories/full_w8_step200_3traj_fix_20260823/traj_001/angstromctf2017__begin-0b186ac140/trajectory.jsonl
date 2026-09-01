@@ -1,1 +1,0 @@
-{"id":"angstromctf2017__begin-0b186ac140","sample_type":"main","messages":[{"role":"user","content":"begin"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

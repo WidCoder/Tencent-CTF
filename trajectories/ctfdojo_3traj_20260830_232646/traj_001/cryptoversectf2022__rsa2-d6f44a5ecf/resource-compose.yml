@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  rsa2-batch-1c36859a86cc-ec952b7c1e0143f0fc22:
+    build: .
+    ports:
+    - 16937:1337
+    networks:
+      ctfnet-batch-1c36859a86cc-ec952b7c1e0143f0fc22:
+        aliases:
+        - rsa2.cryptoversectf.io
+        - rsa2
+    container_name: rsa2-batch-1c36859a86cc-ec952b7c1e0143f0fc22
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-1c36859a86cc-ec952b7c1e0143f0fc22:
+    name: ctfnet-batch-1c36859a86cc-ec952b7c1e0143f0fc22
+    external: true

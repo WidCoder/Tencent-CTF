@@ -1,1 +1,0 @@
-{"id":"corctf2022__turbocrab-3fc121dae4","sample_type":"main","messages":[{"role":"user","content":"turbocrab"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

@@ -1,1 +1,0 @@
-{"id":"lactf2026__lactf1986-fb93c03167","sample_type":"main","messages":[{"role":"user","content":"lactf1986"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"('Subprocess exited unexpectedly.\\nCurrent buffer: ', '')"}]}

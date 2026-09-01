@@ -38,7 +38,7 @@ from sweagent.agent.parsing import FormatError, ParseFunction
 from sweagent.agent.summarizer import SummarizerConfig
 from sweagent.agent.context_compressor import ContextCompressionManager
 from sweagent.agent.trajectory_recorder import TrajectoryRecorder
-from sweagent.environment.swe_env import SWEEnv
+from sweagent.environment.swe_env import CANONICAL_STATE_DEFAULTS, SWEEnv, normalize_state
 from sweagent.types import AgentInfo, History, HistoryItem, Trajectory, TrajectoryStep
 from sweagent.utils.config import convert_paths_to_abspath, keys_config
 from sweagent.utils.log import get_logger
@@ -347,6 +347,8 @@ class Agent:
             max_context_tokens=int(compression.get("max_context_tokens", 128000)),
             trigger_ratio=float(compression.get("trigger_ratio", 0.95)),
             summary_model=self._summarize_context,
+            max_summary_input_chars=int(compression.get("max_summary_input_chars", 120000)),
+            max_summary_output_chars=int(compression.get("max_summary_output_chars", 24000)),
         )
         self.trajectory_recorder = TrajectoryRecorder(enable_thought_recording=bool(getattr(self.config, "enable_thought_recording", True)))
         self._last_context_compressed = False
@@ -862,50 +864,7 @@ class Agent:
             output: raw model output (not output of the command)
         """
         assert self.config is not None  # mypy
-        try:
-            # Handle empty state by providing a default state_vars
-            if not state or not state.strip():
-                # If state is empty or only whitespace, provide default state
-                state_vars = {"working_dir": "."}
-            else:
-                # Check if state looks like shell commands instead of JSON
-                if ("EXITSTATUS" in state and "PROCESS-DONE" in state) or not state.strip().startswith('{'):
-                    # This is likely shell command output instead of JSON
-                    self.logger.warning(f"State appears to be shell commands instead of JSON: {state[:100]}...")
-                    
-                    # Try to extract any JSON that might be embedded
-                    if '{' in state and '}' in state:
-                        start_idx = state.find('{')
-                        end_idx = state.rfind('}')
-                        if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
-                            json_part = state[start_idx:end_idx + 1]
-                            try:
-                                state_vars = json.loads(json_part)
-                            except json.JSONDecodeError:
-                                state_vars = {"working_dir": "."}
-                        else:
-                            state_vars = {"working_dir": "."}
-                    else:
-                        state_vars = {"working_dir": "."}
-                else:
-                    # Try to extract JSON from the state string in case there are shell errors before the JSON
-                    # Look for the first '{' and last '}' to extract the JSON part
-                    if state and '{' in state:
-                        start_idx = state.find('{')
-                        end_idx = state.rfind('}')
-                        if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
-                            json_part = state[start_idx:end_idx + 1]
-                            state_vars = json.loads(json_part)
-                        else:
-                            state_vars = json.loads(state)
-                    else:
-                        state_vars = json.loads(state)
-        except json.JSONDecodeError as e:
-            # If JSON parsing fails, provide a detailed error message and fallback
-            self.logger.warning(f"Failed to parse state as JSON: {e}")
-            self.logger.warning(f"State content: {state[:200]}...")
-            state_vars = {"working_dir": "."}
-            # Don't raise error - use fallback state instead
+        state_vars = json.loads(normalize_state(state))
 
         templates: list[str] = []
         # Determine observation template based on what prior observation was
@@ -1277,36 +1236,53 @@ class Agent:
         for hook in self.hooks:
             hook.on_step_start()
 
-        # fixme: This will probably fail if the state command is not set
+        def environment_alive() -> bool:
+            env = self._env
+            if env.container is None or env.container.poll() is not None:
+                return False
+            try:
+                if env.container_obj is not None:
+                    env.container_obj.reload()
+                    if env.container_obj.status in {"dead", "exited", "stopped", "removing"}:
+                        return False
+            except Exception:
+                return False
+            return True
+
         if self.state_command:
             try:
                 state = self._env.communicate(self.state_command)
+                state_text = (
+                    state.decode("utf-8", errors="replace")
+                    if isinstance(state, bytes) else state
+                )
                 # Log if state command returns empty for debugging
-                if not state or not state.strip():
+                if not state_text or not state_text.strip():
                     self.logger.warning("State command returned empty output. This may indicate an issue with environment setup.")
-                    # Provide minimal fallback state
-                    state = '{"working_dir": "."}'
-                elif not state.strip().startswith('{'):
-                    # If state doesn't start with JSON, it means the command failed
-                    self.logger.warning(f"State command returned non-JSON output: {state[:100]}...")
-                    self.logger.warning("This likely means the state function is not defined in the shell environment.")
-                    # Try to re-initialize the state command
-                    try:
-                        self.logger.info("Attempting to re-initialize state command...")
-                        self.set_environment_vars(self._env, self.config.env_variables)
-                        # Retry the state command
-                        state = self._env.communicate(self.state_command)
-                        if not state.strip().startswith('{'):
-                            # Still failed, use fallback
-                            state = '{"working_dir": "."}'
-                    except Exception as e:
-                        self.logger.warning(f"Failed to re-initialize state command: {e}")
-                        state = '{"working_dir": "."}'
+                    if not environment_alive():
+                        reason = "shell/container became unavailable while reading agent state"
+                        self.finalize_episode("environment_error", reason, "container_unavailable")
+                        return None, True
+                    state = normalize_state(None)
+                elif not state_text.lstrip().startswith('{'):
+                    # Normalize malformed output through the same fallback as
+                    # empty, incomplete, and communication-error states.
+                    self.logger.warning(f"State command returned non-JSON output: {state_text[:100]}...")
+                    if not environment_alive():
+                        reason = "shell/container became unavailable while reading agent state"
+                        self.finalize_episode("environment_error", reason, "container_unavailable")
+                        return None, True
+                    state = normalize_state(state_text)
             except Exception as e:
                 self.logger.warning(f"Failed to execute state command: {e}")
-                state = '{"working_dir": "."}'
+                if not environment_alive():
+                    reason = f"shell/container unavailable while reading agent state: {e}"
+                    self.finalize_episode("environment_error", reason, "container_unavailable")
+                    return None, True
+                state = normalize_state(None)
         else:
-            state = None
+            state = normalize_state(None)
+        state = normalize_state(state)
         thought, action, output = self.forward(observation, self._env.get_available_actions(), state)
         for hook in self.hooks:
             hook.on_actions_generated(thought=thought, action=action, output=output)

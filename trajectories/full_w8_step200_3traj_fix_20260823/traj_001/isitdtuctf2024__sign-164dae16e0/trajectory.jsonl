@@ -1,1 +1,0 @@
-{"id":"isitdtuctf2024__sign-164dae16e0","sample_type":"main","messages":[{"role":"user","content":"sign"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to attach container to CTF network: Container sweagent-enigma-latest-13fc108261 not found"}]}

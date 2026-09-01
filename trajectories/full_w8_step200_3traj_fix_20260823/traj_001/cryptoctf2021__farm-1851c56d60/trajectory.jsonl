@@ -1,1 +1,0 @@
-{"id":"cryptoctf2021__farm-1851c56d60","sample_type":"main","messages":[{"role":"user","content":"farm"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

@@ -1,0 +1,19 @@
+version: '3'
+services:
+  trapdoor-batch-068584789908-3f5d75860c8dc96d13cf:
+    build: .
+    ports:
+    - 19861:1337
+    networks:
+      ctfnet-batch-068584789908-3f5d75860c8dc96d13cf:
+        aliases:
+        - trapdoor.csaw.io
+        - trapdoor
+    container_name: trapdoor-batch-068584789908-3f5d75860c8dc96d13cf
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-068584789908-3f5d75860c8dc96d13cf:
+    name: ctfnet-batch-068584789908-3f5d75860c8dc96d13cf
+    external: true

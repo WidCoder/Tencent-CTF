@@ -1,1 +1,0 @@
-{"id":"breakthesyntaxctf2026__bugxxor-32cc29646c","sample_type":"main","messages":[{"role":"user","content":"bugxxor"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

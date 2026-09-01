@@ -1,1 +1,0 @@
-{"id":"hitcon2017quals__reeasy-d0287d56d5","sample_type":"main","messages":[{"role":"user","content":"reeasy"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

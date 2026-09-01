@@ -1,0 +1,19 @@
+version: '3'
+services:
+  alienmath-batch-41cc6bb0d4c0-e27a25621fbdbe920f4b:
+    build: .
+    ports:
+    - 12216:1337
+    networks:
+      ctfnet-batch-41cc6bb0d4c0-e27a25621fbdbe920f4b:
+        aliases:
+        - alienmath.csaw.io
+        - alienmath
+    container_name: alienmath-batch-41cc6bb0d4c0-e27a25621fbdbe920f4b
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-41cc6bb0d4c0-e27a25621fbdbe920f4b:
+    name: ctfnet-batch-41cc6bb0d4c0-e27a25621fbdbe920f4b
+    external: true

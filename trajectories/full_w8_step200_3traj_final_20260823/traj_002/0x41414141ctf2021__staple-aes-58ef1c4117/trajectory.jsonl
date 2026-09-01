@@ -1,1 +1,0 @@
-{"id":"0x41414141ctf2021__staple-aes-58ef1c4117","sample_type":"main","messages":[{"role":"user","content":"staple-aes"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

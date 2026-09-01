@@ -1,1 +1,0 @@
-{"id":"thcon2026__049-exponope-1f8b981de8","sample_type":"main","messages":[{"role":"user","content":"049-exponope"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

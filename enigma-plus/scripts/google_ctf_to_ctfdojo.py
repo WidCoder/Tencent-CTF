@@ -60,7 +60,7 @@ def convert_one(source: Path, root: Path, output: Path, year: str, category: str
         elif child.is_file() and lowered not in {
             "flag", "flag.txt", "flag.json", "flag.sha256", ".flag.sha256", "flag.sha256.txt",
             "readme", "readme.md", "readme.txt", "description.md", "description.txt",
-        } and "flagcheck" not in lowered:
+        } and not is_private_verifier_name(lowered):
             shutil.copy2(child, task / child.name)
     copied = copy_verification_files(source, task)
     verification = verification_metadata(copied)
@@ -117,7 +117,7 @@ def convert_one(source: Path, root: Path, output: Path, year: str, category: str
     if verification["method"] == "sha256":
         metadata["sha256_file"] = verification["files"][0]
         metadata["sha256_flag_file"] = verification["files"][0]
-    elif verification["method"] == "flagcheck":
+    elif verification["method"] == "checker":
         metadata["flag_check"] = verification["files"][0]
     write_json(task / "challenge.json", metadata)
     return {"challenge": source.name, "status": "converted", "path": str(task), "task_id": task_id, "metadata": metadata}

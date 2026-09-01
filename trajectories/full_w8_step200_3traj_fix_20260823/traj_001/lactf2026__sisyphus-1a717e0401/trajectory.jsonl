@@ -1,1 +1,0 @@
-{"id":"lactf2026__sisyphus-1a717e0401","sample_type":"main","messages":[{"role":"user","content":"sisyphus"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

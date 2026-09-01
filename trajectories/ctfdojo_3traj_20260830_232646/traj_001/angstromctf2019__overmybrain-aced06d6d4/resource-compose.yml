@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  overmybrain-batch-2049aa560761-e7bb1f9a3476fb5746c7:
+    build: .
+    ports:
+    - 10739:1337
+    networks:
+      ctfnet-batch-2049aa560761-e7bb1f9a3476fb5746c7:
+        aliases:
+        - overmybrain.angstromctf.io
+        - overmybrain
+    container_name: overmybrain-batch-2049aa560761-e7bb1f9a3476fb5746c7
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-2049aa560761-e7bb1f9a3476fb5746c7:
+    name: ctfnet-batch-2049aa560761-e7bb1f9a3476fb5746c7
+    external: true

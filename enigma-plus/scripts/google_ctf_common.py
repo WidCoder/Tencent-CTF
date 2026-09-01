@@ -6,6 +6,7 @@ import json
 import logging
 import re
 import shutil
+import shlex
 from pathlib import Path
 from typing import Iterable
 
@@ -25,18 +26,24 @@ ROUND_NAMES = {"qual", "quals", "qualification", "qualifications", "final", "fin
 SKIP_DIR_NAMES = {".git", ".github", "__pycache__", ".venv", "venv", "node_modules"}
 SECRET_FILE_NAMES = {"flag", "flag.txt", "flag.json"}
 HASH_FILE_NAMES = {"flag.sha256", ".flag.sha256", "flag.sha256.txt"}
+CHECKER_FILE_NAMES = {"checker.py", "verify.py", "checker.sh", "verify.sh"}
+VERIFIER_EXCLUDED_DIRS = {
+    ".git", ".hg", ".svn", ".bzr", "_darcs", "solution", "writeup", "writeups",
+}
 DESCRIPTION_FILE_NAMES = {"readme", "readme.md", "readme.txt", "description.md", "description.txt"}
 PLAINTEXT_FLAG_RE = re.compile(r"(?i)\b(?:ctf|flag|pwn\.college|gc)\{[^\r\n}]{2,256}\}")
 
 
 def read_source_metadata(source: Path) -> dict:
     """Read safe routing metadata without copying plaintext solutions."""
-    for name in ("challenge.yaml", "challenge.yml", "metadata.yaml", "metadata.yml"):
+    for name in ("challenge.json", "challenge.yaml", "challenge.yml", "metadata.yaml", "metadata.yml"):
         path = source / name
         if not path.is_file():
             continue
         try:
-            if yaml is not None:
+            if path.suffix.lower() == ".json":
+                value = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+            elif yaml is not None:
                 value = yaml.safe_load(path.read_text(encoding="utf-8", errors="replace"))
             else:
                 value = {}
@@ -82,7 +89,11 @@ def runtime_metadata(source: Path) -> dict:
 
 def is_private_verifier_name(name: str) -> bool:
     lowered = name.lower()
-    return lowered in HASH_FILE_NAMES or "flagcheck" in lowered
+    return (
+        lowered in HASH_FILE_NAMES
+        or lowered in CHECKER_FILE_NAMES
+        or "flagcheck" in lowered
+    )
 
 
 def canonical_category(value: str) -> str:
@@ -203,8 +214,61 @@ def find_named(path: Path, names: set[str]) -> list[Path]:
     return sorted((candidate for candidate in iter_files(path) if candidate.name.lower() in wanted), key=str)
 
 
+def _metadata_verifier_values(metadata: dict) -> list[object]:
+    values: list[object] = []
+    verification = metadata.get("verification")
+    if isinstance(verification, dict):
+        if "files" in verification:
+            values.append(verification["files"])
+        for key in ("flagCheck", "flag_check", "verifier", "checker"):
+            if key in verification:
+                values.append(verification[key])
+    for key in ("flagCheck", "flag_check", "verifier", "checker"):
+        if key in metadata:
+            values.append(metadata[key])
+    return values
+
+
+def _declared_verifier_paths(source: Path) -> list[Path]:
+    metadata = read_source_metadata(source)
+    paths: list[Path] = []
+    for value in _metadata_verifier_values(metadata):
+        values = value if isinstance(value, list) else [value]
+        for item in values:
+            if isinstance(item, dict):
+                item = item.get("path") or item.get("file") or item.get("command")
+            if not isinstance(item, str) or not item.strip():
+                continue
+            try:
+                tokens = shlex.split(item)
+            except ValueError:
+                tokens = [item]
+            for token in tokens:
+                candidate = Path(token)
+                if candidate.is_absolute():
+                    resolved = candidate.resolve()
+                else:
+                    resolved = (source / candidate).resolve()
+                try:
+                    resolved.relative_to(source.resolve())
+                except ValueError:
+                    continue
+                relative_parts = {part.lower() for part in resolved.relative_to(source.resolve()).parts[:-1]}
+                if relative_parts & VERIFIER_EXCLUDED_DIRS:
+                    continue
+                if resolved.is_file() and resolved not in paths:
+                    paths.append(resolved)
+    return paths
+
+
 def verification_files(source: Path) -> list[Path]:
-    return [path for path in iter_files(source) if path.name.lower() in HASH_FILE_NAMES or "flagcheck" in path.name.lower()]
+    declared = _declared_verifier_paths(source)
+    discovered = [
+        path for path in iter_files(source)
+        if is_private_verifier_name(path.name)
+        and not ({part.lower() for part in path.relative_to(source.resolve()).parts[:-1]} & VERIFIER_EXCLUDED_DIRS)
+    ]
+    return sorted({*declared, *discovered}, key=str)
 
 
 def validate_verifier(path: Path, source: Path) -> bool:
@@ -234,11 +298,15 @@ def copy_verification_files(source: Path, task: Path) -> list[str]:
 
 def verification_metadata(copied: list[str]) -> dict:
     hash_files = [path for path in copied if Path(path).name.lower() in HASH_FILE_NAMES]
-    checker_files = [path for path in copied if "flagcheck" in Path(path).name.lower()]
+    checker_files = [
+        path for path in copied
+        if Path(path).name.lower() in CHECKER_FILE_NAMES
+        or "flagcheck" in Path(path).name.lower()
+    ]
     if hash_files:
         return {"status": "eligible", "method": "sha256", "files": hash_files, "hash_input": "full"}
     if checker_files:
-        return {"status": "eligible", "method": "flagcheck", "files": checker_files}
+        return {"status": "eligible", "method": "checker", "files": checker_files}
     return {"status": "pending_validation", "method": "unknown", "files": []}
 
 

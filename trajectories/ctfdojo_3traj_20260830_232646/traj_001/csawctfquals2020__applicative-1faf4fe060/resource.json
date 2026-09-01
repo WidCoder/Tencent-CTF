@@ -1,0 +1,10 @@
+{
+  "agent_container": "batch-df03c796306b-sweagent-enigma-latest-e9d9442ff6",
+  "attempt_token": "batch-df03c796306b",
+  "compose_file": "/data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/csawctfquals2020__applicative-1faf4fe060/resource-compose.yml",
+  "compose_project": "repo_batch_df03c796306b_70bec67d94591ca729b8",
+  "labels": {
+    "com.docker.compose.project": "repo_batch_df03c796306b_70bec67d94591ca729b8"
+  },
+  "network": "ctfnet-batch-df03c796306b-70bec67d94591ca729b8"
+}

@@ -1,0 +1,18 @@
+services:
+  bin200-batch-4974a69cff2e-75d4efd110f38b3bde7e:
+    build: .
+    ports:
+    - 17282:1337
+    networks:
+      ctfnet-batch-4974a69cff2e-75d4efd110f38b3bde7e:
+        aliases:
+        - bin200.codegate.io
+        - bin200
+    container_name: bin200-batch-4974a69cff2e-75d4efd110f38b3bde7e
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-4974a69cff2e-75d4efd110f38b3bde7e:
+    name: ctfnet-batch-4974a69cff2e-75d4efd110f38b3bde7e
+    external: true

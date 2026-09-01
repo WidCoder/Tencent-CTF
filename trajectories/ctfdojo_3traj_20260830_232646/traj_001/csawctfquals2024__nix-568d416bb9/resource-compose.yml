@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  nix-batch-aad2c35b28c6-b376ba476da8af1992e2:
+    build: .
+    ports:
+    - 19894:1337
+    networks:
+      ctfnet-batch-aad2c35b28c6-b376ba476da8af1992e2:
+        aliases:
+        - nix.csaw.io
+        - nix
+    container_name: nix-batch-aad2c35b28c6-b376ba476da8af1992e2
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-aad2c35b28c6-b376ba476da8af1992e2:
+    name: ctfnet-batch-aad2c35b28c6-b376ba476da8af1992e2
+    external: true

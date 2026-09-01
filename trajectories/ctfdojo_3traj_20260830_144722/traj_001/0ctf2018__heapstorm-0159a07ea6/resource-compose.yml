@@ -1,0 +1,19 @@
+version: '3'
+services:
+  heapstorm-batch-bc4cb56fca-9b1d4649a1cecab71c7a:
+    build: .
+    ports:
+    - 10876:1337
+    networks:
+      ctfnet-batch-bc4cb56fca-9b1d4649a1cecab71c7a:
+        aliases:
+        - heapstorm.0ctf.io
+        - heapstorm
+    container_name: heapstorm-batch-bc4cb56fca-9b1d4649a1cecab71c7a
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-bc4cb56fca-9b1d4649a1cecab71c7a:
+    name: ctfnet-batch-bc4cb56fca-9b1d4649a1cecab71c7a
+    external: true

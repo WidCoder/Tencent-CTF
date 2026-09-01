@@ -1,1 +1,0 @@
-{"id":"hackluctf2011__mario-c0b5b97b8f","sample_type":"main","messages":[{"role":"user","content":"mario"},{"role":"assistant","content":"environment_reset","reasoning_content":""},{"role":"tool","content":"CTF server is not accessible even after restart attempts. Task terminated."}]}

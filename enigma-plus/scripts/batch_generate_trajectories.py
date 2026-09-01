@@ -59,7 +59,7 @@ class WorkerRequest:
     config_file: str
     step_limit: int
     python_executable: str
-    task_timeout: int = 2400
+    task_timeout: int = 3600
 
 
 def utc_now() -> str:
@@ -179,7 +179,21 @@ def run_checked(command: list[str], *, cwd: Path | None = None) -> subprocess.Co
 def stage_challenge(source_dir: Path, workspace: Path) -> Path:
     """Copy a challenge and turn the copy into the Git repository run.py needs."""
     repo_path = workspace / "repo"
-    shutil.copytree(source_dir, repo_path)
+    vcs_metadata = {".git", ".hg", ".svn", ".bzr", "_darcs"}
+
+    def ignore_vcs(_directory: str, names: list[str]) -> set[str]:
+        return {name for name in names if name.lower() in vcs_metadata}
+
+    shutil.copytree(source_dir, repo_path, ignore=ignore_vcs)
+    staged_vcs = [
+        path for path in repo_path.rglob("*")
+        if path.name.lower() in vcs_metadata
+    ]
+    if staged_vcs:
+        raise RuntimeError(
+            "staged repository contains forbidden VCS metadata: "
+            + ", ".join(str(path) for path in staged_vcs)
+        )
     run_checked(["git", "init"], cwd=repo_path)
     run_checked(["git", "add", "."], cwd=repo_path)
     run_checked(
@@ -195,6 +209,15 @@ def stage_challenge(source_dir: Path, workspace: Path) -> Path:
         ],
         cwd=repo_path,
     )
+    status = subprocess.run(
+        ["git", "status", "--porcelain", "--untracked-files=all"],
+        cwd=repo_path,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+    if status:
+        raise RuntimeError(f"staged repository is dirty after initialization:\n{status}")
     return repo_path
 
 
@@ -339,7 +362,8 @@ def run_one_task(request: WorkerRequest) -> dict[str, Any]:
                 str(runner_output_dir),
             ]
             run_env = os.environ.copy()
-            run_env.setdefault("SWE_AGENT_TASK_TIMEOUT", "1800")
+            inner_timeout = max(60, request.task_timeout - 60) if request.task_timeout else 1800
+            run_env["SWE_AGENT_TASK_TIMEOUT"] = str(inner_timeout)
             run_env.setdefault("SWE_AGENT_FLAG_VERIFIER_IMAGE", request.image_name)
             completed = subprocess.run(
                 command,
@@ -518,7 +542,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--category", help="Only run challenges whose category matches this value")
     parser.add_argument("--workers", type=int, default=1, help="Concurrent run.py processes (default: 1)")
     parser.add_argument("--python_executable", default=sys.executable, help="Python executable used to invoke run.py")
-    parser.add_argument("--task_timeout", type=int, default=2400, help="Maximum seconds per task; 0 disables the outer timeout")
+    parser.add_argument("--task_timeout", type=int, default=3600, help="Maximum seconds per task; 0 disables the outer timeout")
     parser.add_argument("--dry_run", action="store_true", help="Validate and list selected tasks without invoking run.py")
     return parser.parse_args()
 
@@ -554,6 +578,11 @@ def main() -> int:
     selected = [task for task in challenges if not is_completed(status, args.output_dir, task)]
 
     print(f"Discovered {len(challenges)} task(s); {len(selected)} task(s) need execution.")
+    print(
+        f"Effective runtime configuration: workers={args.workers} step_limit={args.step_limit} "
+        f"task_timeout={args.task_timeout}s inner_task_timeout={max(60, args.task_timeout - 60) if args.task_timeout else 1800}s",
+        flush=True,
+    )
     for task in challenges:
         state = "skip" if task not in selected else "run"
         print(f"[{state}] {task.task_id} ({task.relative_path})")

@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  wallet-batch-5d8404843139-c0bea39e7152acd9c672:
+    build: .
+    ports:
+    - 14699:1337
+    networks:
+      ctfnet-batch-5d8404843139-c0bea39e7152acd9c672:
+        aliases:
+        - wallet.0x41414141ctf.io
+        - wallet
+    container_name: wallet-batch-5d8404843139-c0bea39e7152acd9c672
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-5d8404843139-c0bea39e7152acd9c672:
+    name: ctfnet-batch-5d8404843139-c0bea39e7152acd9c672
+    external: true

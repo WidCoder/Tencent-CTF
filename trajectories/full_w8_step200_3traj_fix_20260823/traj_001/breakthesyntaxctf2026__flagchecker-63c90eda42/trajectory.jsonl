@@ -1,1 +1,0 @@
-{"id":"breakthesyntaxctf2026__flagchecker-63c90eda42","sample_type":"main","messages":[{"role":"user","content":"flagchecker"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

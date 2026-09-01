@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  weirdsnus-batch-82d58279e9f3-d5a431d42582d9df1ba9:
+    build: .
+    ports:
+    - 18108:1337
+    networks:
+      ctfnet-batch-82d58279e9f3-d5a431d42582d9df1ba9:
+        aliases:
+        - weirdsnus.codegate.io
+        - weirdsnus
+    restart: unless-stopped
+    container_name: weirdsnus-batch-82d58279e9f3-d5a431d42582d9df1ba9
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-82d58279e9f3-d5a431d42582d9df1ba9:
+    name: ctfnet-batch-82d58279e9f3-d5a431d42582d9df1ba9
+    external: true

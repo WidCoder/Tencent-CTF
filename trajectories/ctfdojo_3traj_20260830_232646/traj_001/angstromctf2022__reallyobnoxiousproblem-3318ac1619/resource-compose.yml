@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  reallyobnoxiousproblem-batch-17fadab9ce67-44ad25ff5d4dcfb4c4d8:
+    build: .
+    ports:
+    - 16182:1337
+    networks:
+      ctfnet-batch-17fadab9ce67-44ad25ff5d4dcfb4c4d8:
+        aliases:
+        - reallyobnoxious.angstromctf.io
+        - reallyobnoxiousproblem
+        - reallyobnoxious
+    container_name: reallyobnoxiousproblem-batch-17fadab9ce67-44ad25ff5d4dcfb4c4d8
+    restart: always
+networks:
+  cfnet:
+    external: true
+  ctfnet-batch-17fadab9ce67-44ad25ff5d4dcfb4c4d8:
+    name: ctfnet-batch-17fadab9ce67-44ad25ff5d4dcfb4c4d8
+    external: true

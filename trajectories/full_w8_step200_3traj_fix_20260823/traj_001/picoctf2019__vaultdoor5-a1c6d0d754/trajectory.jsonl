@@ -1,1 +1,0 @@
-{"id":"picoctf2019__vaultdoor5-a1c6d0d754","sample_type":"main","messages":[{"role":"user","content":"vaultdoor5"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

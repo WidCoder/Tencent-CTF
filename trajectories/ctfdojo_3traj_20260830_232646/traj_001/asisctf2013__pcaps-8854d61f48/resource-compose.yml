@@ -1,0 +1,19 @@
+version: '3'
+services:
+  pcaps-batch-d66ba7dd2970-0a852ab0cb30521c50e2:
+    build: .
+    ports:
+    - 19051:1337
+    networks:
+      ctfnet-batch-d66ba7dd2970-0a852ab0cb30521c50e2:
+        aliases:
+        - pcaps.asisctf.io
+        - pcaps
+    container_name: pcaps-batch-d66ba7dd2970-0a852ab0cb30521c50e2
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-d66ba7dd2970-0a852ab0cb30521c50e2:
+    name: ctfnet-batch-d66ba7dd2970-0a852ab0cb30521c50e2
+    external: true

@@ -1,1 +1,0 @@
-{"id":"csawctf2011__crypto5-26aa086089","sample_type":"main","messages":[{"role":"user","content":"crypto5"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

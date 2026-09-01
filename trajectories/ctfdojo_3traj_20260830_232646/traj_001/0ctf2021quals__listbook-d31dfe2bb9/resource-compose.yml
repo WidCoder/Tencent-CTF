@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  listbook-batch-bddb305cff3e-fded946d00579b421494:
+    build: .
+    container_name: listbook-batch-bddb305cff3e-fded946d00579b421494
+    ports:
+    - 14032:1337
+    networks:
+      ctfnet-batch-bddb305cff3e-fded946d00579b421494:
+        aliases:
+        - listbook.0ctf.io
+        - listbook
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-bddb305cff3e-fded946d00579b421494:
+    name: ctfnet-batch-bddb305cff3e-fded946d00579b421494
+    external: true

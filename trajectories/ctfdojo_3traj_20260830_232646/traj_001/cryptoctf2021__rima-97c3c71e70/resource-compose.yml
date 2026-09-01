@@ -1,0 +1,19 @@
+version: '3'
+services:
+  rima-batch-597e92a7052c-4d0a3ff1f5e16eb520a7:
+    build: .
+    ports:
+    - 18830:1337
+    networks:
+      ctfnet-batch-597e92a7052c-4d0a3ff1f5e16eb520a7:
+        aliases:
+        - rima.cryptoctf.io
+        - rima
+    container_name: rima-batch-597e92a7052c-4d0a3ff1f5e16eb520a7
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-597e92a7052c-4d0a3ff1f5e16eb520a7:
+    name: ctfnet-batch-597e92a7052c-4d0a3ff1f5e16eb520a7
+    external: true

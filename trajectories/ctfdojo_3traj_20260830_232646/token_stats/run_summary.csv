@@ -1,0 +1,2 @@
+run,tasks,total_tokens,avg_task_tokens,p50_task_tokens,p90_task_tokens,p95_task_tokens,max_task_tokens,avg_assistant_tokens,avg_message_tokens
+traj_001,290,25457718,87785.23,67918,167694,203364,2663314,40006.61,841.33

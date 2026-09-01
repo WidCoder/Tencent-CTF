@@ -1,1 +1,0 @@
-{"id":"imaginaryctf2023__rsa-7dbc49d491","sample_type":"main","messages":[{"role":"user","content":"rsa"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

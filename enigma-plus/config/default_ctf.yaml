@@ -155,7 +155,9 @@ enable_context_compression: true
 enable_thought_recording: true
 context_compression:
   enabled: true
-  max_context_tokens: 128000
-  trigger_ratio: 0.95
+  max_context_tokens: 32000
+  trigger_ratio: 0.75
+  max_summary_input_chars: 120000
+  max_summary_output_chars: 24000
   summary_model: same_as_agent
 

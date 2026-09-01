@@ -1,1 +1,0 @@
-{"id":"downunderctf2022__oracle-cc759fbb28","sample_type":"main","messages":[{"role":"user","content":"oracle"},{"role":"assistant","content":"environment_reset","reasoning_content":""},{"role":"tool","content":"CTF server is not accessible even after restart attempts. Task terminated."}]}

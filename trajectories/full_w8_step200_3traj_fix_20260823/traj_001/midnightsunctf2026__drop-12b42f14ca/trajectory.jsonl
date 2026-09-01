@@ -1,1 +1,0 @@
-{"id":"midnightsunctf2026__drop-12b42f14ca","sample_type":"main","messages":[{"role":"user","content":"drop"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to attach container to CTF network: Container sweagent-enigma-latest-f0592d3e86 not found"}]}

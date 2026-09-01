@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  binary500-batch-1ad4ea813b0b-61803e0f75b67a2d6cda:
+    build: .
+    container_name: binary500-batch-1ad4ea813b0b-61803e0f75b67a2d6cda
+    ports:
+    - 13399:1337
+    networks:
+      ctfnet-batch-1ad4ea813b0b-61803e0f75b67a2d6cda:
+        aliases:
+        - binary500.codegate2011.io
+        - binary500
+    restart: unless-stopped
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-1ad4ea813b0b-61803e0f75b67a2d6cda:
+    name: ctfnet-batch-1ad4ea813b0b-61803e0f75b67a2d6cda
+    external: true

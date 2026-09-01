@@ -1,0 +1,19 @@
+version: '3'
+services:
+  forgot-batch-d7c837216a18-28bfb1f7885b0368f097:
+    build: .
+    ports:
+    - 10853:1337
+    networks:
+      ctfnet-batch-d7c837216a18-28bfb1f7885b0368f097:
+        aliases:
+        - forgot.backdoorctf.io
+        - forgot
+    container_name: forgot-batch-d7c837216a18-28bfb1f7885b0368f097
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-d7c837216a18-28bfb1f7885b0368f097:
+    name: ctfnet-batch-d7c837216a18-28bfb1f7885b0368f097
+    external: true

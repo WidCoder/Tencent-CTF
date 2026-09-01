@@ -1,1 +1,0 @@
-{"id":"l3akctf2025__dumber-ee20cdd8a0","sample_type":"main","messages":[{"role":"user","content":"dumber"},{"role":"assistant","content":"environment_reset","reasoning_content":""},{"role":"tool","content":"CTF server is not accessible even after restart attempts. Task terminated."}]}

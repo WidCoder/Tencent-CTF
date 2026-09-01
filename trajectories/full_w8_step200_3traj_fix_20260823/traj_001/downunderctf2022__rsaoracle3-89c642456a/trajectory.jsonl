@@ -1,1 +1,0 @@
-{"id":"downunderctf2022__rsaoracle3-89c642456a","sample_type":"main","messages":[{"role":"user","content":"rsaoracle3"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

@@ -1,0 +1,13 @@
+{
+  "duplicate_action_steps": 0,
+  "empty_observation_steps": 0,
+  "environment_error": 764,
+  "invalid_terminal_episodes": 831,
+  "legacy_schema_episodes": 831,
+  "parser_error_episodes": 3,
+  "solved_trajectories": 0,
+  "synthetic_error_trajectories": 0,
+  "timeout": 13,
+  "trainable_trajectories": 0,
+  "unsolved_trajectories": 831
+}

@@ -1,1 +1,0 @@
-{"id":"cactusconctf2025__numbersleuthv3-8a1c1410db","sample_type":"main","messages":[{"role":"user","content":"numbersleuthv3"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

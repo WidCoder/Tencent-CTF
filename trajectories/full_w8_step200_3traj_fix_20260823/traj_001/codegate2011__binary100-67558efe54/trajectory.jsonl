@@ -1,1 +1,0 @@
-{"id":"codegate2011__binary100-67558efe54","sample_type":"main","messages":[{"role":"user","content":"binary100"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

@@ -1,0 +1,19 @@
+version: '3'
+services:
+  farm-batch-64dffd65fd52-b0d2000e5ad0a868a53a:
+    build: .
+    ports:
+    - 18477:1337
+    networks:
+      ctfnet-batch-64dffd65fd52-b0d2000e5ad0a868a53a:
+        aliases:
+        - farm.cryptoctf.io
+        - farm
+    container_name: farm-batch-64dffd65fd52-b0d2000e5ad0a868a53a
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-64dffd65fd52-b0d2000e5ad0a868a53a:
+    name: ctfnet-batch-64dffd65fd52-b0d2000e5ad0a868a53a
+    external: true

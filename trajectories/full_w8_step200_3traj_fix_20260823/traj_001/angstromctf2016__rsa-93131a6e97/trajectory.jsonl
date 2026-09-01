@@ -1,1 +1,0 @@
-{"id":"angstromctf2016__rsa-93131a6e97","sample_type":"main","messages":[{"role":"user","content":"rsa"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

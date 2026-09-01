@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  heapify-batch-45a80107dc13-3850d31437b544ac871e:
+    build: .
+    container_name: heapify-batch-45a80107dc13-3850d31437b544ac871e
+    ports:
+    - 19252:1337
+    networks:
+      ctfnet-batch-45a80107dc13-3850d31437b544ac871e:
+        aliases:
+        - heapify.angstromctf.io
+        - heapify
+    restart: unless-stopped
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-45a80107dc13-3850d31437b544ac871e:
+    name: ctfnet-batch-45a80107dc13-3850d31437b544ac871e
+    external: true

@@ -147,6 +147,32 @@ CONTAINER_HEALTH_CHECK_TIMEOUT = float(keys_config.get("SWE_AGENT_CONTAINER_HEAL
 INTERRUPT_TIMEOUT = float(keys_config.get("SWE_AGENT_INTERRUPT_TIMEOUT", 20))
 MAX_EXECUTION_RETRIES = int(keys_config.get("SWE_AGENT_MAX_EXECUTION_RETRIES", 2))
 
+CANONICAL_STATE_DEFAULTS: dict[str, str] = {
+    "working_dir": ".",
+    "open_file": "n/a",
+    "interactive_session": "n/a",
+}
+
+
+def normalize_state(state: Any) -> str:
+    """Return a complete JSON state object for every prompt path."""
+    values = dict(CANONICAL_STATE_DEFAULTS)
+    if isinstance(state, bytes):
+        state = state.decode("utf-8", errors="replace")
+    if isinstance(state, dict):
+        values.update({key: value for key, value in state.items() if value is not None})
+    elif isinstance(state, str) and state.strip():
+        raw = state.strip()
+        try:
+            start, end = raw.find("{"), raw.rfind("}")
+            candidate = raw[start:end + 1] if start >= 0 and end > start else raw
+            parsed = json.loads(candidate)
+            if isinstance(parsed, dict):
+                values.update({key: value for key, value in parsed.items() if value is not None})
+        except (TypeError, ValueError, json.JSONDecodeError):
+            pass
+    return json.dumps(values, ensure_ascii=False)
+
 # Task-level timeout configuration (30 minutes = 1800 seconds by default)
 TASK_EXECUTION_TIMEOUT = float(keys_config.get("SWE_AGENT_TASK_TIMEOUT", 1800))
 
@@ -1251,9 +1277,42 @@ class SWEEnv(gym.Env):
         hash_object = hashlib.sha256(unique_string.encode())
         image_name_sanitized = image_name.replace("/", "-")
         image_name_sanitized = image_name_sanitized.replace(":", "-")
-        resource_token = re.sub(r"[^a-z0-9-]", "", os.environ.get("ENIGMA_BATCH_ATTEMPT_ID", "").lower())[:16]
+        # Keep the complete batch token so the outer cleanup can identify the
+        # container without relying on a lossy prefix match.
+        resource_token = re.sub(r"[^a-z0-9-]", "", os.environ.get("ENIGMA_BATCH_ATTEMPT_ID", "").lower())
         prefix = f"{resource_token}-" if resource_token else ""
         return f"{prefix}{image_name_sanitized}-{hash_object.hexdigest()[:10]}"
+
+    def _write_batch_resource_manifest(self) -> None:
+        """Publish owned Docker identifiers for an outer-timeout cleanup."""
+        manifest_path = os.environ.get("ENIGMA_BATCH_RESOURCE_MANIFEST")
+        if not manifest_path:
+            return
+        payload = {
+            "attempt_token": os.environ.get("ENIGMA_BATCH_ATTEMPT_ID", ""),
+            "agent_container": self.container_name,
+            "network": self.dynamic_network_name,
+            "compose_project": getattr(self, "actual_docker_compose_project_name", None)
+            or self.docker_compose_project_name,
+            "compose_file": str(self.docker_compose) if self.docker_compose else "",
+            "labels": {
+                "com.docker.compose.project": (
+                    getattr(self, "actual_docker_compose_project_name", None)
+                    or self.docker_compose_project_name
+                )
+            } if (
+                getattr(self, "actual_docker_compose_project_name", None)
+                or self.docker_compose_project_name
+            ) else {},
+        }
+        target = Path(manifest_path)
+        temporary = target.with_suffix(target.suffix + f".{os.getpid()}.tmp")
+        try:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            temporary.write_text(json.dumps(payload, ensure_ascii=False) + "\n", encoding="utf-8")
+            temporary.replace(target)
+        except OSError as error:
+            self.logger.warning("Failed to publish Docker resource manifest: %s", error)
 
     # ctf
     def _init_docker_network(self) -> None:
@@ -1483,6 +1542,9 @@ class SWEEnv(gym.Env):
                 
                 self.docker_compose_project_name = normalized_project_name
                 self.logger.debug(f"Normalized Docker Compose project name: {raw_project_name} -> {self.docker_compose_project_name}")
+                # Publish the token, agent, project, and network before any
+                # Docker resource creation so an outer timeout can reclaim it.
+                self._write_batch_resource_manifest()
             
             # CRITICAL FIX: Create the network BEFORE generating docker-compose file
             network_to_create = self.dynamic_network_name if self.args.enable_dynamic_ports else "ctfnet"
@@ -1521,7 +1583,8 @@ class SWEEnv(gym.Env):
                 self.challenge["docker_compose"],
                 container_name_suffix=container_suffix,
                 dynamic_ports=self.args.enable_dynamic_ports,
-                challenge_internal_port=self.challenge.get("port")
+                challenge_internal_port=self.challenge.get("internal_port", self.challenge.get("port")),
+                challenge_aliases=self._ctf_server_aliases(),
             )
             
             # Use the actual project name from get_docker_compose for network discovery
@@ -1530,6 +1593,7 @@ class SWEEnv(gym.Env):
                 self.logger.debug(f"Actual Docker Compose project name from utils: {actual_project_name}")
             else:
                 self.actual_docker_compose_project_name = self.docker_compose_project_name
+            self._write_batch_resource_manifest()
             self.logger.info("🏗️ Initialized docker compose for challenge")
             if self.port_mappings:
                 self.logger.info(f"🔌 Dynamic port mappings: {self.port_mappings}")
@@ -1613,6 +1677,20 @@ class SWEEnv(gym.Env):
                 self.logger.debug("No network setup needed (not a CTF challenge)")
 
     # ctf
+    def _ctf_server_aliases(self) -> list[str]:
+        """Return Docker DNS aliases required by the challenge metadata."""
+        if not self.challenge or not isinstance(self.challenge.get("box"), str):
+            return []
+        server_name = self.challenge["box"].strip()
+        if not server_name:
+            return []
+        aliases = [server_name]
+        if "." in server_name and not re.fullmatch(r"\d+(?:\.\d+){3}", server_name):
+            short_name = server_name.split(".", 1)[0].strip()
+            if short_name:
+                aliases.insert(0, short_name)
+        return list(dict.fromkeys(aliases))
+
     def _validate_ctf_server_connectivity(self) -> bool:
         """
         Validate that CTF server port is accessible from within the agent container.
@@ -2113,6 +2191,8 @@ class SWEEnv(gym.Env):
             raise RuntimeError(msg)
         self.logger.info("🌱 Environment Initialized")
 
+        self._write_batch_resource_manifest()
+
     def _init_scripts(self):
         """
         Initialize custom commands within container
@@ -2187,16 +2267,16 @@ class SWEEnv(gym.Env):
                                 exit_code = "0"
                             except json.JSONDecodeError:
                                 # JSON is invalid, create minimal state
-                                buffer = '{"working_dir": ".", "open_file": "n/a", "interactive_session": "n/a"}'
+                                buffer = normalize_state(None)
                                 exit_code = "0"
                         else:
                             # No JSON found, create minimal state
-                            buffer = '{"working_dir": ".", "open_file": "n/a", "interactive_session": "n/a"}'
+                            buffer = normalize_state(None)
                             exit_code = "0"
                         self.logger.info("Recovered state command with fallback JSON")
                     except Exception:
                         # Absolute fallback
-                        buffer = '{"working_dir": ".", "open_file": "n/a", "interactive_session": "n/a"}'
+                        buffer = normalize_state(None)
                         exit_code = "0"
                 else:
                     # For non-state commands, return error message
@@ -2234,10 +2314,10 @@ class SWEEnv(gym.Env):
                             current_dir = current_dir.strip() if current_dir else "/"
                         except:
                             current_dir = "/"
-                        buffer = f'{{"working_dir": "{current_dir}", "open_file": "n/a", "interactive_session": "n/a"}}'
+                        buffer = normalize_state({"working_dir": current_dir})
                 except Exception:
                     # Fallback to absolute minimal state if everything fails
-                    buffer = '{"working_dir": ".", "open_file": "n/a", "interactive_session": "n/a"}'
+                    buffer = normalize_state(None)
                     
                 self.logger.warning("State command failed, returning fallback JSON state")
                 exit_code = "0"  # Set successful exit code for state command
@@ -2609,7 +2689,13 @@ class SWEEnv(gym.Env):
             })
             return verified
 
-        verifier = challenge.get("flagCheck") or challenge.get("flag_check") or challenge.get("verifier")
+        verifier = (
+            challenge.get("flagCheck")
+            or challenge.get("flag_check")
+            or challenge.get("verifier")
+            or verification.get("command")
+            or verification.get("checker")
+        )
         if isinstance(verifier, dict):
             verifier = verifier.get("path") or verifier.get("command")
         if verifier is None and verifier_files:
@@ -3326,7 +3412,9 @@ class SWEEnv(gym.Env):
         
         # Include the batch-attempt token when present. The parent batch
         # process uses it to reclaim resources after an outer timeout.
-        resource_token = re.sub(r"[^a-z0-9-]", "", os.environ.get("ENIGMA_BATCH_ATTEMPT_ID", "").lower())[:16]
+        # Keep the complete batch token in resource names. The batch runner
+        # uses the token as the ownership key during outer-timeout cleanup.
+        resource_token = re.sub(r"[^a-z0-9-]", "", os.environ.get("ENIGMA_BATCH_ATTEMPT_ID", "").lower())
         if resource_token:
             base_suffix = f"{resource_token}-{base_suffix}"
 
@@ -3349,7 +3437,8 @@ class SWEEnv(gym.Env):
         if len(unique_suffix) > 60:
             # Hash the suffix if it's too long
             hash_suffix = hashlib.sha256(unique_suffix.encode()).hexdigest()[:20]
-            # Keep the resource token outside the hash for timeout cleanup.
+            # Keep the complete resource token outside the hash for timeout
+            # cleanup; the token is short enough for Docker resource names.
             if resource_token:
                 unique_suffix = f"{resource_token}-{hash_suffix}"
             else:

@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  giveup-batch-c99f56c44d55-1af6a2559f77e2d5f9e0:
+    build: .
+    ports:
+    - 16225:1337
+    networks:
+      ctfnet-batch-c99f56c44d55-1af6a2559f77e2d5f9e0:
+        aliases:
+        - giveup.byuctf.io
+        - giveup
+    container_name: giveup-batch-c99f56c44d55-1af6a2559f77e2d5f9e0
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-c99f56c44d55-1af6a2559f77e2d5f9e0:
+    name: ctfnet-batch-c99f56c44d55-1af6a2559f77e2d5f9e0
+    external: true

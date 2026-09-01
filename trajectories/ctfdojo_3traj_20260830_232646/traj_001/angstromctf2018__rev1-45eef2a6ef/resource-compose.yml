@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  rev1-batch-a1ac150b82d7-155a6b2d856ba0f43832:
+    build: .
+    container_name: rev1-batch-a1ac150b82d7-155a6b2d856ba0f43832
+    ports:
+    - 10951:1337
+    networks:
+      ctfnet-batch-a1ac150b82d7-155a6b2d856ba0f43832:
+        aliases:
+        - rev1.angstromctf.io
+        - rev1
+    restart: unless-stopped
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-a1ac150b82d7-155a6b2d856ba0f43832:
+    name: ctfnet-batch-a1ac150b82d7-155a6b2d856ba0f43832
+    external: true

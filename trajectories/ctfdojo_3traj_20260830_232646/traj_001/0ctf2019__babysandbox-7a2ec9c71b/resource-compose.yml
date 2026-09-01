@@ -1,0 +1,19 @@
+version: '3'
+services:
+  babysandbox-batch-4e1f960721d8-340e3a98563dab082d5d:
+    build: .
+    ports:
+    - 17686:1337
+    networks:
+      ctfnet-batch-4e1f960721d8-340e3a98563dab082d5d:
+        aliases:
+        - babysandbox.0ctf.io
+        - babysandbox
+    container_name: babysandbox-batch-4e1f960721d8-340e3a98563dab082d5d
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-4e1f960721d8-340e3a98563dab082d5d:
+    name: ctfnet-batch-4e1f960721d8-340e3a98563dab082d5d
+    external: true

@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  forensics300-batch-d85fe5d1e7be-4d72d760a939bd94ed4d:
+    build: .
+    ports:
+    - 14215:1337
+    networks:
+      ctfnet-batch-d85fe5d1e7be-4d72d760a939bd94ed4d:
+        aliases:
+        - forensics300.codegate2011.io
+        - forensics300
+    container_name: forensics300-batch-d85fe5d1e7be-4d72d760a939bd94ed4d
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-d85fe5d1e7be-4d72d760a939bd94ed4d:
+    name: ctfnet-batch-d85fe5d1e7be-4d72d760a939bd94ed4d
+    external: true

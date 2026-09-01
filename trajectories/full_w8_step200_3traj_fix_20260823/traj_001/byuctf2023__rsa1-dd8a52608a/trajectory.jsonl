@@ -1,1 +1,0 @@
-{"id":"byuctf2023__rsa1-dd8a52608a","sample_type":"main","messages":[{"role":"user","content":"rsa1"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

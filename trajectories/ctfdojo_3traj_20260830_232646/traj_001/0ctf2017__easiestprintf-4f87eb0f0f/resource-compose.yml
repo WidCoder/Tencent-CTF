@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  easiestprintf-batch-0d87514b501f-bdbf841167a44d109409:
+    build: .
+    ports:
+    - 19706:1337
+    networks:
+      ctfnet-batch-0d87514b501f-bdbf841167a44d109409:
+        aliases:
+        - easiestprintf.0ctf.io
+        - easiestprintf
+    container_name: easiestprintf-batch-0d87514b501f-bdbf841167a44d109409
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-0d87514b501f-bdbf841167a44d109409:
+    name: ctfnet-batch-0d87514b501f-bdbf841167a44d109409
+    external: true

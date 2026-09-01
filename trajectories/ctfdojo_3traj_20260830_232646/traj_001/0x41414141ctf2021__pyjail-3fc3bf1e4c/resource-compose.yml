@@ -1,0 +1,19 @@
+version: '3'
+services:
+  pyjail-batch-145daa178566-a4c54a04c2342d4a005d:
+    build: .
+    ports:
+    - 13358:1337
+    networks:
+      ctfnet-batch-145daa178566-a4c54a04c2342d4a005d:
+        aliases:
+        - pyjail.0x41414141ctf.io
+        - pyjail
+    container_name: pyjail-batch-145daa178566-a4c54a04c2342d4a005d
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-145daa178566-a4c54a04c2342d4a005d:
+    name: ctfnet-batch-145daa178566-a4c54a04c2342d4a005d
+    external: true

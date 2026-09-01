@@ -1,1 +1,0 @@
-{"id":"imaginaryctf2022__cbc-d843f4171d","sample_type":"main","messages":[{"role":"user","content":"cbc"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

@@ -1,1 +1,0 @@
-{"id":"csawctf2014__bo-ef9023ee1f","sample_type":"main","messages":[{"role":"user","content":"bo"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

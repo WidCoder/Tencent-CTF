@@ -1,1 +1,0 @@
-{"id":"downunderctf2021__flagchecker-51ab472b1d","sample_type":"main","messages":[{"role":"user","content":"flagchecker"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

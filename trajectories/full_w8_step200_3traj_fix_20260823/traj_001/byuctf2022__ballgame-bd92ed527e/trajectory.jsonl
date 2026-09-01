@@ -1,1 +1,0 @@
-{"id":"byuctf2022__ballgame-bd92ed527e","sample_type":"main","messages":[{"role":"user","content":"ballgame"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

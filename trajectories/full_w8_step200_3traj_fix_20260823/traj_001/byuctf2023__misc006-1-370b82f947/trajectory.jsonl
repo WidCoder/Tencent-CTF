@@ -1,1 +1,0 @@
-{"id":"byuctf2023__misc006-1-370b82f947","sample_type":"main","messages":[{"role":"user","content":"misc006-1"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

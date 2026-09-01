@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  challenge-batch-d08c7cd7fcf9-c2eb6504aed2669b4714:
+    build: .
+    ports:
+    - 10518:1337
+    networks:
+      ctfnet-batch-d08c7cd7fcf9-c2eb6504aed2669b4714:
+        aliases:
+        - linux.csawctf.io
+        - challenge
+        - linux
+    restart: unless-stopped
+    container_name: challenge-batch-d08c7cd7fcf9-c2eb6504aed2669b4714
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-d08c7cd7fcf9-c2eb6504aed2669b4714:
+    name: ctfnet-batch-d08c7cd7fcf9-c2eb6504aed2669b4714
+    external: true

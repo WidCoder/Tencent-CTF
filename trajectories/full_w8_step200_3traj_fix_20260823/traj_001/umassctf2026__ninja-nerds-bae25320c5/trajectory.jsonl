@@ -1,1 +1,0 @@
-{"id":"umassctf2026__ninja-nerds-bae25320c5","sample_type":"main","messages":[{"role":"user","content":"ninja-nerds"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

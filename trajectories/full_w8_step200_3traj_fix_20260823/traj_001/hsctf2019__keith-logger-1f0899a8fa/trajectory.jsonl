@@ -1,1 +1,0 @@
-{"id":"hsctf2019__keith-logger-1f0899a8fa","sample_type":"main","messages":[{"role":"user","content":"keith-logger"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

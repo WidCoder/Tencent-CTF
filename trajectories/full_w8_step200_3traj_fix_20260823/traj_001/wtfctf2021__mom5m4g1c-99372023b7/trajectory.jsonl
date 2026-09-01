@@ -1,1 +1,0 @@
-{"id":"wtfctf2021__mom5m4g1c-99372023b7","sample_type":"main","messages":[{"role":"user","content":"mom5m4g1c"},{"role":"assistant","content":"environment_reset","reasoning_content":""},{"role":"tool","content":"CTF server is not accessible even after restart attempts. Task terminated."}]}

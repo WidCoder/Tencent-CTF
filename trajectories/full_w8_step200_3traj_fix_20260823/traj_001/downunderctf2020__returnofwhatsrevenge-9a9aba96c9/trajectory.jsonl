@@ -1,1 +1,0 @@
-{"id":"downunderctf2020__returnofwhatsrevenge-9a9aba96c9","sample_type":"main","messages":[{"role":"user","content":"returnofwhatsrevenge"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

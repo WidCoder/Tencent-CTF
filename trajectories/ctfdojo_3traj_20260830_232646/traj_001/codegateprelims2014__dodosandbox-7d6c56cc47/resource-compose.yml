@@ -1,0 +1,19 @@
+version: '3'
+services:
+  dodosandbox-batch-ca5d34d427d5-9bf32437bfd088292823:
+    build: .
+    ports:
+    - 14392:1337
+    networks:
+      ctfnet-batch-ca5d34d427d5-9bf32437bfd088292823:
+        aliases:
+        - dodosandbox.codegate.io
+        - dodosandbox
+    container_name: dodosandbox-batch-ca5d34d427d5-9bf32437bfd088292823
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-ca5d34d427d5-9bf32437bfd088292823:
+    name: ctfnet-batch-ca5d34d427d5-9bf32437bfd088292823
+    external: true

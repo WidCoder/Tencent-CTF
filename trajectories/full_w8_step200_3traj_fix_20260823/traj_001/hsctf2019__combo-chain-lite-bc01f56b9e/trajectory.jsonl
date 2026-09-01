@@ -1,1 +1,0 @@
-{"id":"hsctf2019__combo-chain-lite-bc01f56b9e","sample_type":"main","messages":[{"role":"user","content":"combo-chain-lite"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to attach container to CTF network: Failed to communicate with container"}]}

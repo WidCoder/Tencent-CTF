@@ -1,0 +1,18 @@
+services:
+  philosophy-batch-df0854917794-8f255e5d0a596c939e42:
+    build: .
+    ports:
+    - 10394:1337
+    networks:
+      ctfnet-batch-df0854917794-8f255e5d0a596c939e42:
+        aliases:
+        - philosophy.angstromctf.io
+        - philosophy
+    container_name: philosophy-batch-df0854917794-8f255e5d0a596c939e42
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-df0854917794-8f255e5d0a596c939e42:
+    name: ctfnet-batch-df0854917794-8f255e5d0a596c939e42
+    external: true

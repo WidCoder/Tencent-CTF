@@ -1,0 +1,19 @@
+version: '3'
+services:
+  freenote2018-batch-1a2378ba3204-fc4bb27d916875c5bafe:
+    build: .
+    ports:
+    - 15442:1337
+    networks:
+      ctfnet-batch-1a2378ba3204-fc4bb27d916875c5bafe:
+        aliases:
+        - freenote.0ctf.io
+        - freenote2018
+    container_name: freenote2018-batch-1a2378ba3204-fc4bb27d916875c5bafe
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-1a2378ba3204-fc4bb27d916875c5bafe:
+    name: ctfnet-batch-1a2378ba3204-fc4bb27d916875c5bafe
+    external: true

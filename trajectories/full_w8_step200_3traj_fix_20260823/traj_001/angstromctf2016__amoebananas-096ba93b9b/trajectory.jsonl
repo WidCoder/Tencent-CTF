@@ -1,1 +1,0 @@
-{"id":"angstromctf2016__amoebananas-096ba93b9b","sample_type":"main","messages":[{"role":"user","content":"amoebananas"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

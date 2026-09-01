@@ -1,0 +1,19 @@
+services:
+  securerepititions-batch-13dec455bb3d-e32c50388a71707e28f7:
+    build: .
+    ports:
+    - 11135:1337
+    networks:
+      ctfnet-batch-13dec455bb3d-e32c50388a71707e28f7:
+        aliases:
+        - securerep.cactusconctf.io
+        - securerepititions
+        - securerep
+    container_name: securerepititions-batch-13dec455bb3d-e32c50388a71707e28f7
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-13dec455bb3d-e32c50388a71707e28f7:
+    name: ctfnet-batch-13dec455bb3d-e32c50388a71707e28f7
+    external: true

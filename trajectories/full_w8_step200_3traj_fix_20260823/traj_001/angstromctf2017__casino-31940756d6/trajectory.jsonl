@@ -1,1 +1,0 @@
-{"id":"angstromctf2017__casino-31940756d6","sample_type":"main","messages":[{"role":"user","content":"casino"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to attach container to CTF network: Failed to get container object."}]}

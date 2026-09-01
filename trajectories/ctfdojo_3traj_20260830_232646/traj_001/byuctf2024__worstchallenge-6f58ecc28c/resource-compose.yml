@@ -1,0 +1,20 @@
+version: '3'
+services:
+  challenge-batch-59abefbfc235-7ad6be89607b127188af:
+    build: .
+    ports:
+    - 15981:1337
+    networks:
+      ctfnet-batch-59abefbfc235-7ad6be89607b127188af:
+        aliases:
+        - worstchallenge.byuctf.io
+        - challenge
+        - worstchallenge
+    container_name: challenge-batch-59abefbfc235-7ad6be89607b127188af
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-59abefbfc235-7ad6be89607b127188af:
+    name: ctfnet-batch-59abefbfc235-7ad6be89607b127188af
+    external: true

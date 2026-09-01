@@ -1,1 +1,0 @@
-{"id":"utctf2026__qrecreate-c82dc53c6b","sample_type":"main","messages":[{"role":"user","content":"qrecreate"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

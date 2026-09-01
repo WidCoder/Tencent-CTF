@@ -1,1 +1,0 @@
-{"id":"angstromctf2019__lithp-eca00f4b15","sample_type":"main","messages":[{"role":"user","content":"lithp"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

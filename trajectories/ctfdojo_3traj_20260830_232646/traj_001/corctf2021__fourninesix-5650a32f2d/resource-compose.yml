@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  fourninesix-batch-7adf36cae589-1d5f2e0bda5dd3d2d7b0:
+    build: .
+    ports:
+    - 14117:1337
+    networks:
+      ctfnet-batch-7adf36cae589-1d5f2e0bda5dd3d2d7b0:
+        aliases:
+        - fourninesix.corctf.io
+        - fourninesix
+    container_name: fourninesix-batch-7adf36cae589-1d5f2e0bda5dd3d2d7b0
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-7adf36cae589-1d5f2e0bda5dd3d2d7b0:
+    name: ctfnet-batch-7adf36cae589-1d5f2e0bda5dd3d2d7b0
+    external: true

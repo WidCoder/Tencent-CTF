@@ -1,1 +1,0 @@
-{"id":"codegateprelims2014__automata-16578b2814","sample_type":"main","messages":[{"role":"user","content":"automata"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

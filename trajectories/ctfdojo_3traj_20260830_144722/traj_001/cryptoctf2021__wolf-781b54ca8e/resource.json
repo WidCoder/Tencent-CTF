@@ -1,0 +1,1 @@
+{"attempt_token": "batch-f8615d3b02f3", "agent_container": "batch-f8615d3b02-sweagent-enigma-latest-53edb3dc9d", "network": "ctfnet-batch-f8615d3b02-1af65e7039339ff4faf5", "compose_project": "repo_batch_f8615d3b02_1af65e7039339ff4faf5", "compose_file": "", "labels": {"com.docker.compose.project": "repo_batch_f8615d3b02_1af65e7039339ff4faf5"}}

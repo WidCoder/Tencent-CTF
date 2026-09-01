@@ -1,0 +1,10 @@
+{
+  "agent_container": "batch-a1ac150b82d7-sweagent-enigma-latest-f238cd7a68",
+  "attempt_token": "batch-a1ac150b82d7",
+  "compose_file": "/data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/angstromctf2018__rev1-45eef2a6ef/resource-compose.yml",
+  "compose_project": "repo_batch_a1ac150b82d7_155a6b2d856ba0f43832",
+  "labels": {
+    "com.docker.compose.project": "repo_batch_a1ac150b82d7_155a6b2d856ba0f43832"
+  },
+  "network": "ctfnet-batch-a1ac150b82d7-155a6b2d856ba0f43832"
+}

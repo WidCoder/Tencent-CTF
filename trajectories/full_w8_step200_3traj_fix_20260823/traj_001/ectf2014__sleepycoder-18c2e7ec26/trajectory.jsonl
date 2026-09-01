@@ -1,1 +1,0 @@
-{"id":"ectf2014__sleepycoder-18c2e7ec26","sample_type":"main","messages":[{"role":"user","content":"sleepycoder"},{"role":"assistant","content":"environment_reset","reasoning_content":""},{"role":"tool","content":"CTF server is not accessible even after restart attempts. Task terminated."}]}

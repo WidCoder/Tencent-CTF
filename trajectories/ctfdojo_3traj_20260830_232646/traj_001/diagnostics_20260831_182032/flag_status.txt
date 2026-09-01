@@ -1,0 +1,11 @@
+     60 true	false	unsolved	task_timeout
+     60 false	null	unsolved	early_exit
+     56 false	null	unsolved	task_timeout
+     11 true	false	unsolved	early_exit
+     10 false	null	unsolved	runner_exception
+      4 false	null	unsolved	model_timeout
+      3 true	true	solved	submitted
+      3 false	null	unsolved	exit_api
+      2 true	false	unsolved	runner_exception
+      2 false	null	unsolved	step_200_hit
+      1 false	null	unsolved	exit_format

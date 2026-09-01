@@ -1,1 +1,0 @@
-{"id":"tjctf2026__delta-doodle-49860ae5cd","sample_type":"main","messages":[{"role":"user","content":"delta-doodle"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

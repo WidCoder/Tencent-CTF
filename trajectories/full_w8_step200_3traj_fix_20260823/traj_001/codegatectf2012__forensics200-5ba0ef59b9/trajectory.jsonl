@@ -1,1 +1,0 @@
-{"id":"codegatectf2012__forensics200-5ba0ef59b9","sample_type":"main","messages":[{"role":"user","content":"forensics200"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to attach container to CTF network: Container disappeared after creation"}]}

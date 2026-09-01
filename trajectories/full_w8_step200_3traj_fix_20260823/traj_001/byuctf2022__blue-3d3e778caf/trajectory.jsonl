@@ -1,1 +1,0 @@
-{"id":"byuctf2022__blue-3d3e778caf","sample_type":"main","messages":[{"role":"user","content":"blue"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

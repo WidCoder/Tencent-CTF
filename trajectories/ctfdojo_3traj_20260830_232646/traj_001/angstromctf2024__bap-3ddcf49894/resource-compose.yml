@@ -1,0 +1,19 @@
+version: '3'
+services:
+  bap-batch-0c7cbc736d84-83934af1ceee788315f7:
+    build: .
+    ports:
+    - 13377:1337
+    networks:
+      ctfnet-batch-0c7cbc736d84-83934af1ceee788315f7:
+        aliases:
+        - bap.angstromctf.io
+        - bap
+    container_name: bap-batch-0c7cbc736d84-83934af1ceee788315f7
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-0c7cbc736d84-83934af1ceee788315f7:
+    name: ctfnet-batch-0c7cbc736d84-83934af1ceee788315f7
+    external: true

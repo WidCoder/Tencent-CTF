@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  staple-aes-batch-a97e55a9f492-ccb23c2da369daf3b911:
+    build: .
+    ports:
+    - 17588:1337
+    networks:
+      ctfnet-batch-a97e55a9f492-ccb23c2da369daf3b911:
+        aliases:
+        - staple-aes.0x41414141ctf.io
+        - staple-aes
+    container_name: staple-aes-batch-a97e55a9f492-ccb23c2da369daf3b911
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-a97e55a9f492-ccb23c2da369daf3b911:
+    name: ctfnet-batch-a97e55a9f492-ccb23c2da369daf3b911
+    external: true

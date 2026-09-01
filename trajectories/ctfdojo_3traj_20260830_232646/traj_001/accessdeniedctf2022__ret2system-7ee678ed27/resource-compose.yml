@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  ret2system-batch-e5010b5a6fa0-c302083f10b5db222683:
+    build: .
+    ports:
+    - 19679:1337
+    networks:
+      ctfnet-batch-e5010b5a6fa0-c302083f10b5db222683:
+        aliases:
+        - ret2system.accessdeniedctf.io
+        - ret2system
+    container_name: ret2system-batch-e5010b5a6fa0-c302083f10b5db222683
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-e5010b5a6fa0-c302083f10b5db222683:
+    name: ctfnet-batch-e5010b5a6fa0-c302083f10b5db222683
+    external: true

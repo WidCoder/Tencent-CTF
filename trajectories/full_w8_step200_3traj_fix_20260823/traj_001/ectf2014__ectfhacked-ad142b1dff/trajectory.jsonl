@@ -1,1 +1,0 @@
-{"id":"ectf2014__ectfhacked-ad142b1dff","sample_type":"main","messages":[{"role":"user","content":"ectfhacked"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

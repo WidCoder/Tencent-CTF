@@ -1,0 +1,19 @@
+version: '3'
+services:
+  team-batch-7ca9b5692826-2418d13f681a42957cd2:
+    build: .
+    ports:
+    - 14059:1337
+    networks:
+      ctfnet-batch-7ca9b5692826-2418d13f681a42957cd2:
+        aliases:
+        - team.backdoorctf.io
+        - team
+    container_name: team-batch-7ca9b5692826-2418d13f681a42957cd2
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-7ca9b5692826-2418d13f681a42957cd2:
+    name: ctfnet-batch-7ca9b5692826-2418d13f681a42957cd2
+    external: true

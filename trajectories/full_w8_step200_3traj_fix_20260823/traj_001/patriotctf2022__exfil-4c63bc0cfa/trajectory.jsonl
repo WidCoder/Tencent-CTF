@@ -1,1 +1,0 @@
-{"id":"patriotctf2022__exfil-4c63bc0cfa","sample_type":"main","messages":[{"role":"user","content":"exfil"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

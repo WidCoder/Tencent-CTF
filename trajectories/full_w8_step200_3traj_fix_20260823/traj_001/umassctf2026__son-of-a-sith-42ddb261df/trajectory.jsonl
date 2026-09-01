@@ -1,1 +1,0 @@
-{"id":"umassctf2026__son-of-a-sith-42ddb261df","sample_type":"main","messages":[{"role":"user","content":"son-of-a-sith"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

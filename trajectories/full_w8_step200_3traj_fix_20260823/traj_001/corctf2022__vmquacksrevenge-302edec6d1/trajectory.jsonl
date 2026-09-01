@@ -1,1 +1,0 @@
-{"id":"corctf2022__vmquacksrevenge-302edec6d1","sample_type":"main","messages":[{"role":"user","content":"vmquacksrevenge"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

@@ -1,1 +1,0 @@
-{"id":"lactf2026__thefish-39fa1ac412","sample_type":"main","messages":[{"role":"user","content":"thefish"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

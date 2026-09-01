@@ -1,1 +1,0 @@
-{"id":"breakthesyntaxctf2026__my-first-game-d80a8ca24f","sample_type":"main","messages":[{"role":"user","content":"my-first-game"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

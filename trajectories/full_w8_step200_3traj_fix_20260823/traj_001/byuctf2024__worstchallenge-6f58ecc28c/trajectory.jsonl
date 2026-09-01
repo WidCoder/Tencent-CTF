@@ -1,1 +1,0 @@
-{"id":"byuctf2024__worstchallenge-6f58ecc28c","sample_type":"main","messages":[{"role":"user","content":"worstchallenge"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

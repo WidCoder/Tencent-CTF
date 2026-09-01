@@ -1,1 +1,0 @@
-{"id":"downunderctf2022__rsaoracle1-8819a16f51","sample_type":"main","messages":[{"role":"user","content":"rsaoracle1"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to attach container to CTF network: Container disappeared after creation"}]}

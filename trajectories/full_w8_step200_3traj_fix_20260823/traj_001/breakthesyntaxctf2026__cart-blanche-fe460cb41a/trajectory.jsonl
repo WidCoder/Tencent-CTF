@@ -1,1 +1,0 @@
-{"id":"breakthesyntaxctf2026__cart-blanche-fe460cb41a","sample_type":"main","messages":[{"role":"user","content":"cart-blanche"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

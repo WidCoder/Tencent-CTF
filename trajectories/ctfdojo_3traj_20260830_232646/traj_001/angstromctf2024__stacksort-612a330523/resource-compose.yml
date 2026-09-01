@@ -1,0 +1,19 @@
+version: '3'
+services:
+  stacksort-batch-236288b33367-a95e81cf1d9e01829170:
+    build: .
+    ports:
+    - 16301:1337
+    networks:
+      ctfnet-batch-236288b33367-a95e81cf1d9e01829170:
+        aliases:
+        - stacksort.angstromctf.io
+        - stacksort
+    container_name: stacksort-batch-236288b33367-a95e81cf1d9e01829170
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-236288b33367-a95e81cf1d9e01829170:
+    name: ctfnet-batch-236288b33367-a95e81cf1d9e01829170
+    external: true

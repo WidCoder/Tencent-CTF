@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  fibinary-batch-060bd63bd4fa-5c33d64f9d1f11f38ccb:
+    build: .
+    ports:
+    - 17827:1337
+    networks:
+      ctfnet-batch-060bd63bd4fa-5c33d64f9d1f11f38ccb:
+        aliases:
+        - fibinary.corctf.io
+        - fibinary
+    container_name: fibinary-batch-060bd63bd4fa-5c33d64f9d1f11f38ccb
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-060bd63bd4fa-5c33d64f9d1f11f38ccb:
+    name: ctfnet-batch-060bd63bd4fa-5c33d64f9d1f11f38ccb
+    external: true

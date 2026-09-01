@@ -1,0 +1,19 @@
+version: '3'
+services:
+  applicative-batch-df03c796306b-70bec67d94591ca729b8:
+    build: .
+    ports:
+    - 17602:1337
+    networks:
+      ctfnet-batch-df03c796306b-70bec67d94591ca729b8:
+        aliases:
+        - applicative.csawctf.io
+        - applicative
+    container_name: applicative-batch-df03c796306b-70bec67d94591ca729b8
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-df03c796306b-70bec67d94591ca729b8:
+    name: ctfnet-batch-df03c796306b-70bec67d94591ca729b8
+    external: true

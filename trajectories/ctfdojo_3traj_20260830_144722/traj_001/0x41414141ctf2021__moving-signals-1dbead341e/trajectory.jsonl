@@ -1,0 +1,1 @@
+{"id":"0x41414141ctf2021__moving-signals-1dbead341e","sample_type":"main","messages":[{"role":"user","content":"moving-signals"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Path /tmp/enigma-moving-signals-fgat0svr/repo/moving-signals does not exist, cannot copy it to container."}]}

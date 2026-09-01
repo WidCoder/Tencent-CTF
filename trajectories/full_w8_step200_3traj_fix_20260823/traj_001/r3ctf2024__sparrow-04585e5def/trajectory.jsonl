@@ -1,1 +1,0 @@
-{"id":"r3ctf2024__sparrow-04585e5def","sample_type":"main","messages":[{"role":"user","content":"sparrow"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to attach container to CTF network: Container sweagent-enigma-latest-cd5f38877b not found"}]}

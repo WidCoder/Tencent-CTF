@@ -1,0 +1,10 @@
+{
+  "agent_container": "batch-df0854917794-sweagent-enigma-latest-dda978abf0",
+  "attempt_token": "batch-df0854917794",
+  "compose_file": "/data2/nfs/wangyingqi/Cyber-Zero/trajectories/ctfdojo_3traj_20260830_232646/traj_001/angstromctf2024__philosophy-12b2af64e8/resource-compose.yml",
+  "compose_project": "repo_batch_df0854917794_8f255e5d0a596c939e42",
+  "labels": {
+    "com.docker.compose.project": "repo_batch_df0854917794_8f255e5d0a596c939e42"
+  },
+  "network": "ctfnet-batch-df0854917794-8f255e5d0a596c939e42"
+}

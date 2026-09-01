@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  findthekey-batch-82dd3005214d-7af1ee25008201980c75:
+    build: .
+    ports:
+    - 18257:1337
+    networks:
+      ctfnet-batch-82dd3005214d-7af1ee25008201980c75:
+        aliases:
+        - findthekey.29c3ctf.io
+        - findthekey
+    container_name: findthekey-batch-82dd3005214d-7af1ee25008201980c75
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-82dd3005214d-7af1ee25008201980c75:
+    name: ctfnet-batch-82dd3005214d-7af1ee25008201980c75
+    external: true

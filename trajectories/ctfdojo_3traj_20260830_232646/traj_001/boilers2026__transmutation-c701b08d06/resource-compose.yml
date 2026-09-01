@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  transmutation-batch-f44ddc104f42-08f0a4fb9c250841e4f9:
+    build: .
+    ports:
+    - 15561:1337
+    networks:
+      ctfnet-batch-f44ddc104f42-08f0a4fb9c250841e4f9:
+        aliases:
+        - transmutation.boilers.io
+        - transmutation
+    container_name: transmutation-batch-f44ddc104f42-08f0a4fb9c250841e4f9
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-f44ddc104f42-08f0a4fb9c250841e4f9:
+    name: ctfnet-batch-f44ddc104f42-08f0a4fb9c250841e4f9
+    external: true

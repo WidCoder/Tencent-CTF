@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  soul-batch-ff6213051580-3e844ef3ad455a2ee714:
+    build: .
+    container_name: soul-batch-ff6213051580-3e844ef3ad455a2ee714
+    ports:
+    - 11972:1337
+    networks:
+      ctfnet-batch-ff6213051580-3e844ef3ad455a2ee714:
+        aliases:
+        - soul.0x41414141ctf.io
+        - soul
+    restart: unless-stopped
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-ff6213051580-3e844ef3ad455a2ee714:
+    name: ctfnet-batch-ff6213051580-3e844ef3ad455a2ee714
+    external: true

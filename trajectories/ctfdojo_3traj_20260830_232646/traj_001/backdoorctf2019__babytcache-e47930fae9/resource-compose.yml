@@ -1,0 +1,19 @@
+version: '3'
+services:
+  babytcache-batch-82ee4aeeedf3-dfe58cc890b58492ffcc:
+    build: .
+    ports:
+    - 11281:1337
+    networks:
+      ctfnet-batch-82ee4aeeedf3-dfe58cc890b58492ffcc:
+        aliases:
+        - babytcache.backdoorctf.io
+        - babytcache
+    container_name: babytcache-batch-82ee4aeeedf3-dfe58cc890b58492ffcc
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-82ee4aeeedf3-dfe58cc890b58492ffcc:
+    name: ctfnet-batch-82ee4aeeedf3-dfe58cc890b58492ffcc
+    external: true

@@ -1,1 +1,0 @@
-{"id":"hkcertctf2021__freedom-29cdd7a686","sample_type":"main","messages":[{"role":"user","content":"freedom"},{"role":"assistant","content":"environment_reset","reasoning_content":""},{"role":"tool","content":"CTF server is not accessible even after restart attempts. Task terminated."}]}

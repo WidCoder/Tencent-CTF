@@ -1,0 +1,1 @@
+{"model_name_or_path": "glm52_10__challenge__default_ctf__t-0.00__p-0.95__k-20__c-0.00__install-1", "instance_id": "pwn_pwn2038", "model_patch": null, "challenge_name": "pwn2038", "challenge_category": "pwn", "challenge_path": "/tmp/enigma-pwn2038-c9_y4s11/repo/challenge.json"}

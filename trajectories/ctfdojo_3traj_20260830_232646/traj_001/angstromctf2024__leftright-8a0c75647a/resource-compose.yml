@@ -1,0 +1,18 @@
+services:
+  leftright-batch-2940a7da5d6e-75c775868cb5adad4cff:
+    build: .
+    ports:
+    - 17350:1337
+    networks:
+      ctfnet-batch-2940a7da5d6e-75c775868cb5adad4cff:
+        aliases:
+        - leftright.angstromctf.io
+        - leftright
+    container_name: leftright-batch-2940a7da5d6e-75c775868cb5adad4cff
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-2940a7da5d6e-75c775868cb5adad4cff:
+    name: ctfnet-batch-2940a7da5d6e-75c775868cb5adad4cff
+    external: true

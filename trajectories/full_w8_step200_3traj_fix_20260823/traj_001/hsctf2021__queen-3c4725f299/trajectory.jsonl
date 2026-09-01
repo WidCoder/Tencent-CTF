@@ -1,1 +1,0 @@
-{"id":"hsctf2021__queen-3c4725f299","sample_type":"main","messages":[{"role":"user","content":"queen"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

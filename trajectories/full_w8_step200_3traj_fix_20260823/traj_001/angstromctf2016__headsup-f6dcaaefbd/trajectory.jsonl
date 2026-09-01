@@ -1,1 +1,0 @@
-{"id":"angstromctf2016__headsup-f6dcaaefbd","sample_type":"main","messages":[{"role":"user","content":"headsup"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

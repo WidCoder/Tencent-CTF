@@ -1,0 +1,19 @@
+version: '3'
+services:
+  themectl-batch-ac68e30cb0ef-d9feb7d31f73e8a741e2:
+    build: .
+    ports:
+    - 10352:1337
+    networks:
+      ctfnet-batch-ac68e30cb0ef-d9feb7d31f73e8a741e2:
+        aliases:
+        - themectl.angstromctf.io
+        - themectl
+    container_name: themectl-batch-ac68e30cb0ef-d9feb7d31f73e8a741e2
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-ac68e30cb0ef-d9feb7d31f73e8a741e2:
+    name: ctfnet-batch-ac68e30cb0ef-d9feb7d31f73e8a741e2
+    external: true

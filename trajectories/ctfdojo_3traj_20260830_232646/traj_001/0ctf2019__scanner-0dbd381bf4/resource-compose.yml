@@ -1,0 +1,19 @@
+version: '3'
+services:
+  scanner-batch-620bad67d9a0-94185813ee6fee252cc4:
+    build: .
+    ports:
+    - 19836:1337
+    networks:
+      ctfnet-batch-620bad67d9a0-94185813ee6fee252cc4:
+        aliases:
+        - scanner.0ctf.io
+        - scanner
+    container_name: scanner-batch-620bad67d9a0-94185813ee6fee252cc4
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-620bad67d9a0-94185813ee6fee252cc4:
+    name: ctfnet-batch-620bad67d9a0-94185813ee6fee252cc4
+    external: true

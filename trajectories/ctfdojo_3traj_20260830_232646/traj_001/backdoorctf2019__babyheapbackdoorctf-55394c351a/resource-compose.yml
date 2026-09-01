@@ -1,0 +1,20 @@
+version: '3'
+services:
+  babyheapbackdoorctf-batch-ed15973b0d45-80f2227e6b7547f006b0:
+    build: .
+    ports:
+    - 12662:1337
+    networks:
+      ctfnet-batch-ed15973b0d45-80f2227e6b7547f006b0:
+        aliases:
+        - babyheap.backdoorctf.io
+        - babyheapbackdoorctf
+        - babyheap
+    container_name: babyheapbackdoorctf-batch-ed15973b0d45-80f2227e6b7547f006b0
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-ed15973b0d45-80f2227e6b7547f006b0:
+    name: ctfnet-batch-ed15973b0d45-80f2227e6b7547f006b0
+    external: true

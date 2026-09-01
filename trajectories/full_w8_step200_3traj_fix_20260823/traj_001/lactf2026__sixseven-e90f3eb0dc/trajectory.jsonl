@@ -1,1 +1,0 @@
-{"id":"lactf2026__sixseven-e90f3eb0dc","sample_type":"main","messages":[{"role":"user","content":"sixseven"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

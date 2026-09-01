@@ -1,1 +1,0 @@
-{"id":"cryptoversectf2022__bigrabin-1e63e34216","sample_type":"main","messages":[{"role":"user","content":"bigrabin"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to attach container to CTF network: Container sweagent-enigma-latest-85d6418d5c not found"}]}

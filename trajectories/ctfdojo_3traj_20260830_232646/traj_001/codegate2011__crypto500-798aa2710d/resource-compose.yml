@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  crypto500-batch-e07467b8be00-1c90c55a8c4f0c986aaf:
+    build: .
+    ports:
+    - 18502:1337
+    networks:
+      ctfnet-batch-e07467b8be00-1c90c55a8c4f0c986aaf:
+        aliases:
+        - bobpop.codegate.io
+        - crypto500
+        - bobpop
+    container_name: crypto500-batch-e07467b8be00-1c90c55a8c4f0c986aaf
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-e07467b8be00-1c90c55a8c4f0c986aaf:
+    name: ctfnet-batch-e07467b8be00-1c90c55a8c4f0c986aaf
+    external: true

@@ -1,1 +1,0 @@
-{"id":"breakthesyntaxctf2026__poni-barn-60c05f3343","sample_type":"main","messages":[{"role":"user","content":"poni-barn"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

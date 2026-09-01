@@ -1,1 +1,0 @@
-{"id":"hsctf2019__caesars-revenge-wrapper-b74d8fda7c","sample_type":"main","messages":[{"role":"user","content":"caesars-revenge-wrapper"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to attach container to CTF network: Container sweagent-enigma-latest-ee54478695 not found"}]}

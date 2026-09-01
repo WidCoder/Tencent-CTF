@@ -235,7 +235,9 @@ def create_dynamic_docker_compose(
     original_compose_path: Path, 
     container_name_suffix: str,
     dynamic_network_name: str,
-    port_mappings: dict[str, int]
+    port_mappings: dict[str, int],
+    challenge_aliases: list[str] | None = None,
+    challenge_internal_port: int | None = None,
 ) -> Path:
     """
     Create a modified docker-compose.yml file with dynamic ports and network configuration.
@@ -248,6 +250,8 @@ def create_dynamic_docker_compose(
         container_name_suffix: Unique suffix for containers/networks
         dynamic_network_name: The exact network name we want to use
         port_mappings: Dictionary mapping internal ports to external ports
+        challenge_aliases: Hostnames from challenge metadata that must resolve
+        challenge_internal_port: Internal port identifying the challenge service
     
     Returns:
         Path to the new docker-compose.yml file (will be cleaned up automatically)
@@ -290,6 +294,11 @@ def create_dynamic_docker_compose(
     if not compose_data:
         raise ValueError("Empty or invalid docker-compose.yml file")
     
+    challenge_aliases = [
+        alias.strip() for alias in (challenge_aliases or [])
+        if isinstance(alias, str) and alias.strip()
+    ]
+
     # Update container names to include suffix for uniqueness
     if 'services' in compose_data:
         # Rename service keys and update container names
@@ -302,12 +311,34 @@ def create_dynamic_docker_compose(
         # fails DNS resolution and reports ctf_server_unavailable although
         # the service is healthy.
         original_service_names = {}
+        challenge_service_names: list[str] = []
+
+        def exposes_internal_port(service_config: dict[str, Any], target_port: str) -> bool:
+            for port_config in [
+                *(service_config.get('ports', []) or []),
+                *(service_config.get('expose', []) or []),
+            ]:
+                if isinstance(port_config, dict):
+                    if str(port_config.get('target', '')).split('/')[0] == target_port:
+                        return True
+                    continue
+                if isinstance(port_config, int) and str(port_config) == target_port:
+                    return True
+                if isinstance(port_config, str):
+                    endpoint = port_config.rsplit(':', 1)[-1]
+                    if endpoint.split('/')[0] == target_port:
+                        return True
+            return False
         
         for service_name, service_config in compose_data['services'].items():
             # Create new service name with suffix
             new_service_name = f"{service_name}-{container_name_suffix}"
             service_name_mapping[service_name] = new_service_name
             original_service_names[new_service_name] = service_name
+
+            if challenge_internal_port is not None and isinstance(service_config, dict):
+                if exposes_internal_port(service_config, str(challenge_internal_port)):
+                    challenge_service_names.append(service_name)
             
             # Update container name if present, otherwise add it
             if 'container_name' in service_config:
@@ -377,6 +408,15 @@ def create_dynamic_docker_compose(
             # Store service with new name
             new_services[new_service_name] = service_config
             logger.debug(f"Renamed service: {service_name} -> {new_service_name}")
+
+        if challenge_internal_port is not None and len(challenge_service_names) != 1:
+            logger.warning(
+                "Challenge internal port %s matched %d Compose services (%s); "
+                "metadata aliases will be applied to every matching service",
+                challenge_internal_port,
+                len(challenge_service_names),
+                ", ".join(challenge_service_names) or "none",
+            )
         
         # CRITICAL FIX: Update depends_on references to use new service names
         for service_name, service_config in new_services.items():
@@ -412,13 +452,19 @@ def create_dynamic_docker_compose(
     
     # CRITICAL FIX: Reference the external network we just created
     # This ensures the network name is exactly what we want, no Docker Compose auto-naming
-    compose_data['networks'] = {
-        dynamic_network_name: {
-            'name': dynamic_network_name,
-            'external': True,  # This tells Docker Compose to use our pre-created network
-            'driver': 'bridge'  # Add driver for test compatibility
-        }
+    original_networks = compose_data.get('networks')
+    if isinstance(original_networks, dict):
+        compose_networks = dict(original_networks)
+    elif isinstance(original_networks, list):
+        # Keep the permissive legacy list form while emitting valid Compose YAML.
+        compose_networks = {network_name: {} for network_name in original_networks if isinstance(network_name, str) and network_name}
+    else:
+        compose_networks = {}
+    compose_networks[dynamic_network_name] = {
+        'name': dynamic_network_name,
+        'external': True,
     }
+    compose_data['networks'] = compose_networks
     
     # Ensure all services use the external network
     if 'services' in compose_data:
@@ -431,9 +477,17 @@ def create_dynamic_docker_compose(
                 del service_config['network_mode']
             
             original_service_name = original_service_names.get(service_name)
+            is_challenge_service = service_name.removesuffix(f"-{container_name_suffix}") in challenge_service_names
+            service_aliases = list(dict.fromkeys(
+                alias for alias in [original_service_name, *(challenge_aliases if is_challenge_service else [])]
+                if alias
+            ))
+            def network_config(aliases: list[str]) -> dict[str, Any]:
+                return {'aliases': aliases} if aliases else {}
+
             if 'networks' not in service_config:
                 service_config['networks'] = {
-                    dynamic_network_name: {'aliases': [original_service_name]}
+                    dynamic_network_name: network_config(service_aliases)
                 }
             elif isinstance(service_config['networks'], list):
                 # Replace any 'ctfnet' references with dynamic_network_name
@@ -444,7 +498,7 @@ def create_dynamic_docker_compose(
                 if dynamic_network_name not in new_networks:
                     new_networks.append(dynamic_network_name)
                 service_config['networks'] = {
-                    net_name: ({'aliases': [original_service_name]} if net_name == dynamic_network_name else {})
+                    net_name: network_config(service_aliases) if net_name == dynamic_network_name else {}
                     for net_name in new_networks
                 }
             elif isinstance(service_config['networks'], dict):
@@ -457,15 +511,29 @@ def create_dynamic_docker_compose(
                         net_config = {}
                     else:
                         net_config = dict(net_config)
-                    if target_name == dynamic_network_name and original_service_name:
-                        aliases = list(net_config.get('aliases') or [])
-                        if original_service_name not in aliases:
-                            aliases.append(original_service_name)
-                        net_config['aliases'] = aliases
+                    if target_name == dynamic_network_name:
+                        existing_aliases = net_config.get('aliases') or []
+                        aliases = (
+                            list(existing_aliases)
+                            if isinstance(existing_aliases, list)
+                            else [existing_aliases]
+                        )
+                        for alias in [*service_aliases]:
+                            if alias and alias not in aliases:
+                                aliases.append(alias)
+                        net_config['aliases'] = [alias for alias in aliases if alias]
                     new_networks[target_name] = net_config
                 if dynamic_network_name not in new_networks:
-                    new_networks[dynamic_network_name] = {'aliases': [original_service_name]}
+                    new_networks[dynamic_network_name] = network_config(service_aliases)
                 service_config['networks'] = new_networks
+            # Compose requires every service-referenced network to have a
+            # top-level definition. Preserve existing definitions and add
+            # implicit ones for legacy service-only network references.
+            for network_name in service_config.get('networks', {}):
+                if network_name != dynamic_network_name:
+                    compose_networks.setdefault(network_name, {})
+            if any(alias is None for alias in service_config.get('networks', {}).get(dynamic_network_name, {}).get('aliases', [])):
+                raise ValueError(f"service {service_name} generated a null network alias")
             logger.debug(f"Updated service {service_name} to use external network: {dynamic_network_name}")
     
     # Create temporary file
@@ -1236,7 +1304,8 @@ def get_docker_compose(
     docker_compose_path: Path, 
     container_name_suffix: str | None = None,
     dynamic_ports: bool = False,
-    challenge_internal_port: int | None = None
+    challenge_internal_port: int | None = None,
+    challenge_aliases: list[str] | None = None,
 ) -> tuple[Path, dict[str, int], str | None]:
     """
     Start docker-compose services with optional dynamic port allocation.
@@ -1246,6 +1315,7 @@ def get_docker_compose(
         container_name_suffix: Optional suffix for container names to avoid conflicts
         dynamic_ports: If True, use dynamic port allocation to avoid conflicts
         challenge_internal_port: Optional internal port from challenge.json that should be exposed
+        challenge_aliases: Hostnames from challenge.json that must resolve inside the network
         
     Returns:
         Tuple of (compose_path, port_mappings, project_name) where 
@@ -1330,7 +1400,9 @@ def get_docker_compose(
                     docker_compose_path, 
                     container_name_suffix,
                     dynamic_network_name,
-                    port_mappings
+                    port_mappings,
+                    challenge_aliases=challenge_aliases,
+                    challenge_internal_port=challenge_internal_port,
                 )
                 logger.info(f"Created dynamic docker-compose at {actual_compose_path} with port mappings: {port_mappings}")
             except Exception as e:

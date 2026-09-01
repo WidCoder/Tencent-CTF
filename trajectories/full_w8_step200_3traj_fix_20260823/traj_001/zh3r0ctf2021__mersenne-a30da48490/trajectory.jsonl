@@ -1,1 +1,0 @@
-{"id":"zh3r0ctf2021__mersenne-a30da48490","sample_type":"main","messages":[{"role":"user","content":"mersenne"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

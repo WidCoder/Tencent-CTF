@@ -1,0 +1,108 @@
+import argparse import csv import json import math from collections import defaultdict from pathlib 
+import Path from transformers import AutoTokenizer def percentile(values, ratio):
+    if not values: return 0 values = sorted(values) index = max(0, min(len(values) - 1, 
+    math.ceil(len(values) * ratio) - 1)) return values[index]
+def render(value): if value is None: return "" if isinstance(value, str): return value if 
+    isinstance(value, list):
+        return "\n".join(render(item) for item in value if render(item)) if isinstance(value, dict): if 
+        "text" in value:
+            return render(value["text"]) if "thinking" in value: return render(value["thinking"]) if 
+        "reasoning_content" in value:
+            return render(value["reasoning_content"]) if "content" in value and len(value) <= 3: return 
+            render(value["content"])
+        return json.dumps(value, ensure_ascii=False, sort_keys=True) return str(value) def 
+load_payload(path):
+    text = path.read_text(encoding="utf-8", errors="replace").strip() if not text: return {} try: return 
+        json.loads(text)
+    except json.JSONDecodeError: records = [] for line in text.splitlines(): line = line.strip() if 
+            line:
+                try: records.append(json.loads(line)) except json.JSONDecodeError: continue return 
+        records[0] if len(records) == 1 else {"records": records}
+def extract_messages(payload): if not isinstance(payload, dict): return [] messages = 
+    payload.get("messages") if isinstance(messages, list):
+        return [item for item in messages if isinstance(item, dict)] history = payload.get("history") if 
+    isinstance(history, list):
+        return [item for item in history if isinstance(item, dict)] records = payload.get("records") if 
+    isinstance(records, list):
+        result = [] for record in records: if isinstance(record, dict): 
+                result.extend(extract_messages(record))
+        return result return [] def message_text(message): parts = [] if "content" in message: 
+        parts.append(render(message["content"]))
+    for key in ("reasoning_content", "thinking", "tool_calls"): if key in message: 
+            parts.append(render(message[key]))
+    return "\n".join(part for part in parts if part) def task_status(path, root, task_id): candidates = 
+    [
+        path.parents[1] / "state.json", root / "state.json", ] for state_path in candidates: if not 
+        state_path.is_file():
+            continue try: state = json.loads(state_path.read_text(encoding="utf-8")) for record in 
+            state.get("tasks", {}).values():
+                if record.get("task_id") == task_id: return { "exit_status": record.get("exit_status", 
+                        ""), "episode_status": record.get("episode_status", ""), "outcome_status": 
+                        record.get("outcome_status", ""),
+                    }
+        except Exception: pass return { "exit_status": "", "episode_status": "", "outcome_status": "",
+    }
+def analyze(path, root, tokenizer): payload = load_payload(path) messages = extract_messages(payload) 
+    task_id = path.parent.name relative = path.relative_to(root) run_name = relative.parts[0] if 
+    relative.parts else "default" message_lengths = [] assistant_lengths = [] prompt_lengths = [] 
+    reasoning_lengths = [] tool_call_lengths = [] for message in messages:
+        text = message_text(message) length = len(tokenizer.encode(text, add_special_tokens=False)) 
+        message_lengths.append(length) role = message.get("role", "") if role == "assistant":
+            assistant_lengths.append(length) else: prompt_lengths.append(length) reasoning = 0 for key 
+        in ("reasoning_content", "thinking"):
+            if key in message: reasoning += len( tokenizer.encode( render(message[key]), 
+                        add_special_tokens=False,
+                    ) ) reasoning_lengths.append(reasoning) tool_calls = 0 if "tool_calls" in message: 
+            tool_calls = len(
+                tokenizer.encode( render(message["tool_calls"]), add_special_tokens=False, ) ) 
+        tool_call_lengths.append(tool_calls)
+    status = task_status(path, root, task_id) return { "run": run_name, "task_id": task_id, 
+        "trajectory": str(path), "messages": len(messages), "steps": sum(1 for m in messages if 
+        m.get("role") == "assistant"), "total_tokens": sum(message_lengths), "prompt_tokens": 
+        sum(prompt_lengths), "assistant_tokens": sum(assistant_lengths), "reasoning_tokens": 
+        sum(reasoning_lengths), "tool_call_tokens": sum(tool_call_lengths), "avg_message_tokens": 
+        round(sum(message_lengths) / len(message_lengths), 2) if message_lengths else 0, 
+        "avg_assistant_tokens": round(sum(assistant_lengths) / len(assistant_lengths), 2) if 
+        assistant_lengths else 0, "p50_message_tokens": percentile(message_lengths, 0.50), 
+        "p90_message_tokens": percentile(message_lengths, 0.90), "p95_message_tokens": 
+        percentile(message_lengths, 0.95), "max_message_tokens": max(message_lengths, default=0), 
+        **status,
+    }
+def write_csv(path, rows): if not rows: return with path.open("w", encoding="utf-8", newline="") as 
+    handle:
+        writer = csv.DictWriter(handle, fieldnames=list(rows[0].keys())) writer.writeheader() 
+        writer.writerows(rows)
+def main(): parser = argparse.ArgumentParser() parser.add_argument("--root", type=Path, required=True) 
+    parser.add_argument(
+        "--tokenizer", default="Qwen/Qwen2.5-7B-Instruct", ) parser.add_argument("--out", type=Path, 
+    required=True) args = parser.parse_args() tokenizer = AutoTokenizer.from_pretrained(
+        args.tokenizer, trust_remote_code=True, ) files = sorted(args.root.rglob("trajectory.jsonl")) 
+    rows = [
+        analyze(path, args.root, tokenizer) for path in files ] args.out.mkdir(parents=True, 
+    exist_ok=True) write_csv(args.out / "per_task_tokens.csv", rows) grouped = defaultdict(list) for row 
+    in rows:
+        grouped[row["run"]].append(row) summary = [] for run, items in sorted(grouped.items()): total = 
+        [item["total_tokens"] for item in items] assistant = [item["assistant_tokens"] for item in 
+        items] messages = [item["avg_message_tokens"] for item in items] summary.append({
+            "run": run, "tasks": len(items), "total_tokens": sum(total), "avg_task_tokens": 
+            round(sum(total) / len(total), 2), "p50_task_tokens": percentile(total, 0.50), 
+            "p90_task_tokens": percentile(total, 0.90), "p95_task_tokens": percentile(total, 0.95), 
+            "max_task_tokens": max(total, default=0), "avg_assistant_tokens": round(sum(assistant) / 
+            len(assistant), 2), "avg_message_tokens": round(sum(messages) / len(messages), 2),
+        })
+    write_csv(args.out / "run_summary.csv", summary) distribution = [] for row in rows: for field in ( 
+            "total_tokens", "prompt_tokens", "assistant_tokens", "reasoning_tokens", "tool_call_tokens", 
+            "avg_message_tokens", "max_message_tokens",
+        ): distribution.append({ "run": row["run"], "task_id": row["task_id"], "metric": field, "value": 
+                row[field],
+            })
+    write_csv(args.out / "token_distribution.csv", distribution) print(f"trajectory files: {len(rows)}") 
+    print(f"output directory: {args.out}")
+if __name__ == "__main__":
+    main()
+
+
+
+
+
+

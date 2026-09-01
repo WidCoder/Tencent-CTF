@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  casino-batch-51a72c9d9632-50ff621b8ea6c0153ac3:
+    build: .
+    ports:
+    - 10508:1337
+    networks:
+      ctfnet-batch-51a72c9d9632-50ff621b8ea6c0153ac3:
+        aliases:
+        - casino.angstromctf.io
+        - casino
+    restart: unless-stopped
+    container_name: casino-batch-51a72c9d9632-50ff621b8ea6c0153ac3
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-51a72c9d9632-50ff621b8ea6c0153ac3:
+    name: ctfnet-batch-51a72c9d9632-50ff621b8ea6c0153ac3
+    external: true

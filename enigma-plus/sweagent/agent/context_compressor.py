@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from dataclasses import dataclass
 from typing import Any, Callable
@@ -9,7 +10,10 @@ from typing import Any, Callable
 
 def count_tokens(messages: list[dict[str, Any]], tokenizer: Any | None = None) -> int:
     """Count message tokens using tiktoken when available, with a deterministic fallback."""
-    text = "\n".join(str(m.get("content", "")) for m in messages)
+    text = "\n".join(
+        json.dumps(m.get("content", ""), ensure_ascii=False, default=str)
+        for m in messages
+    )
     if tokenizer is not None:
         try:
             return len(tokenizer.encode(text))
@@ -57,12 +61,89 @@ class ContextCompressionManager:
         max_context_tokens: int = 128000,
         trigger_ratio: float = 0.95,
         summary_model: Callable[[list[dict[str, Any]]], Any] | None = None,
+        max_summary_input_chars: int | None = None,
+        max_summary_output_chars: int | None = None,
     ) -> None:
         self.enabled = enabled
         self.max_context_tokens = max_context_tokens
         self.trigger_ratio = trigger_ratio
         self.summary_model = summary_model
+        self.max_summary_input_chars = max_summary_input_chars or int(
+            os.environ.get("SWE_AGENT_CONTEXT_SUMMARY_INPUT_CHARS", "120000")
+        )
+        self.max_summary_output_chars = max_summary_output_chars or int(
+            os.environ.get("SWE_AGENT_CONTEXT_SUMMARY_OUTPUT_CHARS", "24000")
+        )
         self.events: list[dict[str, Any]] = []
+
+    @staticmethod
+    def _truncate(value: Any, limit: int) -> str:
+        text = value if isinstance(value, str) else str(value)
+        if len(text) <= limit:
+            return text
+        head = max(1, limit // 3)
+        tail = max(1, limit - head)
+        return text[:head] + "\n...[context truncated]...\n" + text[-tail:]
+
+    def _bounded_conversation(self, messages: list[dict[str, Any]]) -> str:
+        """Keep summary requests bounded while retaining the newest evidence."""
+        bounded: list[dict[str, Any]] = []
+        for message in messages:
+            item = dict(message)
+            if "content" in item:
+                item["content"] = self._truncate(item["content"], 24000)
+            for key in ("thought", "reasoning_content"):
+                if key in item:
+                    item[key] = self._truncate(item[key], 8000)
+            bounded.append(item)
+        serialized = json.dumps(bounded, ensure_ascii=False, indent=2, default=str)
+        if len(serialized) <= self.max_summary_input_chars:
+            return serialized
+        # The first messages contain the task contract; the tail contains the
+        # latest state. Drop only the middle, which is normally repetitive
+        # command output.
+        keep_head = bounded[:2]
+        keep_tail = bounded[-6:]
+        middle = {"role": "user", "content": "[middle history omitted during compression]"}
+        serialized = json.dumps(keep_head + [middle] + keep_tail, ensure_ascii=False, indent=2, default=str)
+        return self._truncate(serialized, self.max_summary_input_chars)
+
+    def _fit_messages(self, messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Ensure the compact history remains below the configured token budget."""
+        compact = [dict(message) for message in messages]
+        target_chars = max(4000, self.max_context_tokens * 3)
+        serialized = json.dumps(compact, ensure_ascii=False, default=str)
+        if len(serialized) <= target_chars and count_tokens(compact) <= self.max_context_tokens:
+            return compact
+        for message in compact:
+            if "content" in message:
+                message["content"] = self._truncate(message["content"], 12000)
+            for key in ("thought", "reasoning_content"):
+                if key in message:
+                    message[key] = self._truncate(message[key], 4000)
+        serialized = json.dumps(compact, ensure_ascii=False, default=str)
+        if len(serialized) <= target_chars and count_tokens(compact) <= self.max_context_tokens:
+            return compact
+        system = [m for m in compact if m.get("role") == "system"]
+        tail = [m for m in compact if m.get("role") != "system"][-6:]
+        compact = system + [{"role": "user", "content": "[older context omitted; continue from the recent history]"}] + tail
+        for message in compact:
+            if "content" in message:
+                message["content"] = self._truncate(message["content"], 4000)
+            for key in ("thought", "reasoning_content"):
+                if key in message:
+                    message[key] = self._truncate(message[key], 1000)
+        while count_tokens(compact) > self.max_context_tokens and len(tail) > 2:
+            tail = tail[1:]
+            compact = system + [{"role": "user", "content": "[older context omitted; continue from the recent history]"}] + tail
+        if count_tokens(compact) > self.max_context_tokens:
+            for message in compact:
+                if "content" in message:
+                    message["content"] = self._truncate(message["content"], 1000)
+                for key in ("thought", "reasoning_content"):
+                    if key in message:
+                        message[key] = self._truncate(message[key], 256)
+        return compact
 
     def maybe_compress(self, messages: list[dict[str, Any]]) -> CompressionResult:
         old_count = count_tokens(messages)
@@ -72,15 +153,15 @@ class ContextCompressionManager:
 
         system = [m for m in messages if m.get("role") == "system"]
         body = [m for m in messages if m.get("role") != "system"]
-        conversation = json.dumps(body, ensure_ascii=False, indent=2)
+        conversation = self._bounded_conversation(body)
         prompt = SUMMARY_PROMPT.format(conversation=conversation)
         try:
             response = self.summary_model(
                 system + [{"role": "user", "content": prompt, "agent": "context-compressor"}],
             )
-            summary = str(response)
+            summary = self._truncate(response, self.max_summary_output_chars)
         except Exception as exc:
-            summary = json.dumps({"compression_error": str(exc)}, ensure_ascii=False)
+            summary = json.dumps({"compression_error": self._truncate(exc, 4000)}, ensure_ascii=False)
 
         # Keep the system contract and a small recent tail so the next action has local detail.
         tail = body[-4:]
@@ -90,7 +171,7 @@ class ContextCompressionManager:
             "content": "Previous solving context (continue the same task and environment):\n" + summary,
             "context_summary": summary,
         }
-        compact = system + [summary_message] + tail
+        compact = self._fit_messages(system + [summary_message] + tail)
         new_count = count_tokens(compact)
         event = {
             "type": "compression",

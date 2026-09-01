@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  picochip2-batch-5500f6c53bb5-7d0c8935bc6aed8394ab:
+    build: .
+    ports:
+    - 13675:1337
+    networks:
+      ctfnet-batch-5500f6c53bb5-7d0c8935bc6aed8394ab:
+        aliases:
+        - picochip2.cryptoverse.io
+        - picochip2
+    container_name: picochip2-batch-5500f6c53bb5-7d0c8935bc6aed8394ab
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-5500f6c53bb5-7d0c8935bc6aed8394ab:
+    name: ctfnet-batch-5500f6c53bb5-7d0c8935bc6aed8394ab
+    external: true

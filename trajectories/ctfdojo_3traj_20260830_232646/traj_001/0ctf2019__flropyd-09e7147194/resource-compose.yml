@@ -1,0 +1,19 @@
+version: '3'
+services:
+  flropyd-batch-bc18d12955e6-8d7ac284b2480862a5f2:
+    build: .
+    ports:
+    - 13820:1337
+    networks:
+      ctfnet-batch-bc18d12955e6-8d7ac284b2480862a5f2:
+        aliases:
+        - flropyd.0ctf.io
+        - flropyd
+    container_name: flropyd-batch-bc18d12955e6-8d7ac284b2480862a5f2
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-bc18d12955e6-8d7ac284b2480862a5f2:
+    name: ctfnet-batch-bc18d12955e6-8d7ac284b2480862a5f2
+    external: true

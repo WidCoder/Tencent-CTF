@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  blue-batch-db3c5054c3fb-37957bd34142fc93d6ce:
+    build: .
+    ports:
+    - 15891:1337
+    networks:
+      ctfnet-batch-db3c5054c3fb-37957bd34142fc93d6ce:
+        aliases:
+        - sickofblue.byuctf.io
+        - blue
+        - sickofblue
+    container_name: blue-batch-db3c5054c3fb-37957bd34142fc93d6ce
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-db3c5054c3fb-37957bd34142fc93d6ce:
+    name: ctfnet-batch-db3c5054c3fb-37957bd34142fc93d6ce
+    external: true

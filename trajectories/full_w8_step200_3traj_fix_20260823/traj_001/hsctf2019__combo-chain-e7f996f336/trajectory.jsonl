@@ -1,1 +1,0 @@
-{"id":"hsctf2019__combo-chain-e7f996f336","sample_type":"main","messages":[{"role":"user","content":"combo-chain"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to attach container to CTF network: Container sweagent-enigma-latest-f2e1048853 not found"}]}

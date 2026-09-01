@@ -1,0 +1,32 @@
+{
+  "trajectory_schema_version": 2,
+  "environment": "swe_main",
+  "trajectory": [
+    {
+      "step_id": 1,
+      "thought": "",
+      "action": "runner_exception",
+      "tool_name": "unknown",
+      "tool_args": "",
+      "observation": "Failed to create CTF network: 400 Client Error for http+docker://localhost/v1.52/networks/create: Bad Request (\"all predefined address pools have been fully subnetted\")",
+      "return_code": null,
+      "execution_time": 0.0,
+      "error": "RuntimeError",
+      "terminal": true,
+      "response": ""
+    }
+  ],
+  "history": [],
+  "info": {
+    "artifact_type": "synthetic_error",
+    "trajectory_schema_version": 2,
+    "exit_status": "runner_exception",
+    "terminal_reason": "Failed to create CTF network: 400 Client Error for http+docker://localhost/v1.52/networks/create: Bad Request (\"all predefined address pools have been fully subnetted\")",
+    "error_type": "RuntimeError",
+    "traceback": "Traceback (most recent call last):\n  File \"/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/docker/api/client.py\", line 275, in _raise_for_status\n    response.raise_for_status()\n  File \"/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: http+docker://localhost/v1.52/networks/ctfnet-batch-9f80985689-40d130fc4d9565cd326a\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/data2/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/environment/swe_env.py\", line 1558, in _init_docker_compose_impl\n    existing_network = client.networks.get(network_to_create)\n  File \"/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/docker/models/networks.py\", line 182, in get\n    self.client.api.inspect_network(network_id, *args, **kwargs)\n  File \"/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/docker/utils/decorators.py\", line 19, in wrapped\n    return f(self, resource_id, *args, **kwargs)\n  File \"/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/docker/api/network.py\", line 212, in inspect_network\n    return self._result(res, json=True)\n  File \"/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/docker/api/client.py\", line 281, in _result\n    self._raise_for_status(response)\n  File \"/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/docker/api/client.py\", line 277, in _raise_for_status\n    raise create_api_error_from_http_exception(e) from e\n  File \"/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/docker/errors.py\", line 39, in create_api_error_from_http_exception\n    raise cls(e, response=response, explanation=explanation) from e\ndocker.errors.NotFound: 404 Client Error for http+docker://localhost/v1.52/networks/ctfnet-batch-9f80985689-40d130fc4d9565cd326a: Not Found (\"network ctfnet-batch-9f80985689-40d130fc4d9565cd326a not found\")\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/docker/api/client.py\", line 275, in _raise_for_status\n    response.raise_for_status()\n  File \"/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 400 Client Error: Bad Request for url: http+docker://localhost/v1.52/networks/create\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/data2/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/environment/swe_env.py\", line 1563, in _init_docker_compose_impl\n    client.networks.create(\n  File \"/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/docker/models/networks.py\", line 156, in create\n    resp = self.client.api.create_network(name, *args, **kwargs)\n  File \"/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/docker/api/network.py\", line 152, in create_network\n    return self._result(res, json=True)\n  File \"/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/docker/api/client.py\", line 281, in _result\n    self._raise_for_status(response)\n  File \"/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/docker/api/client.py\", line 277, in _raise_for_status\n    raise create_api_error_from_http_exception(e) from e\n  File \"/home/ubuntu/miniconda3/envs/enigma/lib/python3.10/site-packages/docker/errors.py\", line 39, in create_api_error_from_http_exception\n    raise cls(e, response=response, explanation=explanation) from e\ndocker.errors.APIError: 400 Client Error for http+docker://localhost/v1.52/networks/create: Bad Request (\"all predefined address pools have been fully subnetted\")\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/data2/nfs/wangyingqi/Cyber-Zero/enigma-plus/run.py\", line 590, in main\n    if self.run(index) is False:\n  File \"/data2/nfs/wangyingqi/Cyber-Zero/enigma-plus/run.py\", line 370, in run\n    observation, info = self.env.reset(index)\n  File \"/data2/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/environment/swe_env.py\", line 740, in reset\n    self._init_docker_compose()\n  File \"/data2/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/environment/swe_env.py\", line 1463, in _init_docker_compose\n    return self._init_docker_compose_impl()\n  File \"/data2/nfs/wangyingqi/Cyber-Zero/enigma-plus/sweagent/environment/swe_env.py\", line 1577, in _init_docker_compose_impl\n    raise RuntimeError(f\"Failed to create CTF network: {e}\")\nRuntimeError: Failed to create CTF network: 400 Client Error for http+docker://localhost/v1.52/networks/create: Bad Request (\"all predefined address pools have been fully subnetted\")\n",
+    "flag_submitted": false,
+    "flag_verified": "unknown",
+    "episode_end_time": "2026-08-30T11:33:33.584820+00:00",
+    "total_steps": 1
+  }
+}

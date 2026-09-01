@@ -1,1 +1,0 @@
-{"id":"csawctf2014__feal-67ada3a590","sample_type":"main","messages":[{"role":"user","content":"feal"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

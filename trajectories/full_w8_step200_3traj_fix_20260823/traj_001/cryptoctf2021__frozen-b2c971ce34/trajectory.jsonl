@@ -1,1 +1,0 @@
-{"id":"cryptoctf2021__frozen-b2c971ce34","sample_type":"main","messages":[{"role":"user","content":"frozen"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

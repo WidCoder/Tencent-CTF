@@ -1,1 +1,0 @@
-{"id":"hsctf2019__license-7ef99347ff","sample_type":"main","messages":[{"role":"user","content":"license"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

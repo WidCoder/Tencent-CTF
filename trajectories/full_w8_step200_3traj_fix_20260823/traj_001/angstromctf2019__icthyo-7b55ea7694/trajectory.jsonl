@@ -1,1 +1,0 @@
-{"id":"angstromctf2019__icthyo-7b55ea7694","sample_type":"main","messages":[{"role":"user","content":"icthyo"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

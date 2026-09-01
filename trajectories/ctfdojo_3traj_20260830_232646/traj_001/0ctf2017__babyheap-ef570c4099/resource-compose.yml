@@ -1,0 +1,19 @@
+version: '3'
+services:
+  babyheap-batch-8f9841a1735b-2015249329f72faa9232:
+    build: .
+    ports:
+    - 13817:1337
+    networks:
+      ctfnet-batch-8f9841a1735b-2015249329f72faa9232:
+        aliases:
+        - babyheap.0ctf.io
+        - babyheap
+    container_name: babyheap-batch-8f9841a1735b-2015249329f72faa9232
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-8f9841a1735b-2015249329f72faa9232:
+    name: ctfnet-batch-8f9841a1735b-2015249329f72faa9232
+    external: true

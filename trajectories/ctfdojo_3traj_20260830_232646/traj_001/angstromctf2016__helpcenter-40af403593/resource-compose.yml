@@ -1,0 +1,18 @@
+services:
+  helpcenter-batch-b47d80edcc45-c04102292142bba2ba9b:
+    build: .
+    ports:
+    - 16302:1337
+    networks:
+      ctfnet-batch-b47d80edcc45-c04102292142bba2ba9b:
+        aliases:
+        - helpcenter.angstromctf.io
+        - helpcenter
+    container_name: helpcenter-batch-b47d80edcc45-c04102292142bba2ba9b
+    restart: always
+networks:
+  cfnet:
+    external: true
+  ctfnet-batch-b47d80edcc45-c04102292142bba2ba9b:
+    name: ctfnet-batch-b47d80edcc45-c04102292142bba2ba9b
+    external: true

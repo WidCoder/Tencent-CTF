@@ -1,1 +1,0 @@
-{"id":"hackluctf2011__challengetorrent-f832684a06","sample_type":"main","messages":[{"role":"user","content":"challengetorrent"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

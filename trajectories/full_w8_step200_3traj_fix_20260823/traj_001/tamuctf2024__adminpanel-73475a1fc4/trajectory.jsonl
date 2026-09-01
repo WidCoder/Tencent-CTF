@@ -1,1 +1,0 @@
-{"id":"tamuctf2024__adminpanel-73475a1fc4","sample_type":"main","messages":[{"role":"user","content":"adminpanel"},{"role":"assistant","content":"environment_reset","reasoning_content":""},{"role":"tool","content":"CTF server is not accessible even after restart attempts. Task terminated."}]}

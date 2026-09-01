@@ -1,1 +1,0 @@
-{"id":"boilers2026__build-a-builtin-74c3be682c","sample_type":"main","messages":[{"role":"user","content":"build-a-builtin"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

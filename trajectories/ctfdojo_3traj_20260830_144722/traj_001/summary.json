@@ -1,0 +1,88 @@
+{
+  "attempt_resource_cleanup_failed": 2,
+  "attempt_resource_cleanup_removed": 0,
+  "batch_errors": [
+    {
+      "code": "docker_resource_leak",
+      "message": "resource cleanup incomplete for 0ctf2018__heapstorm-0159a07ea6: {'resource_token': 'batch-bc4cb56fcadb', 'removed_containers': [], 'failed_containers': [], 'removed_networks': [], 'failed_networks': ['3c0520a4bedf'], 'remaining_containers': [], 'remaining_networks': ['3c0520a4bedf'], 'removed_volumes': [], 'failed_volumes': [], 'remaining_volumes': [], 'removal_errors': {'3c0520a4bedf': 'returncode=1; stdout=; stderr=Error response from daemon: error while removing network: network ctfnet-batch-bc4cb56fca-9b1d4649a1cecab71c7a has active endpoints (name:\"batch-bc4cb56fca-sweagent-enigma-latest-ab6f4ee72f\" id:\"1e74d0bf5bb4\")\\nexit status 1\\n'}}",
+      "time": "2026-08-30T08:50:45+00:00"
+    },
+    {
+      "code": "docker_resource_leak",
+      "message": "resource cleanup incomplete for 0ctf2019__flropyd-09e7147194: {'resource_token': 'batch-6812e47cb641', 'removed_containers': [], 'failed_containers': [], 'removed_networks': [], 'failed_networks': ['2ce80866a1ee'], 'remaining_containers': [], 'remaining_networks': ['2ce80866a1ee'], 'removed_volumes': [], 'failed_volumes': [], 'remaining_volumes': [], 'removal_errors': {'2ce80866a1ee': 'returncode=1; stdout=; stderr=Error response from daemon: error while removing network: network ctfnet-batch-6812e47cb6-d2a7d6b5c68d6cedfdd6 has active endpoints (name:\"batch-6812e47cb6-sweagent-enigma-latest-406b3fd3a4\" id:\"6b78bad3e1c9\")\\nexit status 1\\n'}}",
+      "time": "2026-08-30T09:27:04+00:00"
+    }
+  ],
+  "categories": {
+    "crypto": {
+      "flag_submitted": 1,
+      "flag_verified": 0,
+      "trajectory_generated": 246
+    },
+    "forensics": {
+      "flag_submitted": 0,
+      "flag_verified": 0,
+      "trajectory_generated": 40
+    },
+    "hardware": {
+      "flag_submitted": 0,
+      "flag_verified": 0,
+      "trajectory_generated": 10
+    },
+    "misc": {
+      "flag_submitted": 5,
+      "flag_verified": 0,
+      "trajectory_generated": 116
+    },
+    "pwn": {
+      "flag_submitted": 3,
+      "flag_verified": 0,
+      "trajectory_generated": 190
+    },
+    "rev": {
+      "flag_submitted": 4,
+      "flag_verified": 0,
+      "trajectory_generated": 129
+    },
+    "sandbox": {
+      "flag_submitted": 1,
+      "flag_verified": 0,
+      "trajectory_generated": 21
+    },
+    "web": {
+      "flag_submitted": 1,
+      "flag_verified": 0,
+      "trajectory_generated": 79
+    }
+  },
+  "container_cleanup_failed": 0,
+  "container_cleanup_removed": 0,
+  "docker_bridge_containers_at_end": null,
+  "docker_bridge_containers_at_start": 46,
+  "docker_bridge_containers_delta": null,
+  "docker_dynamic_networks_at_end": null,
+  "docker_dynamic_networks_at_start": 18,
+  "docker_dynamic_networks_delta": null,
+  "docker_owned_bridge_containers_at_end": null,
+  "docker_owned_bridge_containers_at_start": 0,
+  "docker_owned_bridge_containers_delta": null,
+  "environment_error": 764,
+  "flag_not_attempted": 1066,
+  "flag_status_unknown": 8,
+  "flag_submitted": 15,
+  "flag_verified": 0,
+  "generated_at": "2026-08-30T15:24:59+00:00",
+  "generated_trajectories": 831,
+  "generation_failed": 788,
+  "pending": 250,
+  "run_status": {
+    "error": 788,
+    "failed": 0,
+    "generated": 43
+  },
+  "skipped": 0,
+  "total_tasks": 1081,
+  "trajectory_generated": 831,
+  "unsolved": 831,
+  "verified_solved": 0
+}

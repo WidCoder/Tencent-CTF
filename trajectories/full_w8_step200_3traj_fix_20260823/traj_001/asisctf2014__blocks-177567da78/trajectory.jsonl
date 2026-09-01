@@ -1,1 +1,0 @@
-{"id":"asisctf2014__blocks-177567da78","sample_type":"main","messages":[{"role":"user","content":"blocks"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

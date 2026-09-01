@@ -1,1 +1,0 @@
-{"id":"tjctf2026__chained-c161e4104a","sample_type":"main","messages":[{"role":"user","content":"chained"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to attach container to CTF network: Failed to get container object."}]}

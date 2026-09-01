@@ -1,1 +1,0 @@
-{"id":"angstromctf2024__bap-3ddcf49894","sample_type":"main","messages":[{"role":"user","content":"bap"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to attach container to CTF network: Container sweagent-enigma-latest-d9dd50b96e not found"}]}

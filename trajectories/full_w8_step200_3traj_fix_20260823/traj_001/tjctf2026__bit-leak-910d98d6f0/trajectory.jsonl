@@ -1,1 +1,0 @@
-{"id":"tjctf2026__bit-leak-910d98d6f0","sample_type":"main","messages":[{"role":"user","content":"bit-leak"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

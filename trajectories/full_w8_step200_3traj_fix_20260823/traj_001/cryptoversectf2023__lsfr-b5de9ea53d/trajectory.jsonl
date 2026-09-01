@@ -1,1 +1,0 @@
-{"id":"cryptoversectf2023__lsfr-b5de9ea53d","sample_type":"main","messages":[{"role":"user","content":"lsfr"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to communicate with container"}]}

@@ -1,1 +1,0 @@
-{"id":"umassctf2026__building-blocks-market-0574202b1b","sample_type":"main","messages":[{"role":"user","content":"building-blocks-market"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"Failed to attach container to CTF network: Container disappeared after creation"}]}

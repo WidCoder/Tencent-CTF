@@ -1,1 +1,0 @@
-{"id":"l3akctf2025__basiclll-f37915565b","sample_type":"main","messages":[{"role":"user","content":"basiclll"},{"role":"assistant","content":"runner_exception","reasoning_content":""},{"role":"tool","content":"run.py exited with code 1"}]}

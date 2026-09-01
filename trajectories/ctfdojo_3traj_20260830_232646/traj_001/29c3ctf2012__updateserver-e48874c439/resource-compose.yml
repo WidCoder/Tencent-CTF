@@ -1,0 +1,19 @@
+version: '3'
+services:
+  updateserver-batch-eef5fb20bb28-25d8193bd533e6edb350:
+    build: .
+    ports:
+    - 14904:1337
+    networks:
+      ctfnet-batch-eef5fb20bb28-25d8193bd533e6edb350:
+        aliases:
+        - updateserver.29c3ctf.io
+        - updateserver
+    container_name: updateserver-batch-eef5fb20bb28-25d8193bd533e6edb350
+    restart: always
+networks:
+  ctfnet:
+    external: true
+  ctfnet-batch-eef5fb20bb28-25d8193bd533e6edb350:
+    name: ctfnet-batch-eef5fb20bb28-25d8193bd533e6edb350
+    external: true
